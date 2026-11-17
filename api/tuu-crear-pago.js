@@ -1,10 +1,23 @@
-// Vercel Serverless Function: Crea paciente + reserva pendiente en Supabase y genera pago en TUU (Haulmer)
+// Vercel Serverless Function: Crea paciente + reserva pendiente con expiración 15 min y genera pago TUU
 import crypto from 'crypto';
 
 const TUU_ENDPOINTS = {
   sandbox: 'https://frontend-api.payment.haulmer.dev/v1/payment',
   production: 'https://core.payment.haulmer.com/api/v1/payment'
 };
+
+function getSantiagoOffsetForDate(dateStr) {
+  const probe = new Date(`${dateStr}T12:00:00Z`);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Santiago',
+    timeZoneName: 'shortOffset'
+  }).formatToParts(probe);
+  const tz = parts.find((p) => p.type === 'timeZoneName')?.value || 'GMT-3';
+  const match = tz.match(/GMT([+-]\d+)/);
+  if (!match) return '-03:00';
+  const hr = Number(match[1]);
+  return `${hr < 0 ? '-' : '+'}${String(Math.abs(hr)).padStart(2, '0')}:00`;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -17,7 +30,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Faltan credenciales TUU_ACCOUNT_ID / TUU_SECRET_KEY' });
   }
 
-  const { service, sede, modalidad, date, time, payMode, patient } = req.body || {};
+  const { service, sede, modalidad, date, time, payMode, idempotencyKey, patient } = req.body || {};
   if (!service || !date || !time || !patient?.email || !patient?.name) {
     return res.status(400).json({ error: 'Datos incompletos para crear la reserva' });
   }
@@ -29,14 +42,20 @@ export default async function handler(req, res) {
   };
 
   try {
+    // 0. Expirar reservas pendientes vencidas (>15 min) antes de validar disponibilidad
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/expirar_reservas_pendientes`, {
+      method: 'POST',
+      headers: sbHeaders
+    }).catch(() => {});
+
     // 1. Upsert paciente por email
     const pacRes = await fetch(`${SUPABASE_URL}/rest/v1/pacientes?on_conflict=email`, {
       method: 'POST',
       headers: { ...sbHeaders, Prefer: 'resolution=merge-duplicates,return=representation' },
       body: JSON.stringify({
-        nombre_completo: patient.name,
-        telefono: patient.phone || '',
-        rut: patient.rut || null,
+        nombre_completo: patient.name.trim(),
+        telefono: (patient.phone || '').trim(),
+        rut: patient.rut ? patient.rut.trim() : null,
         email: patient.email.trim().toLowerCase()
       })
     });
@@ -44,7 +63,7 @@ export default async function handler(req, res) {
     const pacienteId = pacRows?.[0]?.id;
     if (!pacienteId) throw new Error('No se pudo registrar al paciente');
 
-    // 2. Calcular precio, crédito previo verificado y abono ($10.000 CLP) en el servidor
+    // 2. Calcular precio, duración efectiva, crédito verificado y abono en el servidor
     const servicioSlug = service === 'consulta_inicial'
       ? (modalidad === 'online' ? 'consulta_inicial_online' : 'consulta_inicial_presencial')
       : service;
@@ -61,10 +80,13 @@ export default async function handler(req, res) {
     });
     const creditoPrevio = Number(await credRes.json()) || 0;
     const neto = Math.max(0, srv.precio_clp - creditoPrevio);
-    const montoCobrar = payMode === 'total' ? neto : Math.min(srv.abono_sugerido_clp || 10000, neto);
+    const montoCobrar = Math.round(payMode === 'total' ? neto : Math.min(srv.abono_sugerido_clp || 10000, neto));
 
-    // 3. Crear reserva en pendiente_pago
-    const fechaHora = `${date}T${time}:00-03:00`;
+    // 3. Crear reserva en pendiente_pago (GiST impide solapamiento concurrente -> 23P01)
+    const offset = getSantiagoOffsetForDate(date);
+    const fechaHora = `${date}T${time}:00${offset}`;
+    const expiraEn = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
     const rsvRes = await fetch(`${SUPABASE_URL}/rest/v1/reservas`, {
       method: 'POST',
       headers: { ...sbHeaders, Prefer: 'return=representation' },
@@ -74,13 +96,27 @@ export default async function handler(req, res) {
         sede_slug: sede || (modalidad === 'online' ? 'online' : 'punta_arenas'),
         modalidad: modalidad || 'presencial',
         fecha_hora: fechaHora,
+        fecha_inicio: fechaHora,
+        duracion_min: srv.duracion_min || 60,
         precio_total_clp: srv.precio_clp,
         credito_previo_clp: creditoPrevio,
         monto_abonado_clp: 0,
-        estado: 'pendiente_pago'
+        estado: 'pendiente_pago',
+        expira_pago_en: expiraEn
       })
     });
-    const rsvRows = await rsvRes.json();
+
+    const rsvText = await rsvRes.text();
+    let rsvRows = [];
+    try { rsvRows = JSON.parse(rsvText); } catch (_) {}
+
+    if (!rsvRes.ok) {
+      if (rsvRes.status === 409 || rsvText.includes('23P01') || rsvText.includes('reservas_no_solapamiento_global')) {
+        return res.status(409).json({ error: 'Ese horario acaba de ser reservado.', code: 'SLOT_TAKEN' });
+      }
+      throw new Error('No se pudo crear la reserva');
+    }
+
     const reserva = rsvRows?.[0];
     if (!reserva?.id) throw new Error('No se pudo crear la reserva');
 
@@ -92,15 +128,14 @@ export default async function handler(req, res) {
       x_amount: String(montoCobrar),
       x_currency: 'CLP',
       x_reference: reference,
-      x_customer_email: patient.email,
-      x_customer_first_name: patient.name.split(' ')[0] || patient.name,
-      x_customer_last_name: patient.name.split(' ').slice(1).join(' ') || '-',
+      x_customer_email: patient.email.trim(),
+      x_customer_first_name: patient.name.trim().split(' ')[0] || patient.name.trim(),
+      x_customer_last_name: patient.name.trim().split(' ').slice(1).join(' ') || '-',
       x_url_callback: `${origin}/api/tuu-webhook`,
       x_url_complete: `${origin}/ingreso-paciente.html?token=${reserva.intake_token}`,
       x_url_cancel: `${origin}/reservar.html?pago=cancelado`
     };
 
-    // Firma HMAC SHA-256 según estándar TUU si se requiere
     const sorted = Object.keys(tuuBody).sort().map((k) => `${k}${tuuBody[k]}`).join('');
     tuuBody.x_signature = crypto.createHmac('sha256', TUU_SECRET_KEY).update(sorted).digest('hex');
 
@@ -122,7 +157,7 @@ export default async function handler(req, res) {
       throw new Error(tuuData?.message || `TUU HTTP ${tuuRes.status} sin URL de pago`);
     }
 
-    // 5. Registrar intento en pagos_tuu
+    // 5. Registrar intento en pagos_tuu (con idempotency_key opcional del cliente)
     await fetch(`${SUPABASE_URL}/rest/v1/pagos_tuu`, {
       method: 'POST',
       headers: sbHeaders,
@@ -133,11 +168,13 @@ export default async function handler(req, res) {
         monto_clp: montoCobrar,
         tuu_transaction_id: reference,
         tuu_status: 'pending',
+        origen_pago: 'tuu',
+        idempotency_key: idempotencyKey || reference,
         tuu_raw_payload: tuuData
       })
     });
 
-    return res.status(200).json({ paymentUrl, reservaId: reserva.id, intakeToken: reserva.intake_token });
+    return res.status(200).json({ paymentUrl, reservaId: reserva.id, expiraEn });
   } catch (err) {
     return res.status(500).json({ error: err.message || 'Error interno' });
   }

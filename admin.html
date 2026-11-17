@@ -792,7 +792,7 @@
 
         const pagosByReserva = {};
         (pagosRows || []).forEach((p) => {
-          if (p.tuu_status !== 'paid') return;
+          if (p.tuu_status !== 'paid' && !p.requiere_conciliacion) return;
           const parts = toSantiagoParts(p.created_at);
           pagosByReserva[p.reserva_id] = pagosByReserva[p.reserva_id] || [];
           pagosByReserva[p.reserva_id].push({
@@ -800,8 +800,10 @@
             fechaIso: parts.dateIso,
             concepto: p.concepto || 'Pago registrado',
             monto: Number(p.monto_clp || 0),
-            medio: String(p.tuu_transaction_id || '').startsWith('manual-') ? 'Pago manual' : 'TUU Online',
-            esTuu: !String(p.tuu_transaction_id || '').startsWith('manual-')
+            medio: p.origen_pago === 'manual' || String(p.tuu_transaction_id || '').startsWith('manual-') ? 'Manual' : 'TUU',
+            esTuu: p.origen_pago !== 'manual' && !String(p.tuu_transaction_id || '').startsWith('manual-'),
+            requiereConciliacion: !!p.requiere_conciliacion,
+            detalleConciliacion: p.detalle_conciliacion || ''
           });
         });
 
@@ -1533,14 +1535,19 @@
         const saldo = Math.max(0, r.total - paid);
         const pct = r.total > 0 ? Math.min(100, Math.round((paid / r.total) * 100)) : 100;
         const hist = (r.pagos || []).map((p) => `
-          <div class="flex justify-between py-1.5 border-t border-sage/10 text-xs">
-            <span class="text-sage-deep/80">${p.fechaIso.split('-').reverse().join('/')} · ${p.concepto} <span class="px-1.5 py-0.5 rounded bg-sage-soft text-[10px] font-semibold">${p.esTuu ? 'TUU' : p.medio}</span></span>
-            <strong class="text-sage-deep">${fmtCLP(p.monto)}</strong>
+          <div class="flex justify-between items-center gap-2 py-1.5 border-t border-sage/10 text-xs">
+            <span class="text-sage-deep/80">
+              ${p.fechaIso.split('-').reverse().join('/')} · ${p.concepto}
+              <span class="px-1.5 py-0.5 rounded bg-sage-soft text-[10px] font-semibold">${p.esTuu ? 'TUU' : p.medio}</span>
+              ${p.requiereConciliacion ? `<span class="px-1.5 py-0.5 rounded bg-coral-soft text-coral text-[10px] font-bold">Requiere conciliación</span>` : ''}
+            </span>
+            <strong class="text-sage-deep shrink-0">${fmtCLP(p.monto)}</strong>
           </div>
         `).join('');
+        const hasReconcile = (r.pagos || []).some((p) => p.requiereConciliacion);
 
         return `
-          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-sage/20 space-y-4">
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border ${hasReconcile ? 'border-coral/50' : 'border-sage/20'} space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div class="flex flex-wrap items-center gap-2">
@@ -1548,6 +1555,7 @@
                   <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${saldo === 0 ? 'bg-sage-soft text-sage-deep' : 'bg-coral-soft text-coral'}">
                     ${saldo === 0 ? 'Pagado 100%' : 'Abono parcial'}
                   </span>
+                  ${hasReconcile ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-coral text-white">Conciliar pago tardío</span>' : ''}
                 </div>
                 <p class="text-xs text-sage-deep/75 mt-0.5">${r.servicio}</p>
               </div>
@@ -1573,12 +1581,19 @@
       }).join('') : '<p class="text-sm text-sage-deep/70">No hay registros en esta categoría.</p>';
     }
 
+    let pendingPaymentKey = null;
+
+    function resetPaymentKey() {
+      pendingPaymentKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
     function openQuickPaymentModal(preselectedId = null) {
       const bookings = getBookings().filter((b) => Math.max(0, b.total - (b.credito || 0) - (b.abonado || 0)) > 0);
       if (!bookings.length) {
         showToast('No hay reservas con saldo pendiente.', 'success');
         return;
       }
+      resetPaymentKey();
       document.getElementById('pay-err').classList.add('hidden');
       const sel = document.getElementById('pay-booking-select');
       sel.innerHTML = bookings.map((b) => `<option value="${b.id}" ${b.id === preselectedId ? 'selected' : ''}>${b.paciente} — Saldo ${fmtCLP(Math.max(0, b.total - (b.credito || 0) - (b.abonado || 0)))}</option>`).join('');
@@ -1587,6 +1602,7 @@
     }
 
     function prefillPaymentAmount() {
+      resetPaymentKey();
       const id = document.getElementById('pay-booking-select').value;
       const b = getBookings().find((x) => x.id === id);
       if (!b) return;
@@ -1620,6 +1636,7 @@
         return;
       }
       err.classList.add('hidden');
+      if (!pendingPaymentKey) resetPaymentKey();
 
       appState.submitting = true;
       btn.disabled = true;
@@ -1627,25 +1644,22 @@
 
       try {
         if (isAuthenticated()) {
-          const manualRef = `manual-${target.id}-${Date.now()}`;
-          await sbFetch('/rest/v1/pagos_tuu', {
+          const rpcRes = await sbFetch('/rest/v1/rpc/registrar_pago_manual', {
             method: 'POST',
             body: JSON.stringify({
-              reserva_id: target.id,
-              paciente_id: target.pacienteId || null,
-              concepto: `${note} (${method})`,
-              monto_clp: rawAmount,
-              tuu_transaction_id: manualRef,
-              tuu_status: 'paid'
+              p_reserva_id: target.id,
+              p_monto_clp: rawAmount,
+              p_medio: method,
+              p_concepto: note,
+              p_idempotency_key: pendingPaymentKey
             })
           });
-          const nuevoAbono = (target.abonado || 0) + rawAmount;
-          const nuevoEstado = (target.credito + nuevoAbono) >= target.total ? 'pagada' : 'abonada';
-          await sbFetch(`/rest/v1/reservas?id=eq.${target.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ monto_abonado_clp: nuevoAbono, estado: nuevoEstado })
-          });
           await loadOperationalData();
+          if (rpcRes?.idempotent_replay) {
+            showToast('Pago ya había sido registrado (idempotencia verificada).');
+          } else {
+            showToast(`Pago de ${fmtCLP(rawAmount)} registrado atómicamente.`);
+          }
         } else {
           const list = getBookings();
           const item = list.find((x) => x.id === id);
@@ -1654,11 +1668,12 @@
           item.pagos.push({ fechaIso: santiagoTodayStr(), concepto: note, monto: rawAmount, medio: method, esTuu: false });
           localStorage.setItem(DEMO_BOOKINGS_KEY, JSON.stringify(list));
           renderAll();
+          showToast(`Pago de ${fmtCLP(rawAmount)} registrado.`);
         }
+        pendingPaymentKey = null;
         closeModal('payment-modal');
-        showToast(`Pago de ${fmtCLP(rawAmount)} registrado.`);
       } catch (e) {
-        err.textContent = `${e.message}. El pago no fue registrado.`;
+        err.textContent = `${e.message}. Puedes reintentar de forma segura sin duplicar el cobro.`;
         err.classList.remove('hidden');
         showToast('Error al registrar pago.', 'error');
       } finally {
@@ -1669,7 +1684,7 @@
     }
 
     // =========================================================================
-    // AUTENTICACIÓN SUPABASE (INTACTA)
+    // AUTENTICACIÓN SUPABASE + VERIFICACIÓN DE ROL ADMINISTRADORA CLÍNICA
     // =========================================================================
     async function signInNicole() {
       const email = document.getElementById('cfg-email').value.trim();
@@ -1686,10 +1701,27 @@
         });
         const data = await res.json();
         if (!res.ok || !data.access_token) throw new Error(data.error_description || 'Credenciales inválidas');
+
+        // Verificar permiso administrativo efectivo
+        const adminCheck = await fetch(`${SUPABASE_URL}/rest/v1/rpc/es_admin_clinica`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${data.access_token}`
+          }
+        });
+        if (adminCheck.ok) {
+          const isAdmin = await adminCheck.json();
+          if (isAdmin === false) {
+            throw new Error('Tu cuenta no tiene permisos de administración clínica.');
+          }
+        }
+
         localStorage.setItem(AUTH_TOKEN_KEY, data.access_token);
         updateAuthUI();
         await loadOperationalData();
-        showToast('Sesión conectada con Supabase.');
+        showToast('Sesión administrativa conectada con Supabase.');
       } catch (err) {
         showToast(err.message || 'No se pudo iniciar sesión', 'error');
       } finally {

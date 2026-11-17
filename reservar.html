@@ -270,6 +270,14 @@
       { sede: 'porvenir', modalidad: 'presencial', type: 'date', day: null, date: '2026-12-04', start: '10:00', end: '17:00', dur: 60, active: true }
     ];
 
+    function santiagoTodayStr() {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    }
+
+    function toSantiagoHHMM(isoStr) {
+      return new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(isoStr));
+    }
+
     const now = new Date();
     const state = {
       step: 1,
@@ -283,6 +291,8 @@
       slotBlockMod: 'presencial',
       chosenModality: 'presencial',
       verifiedCredit: 0,
+      isSubmitting: false,
+      attemptKey: null,
       blocks: DEFAULT_BLOCKS
     };
 
@@ -343,7 +353,7 @@
       const firstDay = new Date(state.viewYear, state.viewMonth, 1);
       const offset = (firstDay.getDay() + 6) % 7;
       const daysInMonth = new Date(state.viewYear, state.viewMonth + 1, 0).getDate();
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = santiagoTodayStr();
 
       let html = '';
       for (let i = 0; i < offset; i++) html += '<div></div>';
@@ -421,7 +431,7 @@
           body: JSON.stringify({ p_fecha: dateStr, p_sede: null })
         });
         const rows = await res.json();
-        if (Array.isArray(rows)) rows.forEach((r) => r.fecha_hora && taken.add(new Date(r.fecha_hora).toTimeString().slice(0, 5)));
+        if (Array.isArray(rows)) rows.forEach((r) => r.fecha_hora && taken.add(toSantiagoHHMM(r.fecha_hora)));
       } catch (_) {}
 
       const free = slots.filter((s) => !taken.has(s.time));
@@ -628,9 +638,18 @@
     }
 
     async function startTuuBookingPayment(patient) {
+      if (state.isSubmitting) return;
+      const btn = document.getElementById('btn-forward');
       const btnText = document.getElementById('btn-forward-text');
       const err = document.getElementById('p-err');
       const prevText = btnText.textContent;
+
+      if (!state.attemptKey) {
+        state.attemptKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `rsv-${Date.now()}`;
+      }
+
+      state.isSubmitting = true;
+      btn.disabled = true;
       btnText.textContent = 'Conectando con TUU...';
 
       try {
@@ -644,18 +663,31 @@
             date: state.selectedDate,
             time: state.slot,
             payMode: state.payMode,
+            idempotencyKey: state.attemptKey,
             patient
           })
         });
         const data = await res.json();
+        if (res.status === 409 || data.code === 'SLOT_TAKEN') {
+          state.attemptKey = null;
+          state.slot = '';
+          await pickDate(state.selectedDate);
+          goBookingStep(2);
+          document.getElementById('slots-hint').textContent = 'Ese horario acaba de ser tomado por otro paciente. Elige otra hora disponible arriba.';
+          return;
+        }
         if (!res.ok || !data.paymentUrl) {
           throw new Error(data.error || 'No se pudo iniciar el pago en TUU');
         }
+        state.attemptKey = null;
         window.location.href = data.paymentUrl;
       } catch (e) {
         btnText.textContent = prevText;
         err.textContent = e.message || 'No se pudo iniciar el pago en TUU.';
         err.classList.remove('hidden');
+      } finally {
+        state.isSubmitting = false;
+        btn.disabled = false;
       }
     }
 
