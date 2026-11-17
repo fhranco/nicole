@@ -53,7 +53,12 @@ const server = http.createServer(async (req, res) => {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     const raw = Buffer.concat(chunks).toString('utf8');
-    try { req.body = raw ? JSON.parse(raw) : {}; } catch (_) { req.body = {}; }
+    const ctype = String(req.headers['content-type'] || '').toLowerCase();
+    if (ctype.includes('application/x-www-form-urlencoded')) {
+      req.body = Object.fromEntries(new URLSearchParams(raw));
+    } else {
+      try { req.body = raw ? JSON.parse(raw) : {}; } catch (_) { req.body = {}; }
+    }
     const handler = urlPath === '/api/tuu-crear-pago' ? tuuCrearPago : tuuWebhook;
     return handler(req, wrapRes(res));
   }

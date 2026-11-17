@@ -2,12 +2,15 @@
 import crypto from 'crypto';
 
 function verifyTuuSignature(body, secret) {
-  if (!secret || !body?.x_signature) return !body?.x_signature;
-  const payload = { ...body };
-  const receivedSig = String(payload.x_signature);
-  delete payload.x_signature;
-  const sorted = Object.keys(payload).sort().map((k) => `${k}${payload[k] ?? ''}`).join('');
-  const expected = crypto.createHmac('sha256', secret).update(sorted).digest('hex');
+  if (!secret) return false;
+  if (!body?.x_signature) return false;
+  const receivedSig = String(body.x_signature);
+  const sorted = Object.keys(body)
+    .filter((k) => k.startsWith('x_') && k !== 'x_signature')
+    .sort()
+    .map((k) => `${k}${body[k] ?? ''}`)
+    .join('');
+  const expected = crypto.createHmac('sha256', secret).update(sorted, 'utf8').digest('hex');
   try {
     return crypto.timingSafeEqual(Buffer.from(receivedSig, 'utf8'), Buffer.from(expected, 'utf8'));
   } catch (_) {
