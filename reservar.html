@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Reservar Hora | Nicole Borguenson</title>
+  <meta name="description"
+    content="Agenda tu consulta nutricional integrativa o evaluación Epixlife en Punta Arenas, Online o giras en Magallanes." />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="favicon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            coral: { DEFAULT: "#E07A5F", dark: "#C65C40" },
+            sage: { DEFAULT: "#81B29A", light: "#B8D4C7", deep: "#2C5240", dark: "#1E3B2E" },
+            charcoal: { DEFAULT: "#3D405B", muted: "#57534E" }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            body: ['Poppins', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Poppins', system-ui, sans-serif;
+      background-color: #F4F8F6;
+      color: #2C5240;
+      -webkit-tap-highlight-color: transparent;
+    }
+    h1, h2, h3, h4, button, label {
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    input, select {
+      font-size: 16px !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+  <!-- TOP STICKY MOBILE HEADER -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-sage-deep/10">
+    <div class="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+      <a href="index.html" class="inline-flex items-center gap-1.5 text-xs font-semibold text-sage-deep hover:text-coral py-2 pr-2">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span>Inicio</span>
+      </a>
+      <div class="text-center">
+        <p class="text-xs font-bold tracking-wide text-sage-deep leading-none">Agenda tu Hora</p>
+        <p id="res-step-label" class="text-[11px] text-charcoal-muted mt-0.5">Paso 1 de 3 · Servicio</p>
+      </div>
+      <span id="res-step-pct" class="text-xs font-bold text-coral tabular-nums">33%</span>
+    </div>
+    <div class="w-full h-1 bg-sage-deep/10">
+      <div id="res-progress-bar" class="h-full bg-coral transition-all duration-300" style="width: 33%;"></div>
+    </div>
+  </header>
+
+  <!-- FULL-VIEW MOBILE-FIRST BOOKING FLOW -->
+  <main class="flex-1 w-full max-w-2xl mx-auto px-4 pt-5 pb-28 space-y-5">
+
+    <!-- PASO 1: SERVICIO -->
+    <section id="step-panel-1" class="space-y-4">
+      <div class="bg-white rounded-3xl p-5 border border-sage-deep/10 shadow-sm space-y-4">
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Paso 1 de 3</span>
+          <h1 class="text-xl sm:text-2xl font-semibold text-sage-deep mt-2">¿Qué atención deseas agendar?</h1>
+        </div>
+
+        <div class="space-y-2.5">
+          <button type="button" onclick="chooseService('consulta_inicial')" data-srv-card="consulta_inicial" class="srv-card w-full text-left p-4 rounded-2xl border-2 border-sage-deep bg-[#F9FBFA] transition-all">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h2 class="text-sm sm:text-base font-semibold text-sage-deep">Consulta Nutricional Inicial</h2>
+                <p class="text-xs text-charcoal-muted mt-0.5">Evaluación clínica integral · 60 min</p>
+              </div>
+              <span class="text-xs font-bold text-coral shrink-0">$40.000 – $45.000</span>
+            </div>
+            <p class="text-[11px] text-sage-deep/80 mt-2">Abono de reserva: <strong>$10.000 CLP</strong></p>
+          </button>
+
+          <button type="button" onclick="chooseService('evaluacion_epixlife')" data-srv-card="evaluacion_epixlife" class="srv-card w-full text-left p-4 rounded-2xl border border-sage-deep/15 bg-white transition-all">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h2 class="text-sm sm:text-base font-semibold text-sage-deep">Evaluación Integral + Epixlife</h2>
+                <p class="text-xs text-charcoal-muted mt-0.5">Bio-marcador capilar S-Drive · 2 sesiones</p>
+              </div>
+              <span class="text-xs font-bold text-coral shrink-0">$120.000 CLP</span>
+            </div>
+            <p class="text-[11px] text-sage-deep/80 mt-2">Abono de reserva: <strong>$10.000 CLP</strong> · Si ya tuviste Consulta Inicial abonas solo el saldo de $80.000</p>
+          </button>
+
+          <button type="button" onclick="chooseService('programa_90_dias')" data-srv-card="programa_90_dias" class="srv-card w-full text-left p-4 rounded-2xl border border-sage-deep/15 bg-white transition-all">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h2 class="text-sm sm:text-base font-semibold text-sage-deep">Programa Integral de 90 Días</h2>
+                <p class="text-xs text-charcoal-muted mt-0.5">Acompañamiento continuo · 3 meses</p>
+              </div>
+              <span class="text-xs font-bold text-coral shrink-0">$240.000 CLP</span>
+            </div>
+            <p class="text-[11px] text-sage-deep/80 mt-2">Abono de reserva: <strong>$10.000 CLP</strong> · Si ya pagaste Epixlife abonas solo $120.000</p>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASO 2: CALENDARIO ÚNICO FULL-VIEW -->
+    <section id="step-panel-2" class="hidden space-y-4">
+      <div class="bg-white rounded-3xl p-4 sm:p-6 border border-sage-deep/10 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-coral">Paso 2 de 3</span>
+            <h2 id="cal-month-title" class="text-lg sm:text-xl font-semibold text-sage-deep capitalize">Noviembre 2026</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="changeMonth(-1)" class="w-10 h-10 rounded-full border border-sage-deep/15 flex items-center justify-center text-sage-deep active:bg-[#EAF3EE]" aria-label="Mes anterior">
+              <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <button type="button" onclick="changeMonth(1)" class="w-10 h-10 rounded-full border border-sage-deep/15 flex items-center justify-center text-sage-deep active:bg-[#EAF3EE]" aria-label="Mes siguiente">
+              <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 text-[11px] font-semibold">
+          <span class="inline-flex items-center gap-1.5 text-sage-deep">
+            <span class="w-2.5 h-2.5 rounded-full bg-coral"></span> Presencial
+          </span>
+          <span class="inline-flex items-center gap-1.5 text-sage-deep">
+            <span class="w-2.5 h-2.5 rounded-full bg-sage-deep"></span> Online
+          </span>
+          <span class="inline-flex items-center gap-1.5 text-sage-deep">
+            <span class="inline-flex gap-0.5"><span class="w-2 h-2 rounded-full bg-coral"></span><span class="w-2 h-2 rounded-full bg-sage-deep"></span></span> Ambas
+          </span>
+        </div>
+
+        <div class="grid grid-cols-7 text-center text-[11px] font-bold uppercase tracking-wider text-charcoal-muted">
+          <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+
+        <div id="cal-grid" class="grid grid-cols-7 gap-1.5 sm:gap-2"></div>
+
+        <!-- Horas del día elegido -->
+        <div class="pt-4 border-t border-sage-deep/10 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p id="day-title" class="text-sm font-semibold text-sage-deep">Elige un día destacado en el calendario</p>
+            <span id="day-place-badge" class="hidden text-[11px] font-semibold px-3 py-1 rounded-full bg-[#EAF3EE] text-sage-deep"></span>
+          </div>
+          <div id="slots-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+          <div id="slot-hover-info" class="hidden rounded-xl px-3 py-2 text-xs font-semibold border"></div>
+          <div id="ambas-modality-picker" class="hidden pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#F9FBFA] p-3 rounded-2xl border border-sage-deep/15">
+            <span class="text-xs font-semibold text-sage-deep">Este bloque admite ambas modalidades:</span>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" onclick="chooseSlotModality('presencial')" id="slot-mod-presencial" class="px-3 py-1.5 rounded-xl text-xs font-semibold border bg-coral text-white border-coral">Presencial</button>
+              <button type="button" onclick="chooseSlotModality('online')" id="slot-mod-online" class="px-3 py-1.5 rounded-xl text-xs font-semibold border bg-white text-sage-deep border-sage-deep/20">Online</button>
+            </div>
+          </div>
+          <p id="slots-hint" class="text-xs text-charcoal-muted"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASO 3: DATOS Y ABONO TUU -->
+    <section id="step-panel-3" class="hidden space-y-4">
+      <div class="bg-white rounded-3xl p-5 sm:p-6 border border-sage-deep/10 shadow-sm space-y-4">
+        <div class="flex items-start justify-between gap-3 pb-3 border-b border-sage-deep/10">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-coral">Paso 3 de 3 · Confirmación</span>
+            <h2 id="sum-service" class="text-lg font-semibold text-sage-deep mt-0.5">Consulta Inicial</h2>
+            <p id="sum-datetime" class="text-xs text-charcoal-muted mt-0.5"></p>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="block text-[10px] text-charcoal-muted">A pagar hoy</span>
+            <span id="sum-amount" class="text-xl font-bold text-sage-deep">$20.000</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="setPayMode('abono')" id="btn-mode-abono" class="py-2.5 rounded-2xl text-xs font-semibold border bg-sage-deep text-white border-sage-deep">Abonar Reserva</button>
+          <button type="button" onclick="setPayMode('total')" id="btn-mode-total" class="py-2.5 rounded-2xl text-xs font-semibold border bg-[#F9FBFA] text-charcoal-muted border-sage-deep/15">Pagar Total</button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label for="p-name" class="block text-xs font-semibold text-sage-deep mb-1">Nombre completo <span class="text-coral">*</span></label>
+            <input id="p-name" type="text" autocomplete="name" placeholder="Tu nombre y apellidos" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="p-phone" class="block text-xs font-semibold text-sage-deep mb-1">Teléfono (WhatsApp) <span class="text-coral">*</span></label>
+              <input id="p-phone" type="tel" autocomplete="tel" placeholder="+56 9 1234 5678" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+            </div>
+            <div>
+              <label for="p-rut" class="block text-xs font-semibold text-sage-deep mb-1">RUT</label>
+              <input id="p-rut" type="text" onblur="verifySystemCredit()" placeholder="12.345.678-9" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+            </div>
+          </div>
+          <div>
+            <label for="p-email" class="block text-xs font-semibold text-sage-deep mb-1">Correo electrónico <span class="text-coral">*</span></label>
+            <input id="p-email" type="email" autocomplete="email" onblur="verifySystemCredit()" placeholder="nombre@correo.cl" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+          </div>
+        </div>
+
+        <div id="verified-credit-banner" class="hidden rounded-2xl bg-[#EAF3EE] border border-sage-deep/20 px-4 py-2.5 text-xs font-semibold text-sage-deep flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-4 h-4 text-sage-deep shrink-0"></i>
+          <span id="verified-credit-text"></span>
+        </div>
+
+        <p id="p-err" class="hidden text-xs font-semibold text-coral"></p>
+        <p class="text-[11px] text-charcoal-muted text-center">
+          Al confirmar tu abono con TUU se desbloqueará automáticamente tu Ficha de Ingreso Clínico.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- STICKY BOTTOM MOBILE ACTION BAR -->
+  <footer class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-sage-deep/10 pb-[env(safe-area-inset-bottom)]">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <button type="button" id="btn-back" onclick="prevBookingStep()" class="px-4 py-3.5 rounded-2xl bg-[#F4F8F6] text-sage-deep text-sm font-semibold inline-flex items-center gap-1 disabled:opacity-40">
+        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        <span>Atrás</span>
+      </button>
+      <button type="button" id="btn-forward" onclick="nextBookingStep()" class="flex-1 py-3.5 px-5 rounded-2xl bg-sage-deep text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm">
+        <span id="btn-forward-text">Elegir Fecha y Hora</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    const SB_URL = 'https://bfzeejjzgvhfybtfeajg.supabase.co';
+    const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmemVlamp6Z3ZoZnlidGZlYWpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4NDY2NDYsImV4cCI6MjExMDQyMjY0Nn0.RdHRAyybuLjwdVThhX2I2_vF4Y4JFsspdiTJ733-8AU';
+
+    const SEDE_FULL = {
+      punta_arenas: 'Punta Arenas · Carlos Condell 065',
+      puerto_natales: 'Gira Puerto Natales · Por confirmar',
+      porvenir: 'Gira Porvenir · Por confirmar',
+      online: 'Online · Google Meet'
+    };
+
+    const SEDE_SHORT = {
+      punta_arenas: 'P. Arenas',
+      puerto_natales: 'Natales',
+      porvenir: 'Porvenir',
+      online: 'Online'
+    };
+
+    const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+    const DEFAULT_BLOCKS = [
+      { sede: 'punta_arenas', modalidad: 'presencial', type: 'weekly', day: 2, date: '', start: '10:00', end: '14:00', dur: 60, active: true },
+      { sede: 'punta_arenas', modalidad: 'ambas', type: 'weekly', day: 4, date: '', start: '09:00', end: '14:00', dur: 60, active: true },
+      { sede: 'online', modalidad: 'online', type: 'weekly', day: 4, date: '', start: '15:00', end: '19:00', dur: 60, active: true },
+      { sede: 'puerto_natales', modalidad: 'presencial', type: 'date', day: null, date: '2026-11-27', start: '09:00', end: '18:00', dur: 60, active: true },
+      { sede: 'porvenir', modalidad: 'presencial', type: 'date', day: null, date: '2026-12-04', start: '10:00', end: '17:00', dur: 60, active: true }
+    ];
+
+    const now = new Date();
+    const state = {
+      step: 1,
+      service: 'consulta_inicial',
+      payMode: 'abono',
+      viewYear: now.getFullYear(),
+      viewMonth: now.getMonth(),
+      selectedDate: '',
+      slot: '',
+      slotSede: 'punta_arenas',
+      slotBlockMod: 'presencial',
+      chosenModality: 'presencial',
+      verifiedCredit: 0,
+      blocks: DEFAULT_BLOCKS
+    };
+
+    function getBlockMod(b) {
+      return b.modalidad || (b.sede === 'online' ? 'online' : 'presencial');
+    }
+
+    function getActiveBlocks() {
+      try {
+        const local = JSON.parse(localStorage.getItem('nicole_agenda_blocks_v1') || 'null');
+        if (Array.isArray(local) && local.length) return local.filter((b) => b.active);
+      } catch (_) {}
+      return state.blocks.filter((b) => b.active);
+    }
+
+    function getBlocksForDate(dateStr) {
+      const dow = new Date(dateStr + 'T00:00:00').getDay();
+      const blocks = getActiveBlocks();
+      const specific = blocks.filter((b) => b.type === 'date' && b.date === dateStr);
+      if (specific.length) return specific;
+      return blocks.filter((b) => b.type === 'weekly' && Number(b.day) === dow);
+    }
+
+    function chooseService(srv) {
+      state.service = srv;
+      state.verifiedCredit = 0;
+      document.querySelectorAll('.srv-card').forEach((card) => {
+        const active = card.dataset.srvCard === srv;
+        card.className = active
+          ? 'srv-card w-full text-left p-4 rounded-2xl border-2 border-sage-deep bg-[#F9FBFA] transition-all'
+          : 'srv-card w-full text-left p-4 rounded-2xl border border-sage-deep/15 bg-white transition-all';
+      });
+      document.getElementById('verified-credit-banner')?.classList.add('hidden');
+      updateSummary();
+    }
+
+    function setPayMode(mode) {
+      state.payMode = mode;
+      document.getElementById('btn-mode-abono').className = mode === 'abono'
+        ? 'py-2.5 rounded-2xl text-xs font-semibold border bg-sage-deep text-white border-sage-deep'
+        : 'py-2.5 rounded-2xl text-xs font-semibold border bg-[#F9FBFA] text-charcoal-muted border-sage-deep/15';
+      document.getElementById('btn-mode-total').className = mode === 'total'
+        ? 'py-2.5 rounded-2xl text-xs font-semibold border bg-sage-deep text-white border-sage-deep'
+        : 'py-2.5 rounded-2xl text-xs font-semibold border bg-[#F9FBFA] text-charcoal-muted border-sage-deep/15';
+      updateSummary();
+    }
+
+    function changeMonth(delta) {
+      state.viewMonth += delta;
+      if (state.viewMonth < 0) { state.viewMonth = 11; state.viewYear--; }
+      if (state.viewMonth > 11) { state.viewMonth = 0; state.viewYear++; }
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      document.getElementById('cal-month-title').textContent = `${MONTHS[state.viewMonth]} ${state.viewYear}`;
+      const grid = document.getElementById('cal-grid');
+      const firstDay = new Date(state.viewYear, state.viewMonth, 1);
+      const offset = (firstDay.getDay() + 6) % 7;
+      const daysInMonth = new Date(state.viewYear, state.viewMonth + 1, 0).getDate();
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      let html = '';
+      for (let i = 0; i < offset; i++) html += '<div></div>';
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const mm = String(state.viewMonth + 1).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        const dateStr = `${state.viewYear}-${mm}-${dd}`;
+        const dayBlocks = getBlocksForDate(dateStr);
+        const open = dateStr >= todayStr && dayBlocks.length > 0;
+        const selected = state.selectedDate === dateStr;
+
+        if (!open) {
+          html += `<div class="h-12 sm:h-14 rounded-2xl flex items-center justify-center text-xs text-charcoal-muted/35">${day}</div>`;
+        } else {
+          const hasOnline = dayBlocks.some((b) => getBlockMod(b) !== 'presencial');
+          const hasPresencial = dayBlocks.some((b) => getBlockMod(b) !== 'online');
+          const dots = `${hasPresencial ? '<span class="w-1.5 h-1.5 rounded-full bg-coral"></span>' : ''}${hasOnline ? '<span class="w-1.5 h-1.5 rounded-full bg-sage-deep"></span>' : ''}`;
+          const baseColor = selected
+            ? 'bg-sage-deep text-white border-sage-deep shadow-sm'
+            : (hasPresencial && !hasOnline
+              ? 'bg-[#F9ECE8]/75 text-sage-deep border-coral/30'
+              : 'bg-[#EAF3EE]/75 text-sage-deep border-sage-deep/20');
+          html += `
+            <button type="button" onclick="pickDate('${dateStr}')" class="h-12 sm:h-14 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${baseColor}">
+              <span class="text-sm font-bold leading-none">${day}</span>
+              <span class="flex items-center gap-1">${selected ? '<span class="w-1.5 h-1.5 rounded-full bg-white"></span>' : dots}</span>
+            </button>
+          `;
+        }
+      }
+      grid.innerHTML = html;
+    }
+
+    async function pickDate(dateStr, preserveSlot = false) {
+      state.selectedDate = dateStr;
+      if (!preserveSlot) state.slot = '';
+      renderCalendar();
+
+      const dayBlocks = getBlocksForDate(dateStr);
+      document.getElementById('day-title').textContent = `Horas para el ${dateStr.split('-').reverse().join('/')}`;
+      const badge = document.getElementById('day-place-badge');
+      const hasOnline = dayBlocks.some((b) => getBlockMod(b) !== 'presencial');
+      const hasPresencial = dayBlocks.some((b) => getBlockMod(b) !== 'online');
+      const modeText = hasPresencial && hasOnline ? 'Presencial / Online' : (hasPresencial ? 'Atención Presencial' : 'Atención Online');
+      badge.textContent = modeText;
+      badge.className = hasPresencial && !hasOnline
+        ? 'text-[11px] font-semibold px-3 py-1 rounded-full bg-[#F9ECE8] text-coral'
+        : 'text-[11px] font-semibold px-3 py-1 rounded-full bg-[#EAF3EE] text-sage-deep';
+
+      const slotMap = new Map();
+      dayBlocks.forEach((b) => {
+        const [sh, sm] = b.start.split(':').map(Number);
+        const [eh, em] = b.end.split(':').map(Number);
+        const dur = b.dur || 60;
+        const mod = getBlockMod(b);
+        for (let m = sh * 60 + sm; m + dur <= eh * 60 + em; m += dur) {
+          const time = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+          if (!slotMap.has(time)) {
+            slotMap.set(time, { time, sede: b.sede, mod });
+          } else {
+            const prev = slotMap.get(time);
+            if (prev.mod !== mod) prev.mod = 'ambas';
+            if (b.sede !== 'online') prev.sede = b.sede;
+          }
+        }
+      });
+      const slots = Array.from(slotMap.values()).sort((a, b) => a.time.localeCompare(b.time));
+
+      let taken = new Set();
+      try {
+        const res = await fetch(`${SB_URL}/rest/v1/rpc/horas_ocupadas_sede`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` },
+          body: JSON.stringify({ p_fecha: dateStr, p_sede: null })
+        });
+        const rows = await res.json();
+        if (Array.isArray(rows)) rows.forEach((r) => r.fecha_hora && taken.add(new Date(r.fecha_hora).toTimeString().slice(0, 5)));
+      } catch (_) {}
+
+      const free = slots.filter((s) => !taken.has(s.time));
+      const grid = document.getElementById('slots-grid');
+      const hint = document.getElementById('slots-hint');
+
+      if (!free.length) {
+        grid.innerHTML = '';
+        hint.textContent = 'Sin cupos disponibles en esta fecha.';
+        return;
+      }
+
+      hint.textContent = '';
+      grid.innerHTML = free.map((s) => {
+        const active = state.slot === s.time;
+        const isOnline = s.mod === 'online';
+        const isAmbas = s.mod === 'ambas';
+        const modTitle = isAmbas ? 'Disponible: Presencial u Online' : (isOnline ? 'Disponible: Solo Online' : 'Disponible: Solo Presencial');
+        const subLabel = isAmbas ? 'Presencial / Online' : (isOnline ? 'Online' : 'Presencial');
+        const dotHtml = isAmbas
+          ? '<span class="inline-flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-coral"></span><span class="w-1.5 h-1.5 rounded-full bg-sage-deep"></span></span>'
+          : `<span class="inline-block w-1.5 h-1.5 rounded-full ${active ? 'bg-white' : (isOnline ? 'bg-sage-deep' : 'bg-coral')}"></span>`;
+        const pillClass = active
+          ? (isOnline ? 'bg-sage-deep text-white border-sage-deep shadow-sm' : 'bg-coral text-white border-coral shadow-sm')
+          : (isOnline
+            ? 'bg-[#EAF3EE] text-sage-deep border-sage-deep/25 hover:border-sage-deep'
+            : (isAmbas ? 'bg-white text-sage-deep border-coral/40 hover:border-sage-deep' : 'bg-[#F9ECE8] text-coral border-coral/30 hover:border-coral'));
+        return `
+          <button type="button" title="${modTitle}" onmouseenter="showSlotModInfo('${s.time}', '${s.mod}', '${s.sede}')" onfocus="showSlotModInfo('${s.time}', '${s.mod}', '${s.sede}')" onclick="pickSlot('${s.time}', '${s.sede}', '${s.mod}')" class="py-2.5 px-2 rounded-2xl border transition-all flex flex-col items-center justify-center gap-0.5 ${pillClass}">
+            <span class="text-xs font-bold leading-none">${s.time}</span>
+            <span class="inline-flex items-center gap-1 text-[10px] font-medium leading-none opacity-90">${active ? '' : dotHtml}<span>${subLabel}</span></span>
+          </button>
+        `;
+      }).join('');
+      if (!preserveSlot) {
+        document.getElementById('ambas-modality-picker')?.classList.add('hidden');
+        document.getElementById('slot-hover-info')?.classList.add('hidden');
+      }
+    }
+
+    function showSlotModInfo(time, mod, sede) {
+      const box = document.getElementById('slot-hover-info');
+      if (!box) return;
+      const cityInfo = SEDE_FULL[sede || state.slotSede] || 'Punta Arenas';
+      if (mod === 'ambas') {
+        box.className = 'rounded-xl px-3 py-2 text-xs font-semibold border bg-white border-sage-deep/20 text-sage-deep';
+        box.textContent = `Bloque ${time} hrs: Disponible Presencial (${cityInfo}) u Online (Meet)`;
+      } else if (mod === 'online') {
+        box.className = 'rounded-xl px-3 py-2 text-xs font-semibold border bg-[#EAF3EE] border-sage-deep/20 text-sage-deep';
+        box.textContent = `Bloque ${time} hrs: Disponible solo Online (Meet)`;
+      } else {
+        box.className = 'rounded-xl px-3 py-2 text-xs font-semibold border bg-[#F9ECE8] border-coral/25 text-coral';
+        box.textContent = `Bloque ${time} hrs: Disponible solo Presencial · ${cityInfo}`;
+      }
+    }
+
+    function pickSlot(time, sede, mod) {
+      state.slot = time;
+      state.slotSede = sede;
+      state.slotBlockMod = mod || 'presencial';
+      showSlotModInfo(time, state.slotBlockMod, sede);
+      if (state.slotBlockMod === 'ambas') {
+        document.getElementById('ambas-modality-picker')?.classList.remove('hidden');
+        chooseSlotModality(state.chosenModality || 'presencial');
+      } else {
+        document.getElementById('ambas-modality-picker')?.classList.add('hidden');
+        state.chosenModality = state.slotBlockMod;
+      }
+      pickDate(state.selectedDate, true);
+      updateSummary();
+    }
+
+    function chooseSlotModality(mod) {
+      state.chosenModality = mod;
+      document.getElementById('slot-mod-presencial').className = mod === 'presencial'
+        ? 'px-3 py-1.5 rounded-xl text-xs font-semibold border bg-coral text-white border-coral'
+        : 'px-3 py-1.5 rounded-xl text-xs font-semibold border bg-white text-sage-deep border-sage-deep/20';
+      document.getElementById('slot-mod-online').className = mod === 'online'
+        ? 'px-3 py-1.5 rounded-xl text-xs font-semibold border bg-sage-deep text-white border-sage-deep'
+        : 'px-3 py-1.5 rounded-xl text-xs font-semibold border bg-white text-sage-deep border-sage-deep/20';
+      updateSummary();
+    }
+
+    async function verifySystemCredit() {
+      state.verifiedCredit = 0;
+      const banner = document.getElementById('verified-credit-banner');
+      if (state.service !== 'evaluacion_epixlife' && state.service !== 'programa_90_dias') {
+        banner?.classList.add('hidden');
+        updateSummary();
+        return;
+      }
+      const email = (document.getElementById('p-email')?.value || '').trim();
+      const rut = (document.getElementById('p-rut')?.value || '').trim();
+      if (!email && !rut) {
+        banner?.classList.add('hidden');
+        updateSummary();
+        return;
+      }
+      try {
+        const res = await fetch(`${SB_URL}/rest/v1/rpc/verificar_credito_previo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` },
+          body: JSON.stringify({ p_email: email, p_rut: rut, p_servicio_destino: state.service })
+        });
+        const credit = await res.json();
+        if (typeof credit === 'number' && credit > 0) {
+          state.verifiedCredit = credit;
+          document.getElementById('verified-credit-text').textContent = `Abono previo verificado en sistema: -$${credit.toLocaleString('es-CL')} CLP`;
+          banner?.classList.remove('hidden');
+        } else {
+          banner?.classList.add('hidden');
+        }
+      } catch (_) {
+        banner?.classList.add('hidden');
+      }
+      updateSummary();
+    }
+
+    function computeAmounts() {
+      let total = state.chosenModality === 'online' ? 40000 : 45000;
+      const abono = 10000;
+      const credit = state.verifiedCredit || 0;
+
+      if (state.service === 'evaluacion_epixlife') {
+        total = 120000;
+      } else if (state.service === 'programa_90_dias') {
+        total = 240000;
+      }
+      const net = Math.max(0, total - credit);
+      const payToday = state.payMode === 'abono' ? Math.min(abono, net) : net;
+      return { total, credit, net, payToday };
+    }
+
+    function updateSummary() {
+      const names = {
+        consulta_inicial: 'Consulta Nutricional Inicial',
+        evaluacion_epixlife: 'Evaluación Integral + Epixlife',
+        programa_90_dias: 'Programa Integral de 90 Días'
+      };
+      const { payToday } = computeAmounts();
+      const placeLabel = state.chosenModality === 'online'
+        ? 'Online · Google Meet'
+        : `Presencial · ${SEDE_FULL[state.slotSede] || 'Punta Arenas'}`;
+      document.getElementById('sum-service').textContent = names[state.service];
+      document.getElementById('sum-datetime').textContent = state.slot
+        ? `${state.selectedDate.split('-').reverse().join('/')} · ${state.slot} hrs · ${placeLabel}`
+        : '';
+      document.getElementById('sum-amount').textContent = '$' + payToday.toLocaleString('es-CL');
+    }
+
+    function goBookingStep(step) {
+      state.step = step;
+      [1, 2, 3].forEach((n) => document.getElementById(`step-panel-${n}`).classList.toggle('hidden', n !== step));
+
+      const labels = { 1: 'Paso 1 de 3 · Servicio', 2: 'Paso 2 de 3 · Día y hora', 3: 'Paso 3 de 3 · Abono TUU' };
+      const pcts = { 1: 33, 2: 66, 3: 100 };
+      const nextTexts = { 1: 'Elegir Fecha y Hora', 2: 'Continuar al Abono', 3: 'Reservar y Pagar con TUU' };
+
+      document.getElementById('res-step-label').textContent = labels[step];
+      document.getElementById('res-step-pct').textContent = `${pcts[step]}%`;
+      document.getElementById('res-progress-bar').style.width = `${pcts[step]}%`;
+      document.getElementById('btn-back').disabled = step === 1;
+      document.getElementById('btn-forward-text').textContent = nextTexts[step];
+
+      const forwardBtn = document.getElementById('btn-forward');
+      forwardBtn.className = step === 3
+        ? 'flex-1 py-3.5 px-5 rounded-2xl bg-coral text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm'
+        : 'flex-1 py-3.5 px-5 rounded-2xl bg-sage-deep text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function prevBookingStep() {
+      if (state.step > 1) goBookingStep(state.step - 1);
+    }
+
+    async function nextBookingStep() {
+      if (state.step === 1) {
+        goBookingStep(2);
+        return;
+      }
+      if (state.step === 2) {
+        if (!state.selectedDate || !state.slot) {
+          document.getElementById('slots-hint').textContent = 'Por favor selecciona un día y un horario para continuar.';
+          return;
+        }
+        updateSummary();
+        goBookingStep(3);
+        return;
+      }
+      if (state.step === 3) {
+        const name = (document.getElementById('p-name').value || '').trim();
+        const phone = (document.getElementById('p-phone').value || '').trim();
+        const email = (document.getElementById('p-email').value || '').trim();
+        const err = document.getElementById('p-err');
+        if (!name || !phone || !email) {
+          err.textContent = 'Completa tu nombre, teléfono y correo electrónico para continuar.';
+          err.classList.remove('hidden');
+          return;
+        }
+        err.classList.add('hidden');
+        await startTuuBookingPayment({ name, phone, rut: (document.getElementById('p-rut').value || '').trim(), email });
+      }
+    }
+
+    async function startTuuBookingPayment(patient) {
+      const btnText = document.getElementById('btn-forward-text');
+      const err = document.getElementById('p-err');
+      const prevText = btnText.textContent;
+      btnText.textContent = 'Conectando con TUU...';
+
+      try {
+        const res = await fetch('/api/tuu-crear-pago', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service: state.service,
+            sede: state.chosenModality === 'online' ? 'online' : state.slotSede,
+            modalidad: state.chosenModality,
+            date: state.selectedDate,
+            time: state.slot,
+            payMode: state.payMode,
+            patient
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.paymentUrl) {
+          throw new Error(data.error || 'No se pudo iniciar el pago en TUU');
+        }
+        window.location.href = data.paymentUrl;
+      } catch (e) {
+        btnText.textContent = prevText;
+        err.textContent = e.message || 'No se pudo iniciar el pago en TUU.';
+        err.classList.remove('hidden');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const preSrv = params.get('servicio');
+      if (preSrv && ['consulta_inicial', 'evaluacion_epixlife', 'programa_90_dias'].includes(preSrv)) {
+        chooseService(preSrv);
+      }
+
+      try {
+        const res = await fetch(`${SB_URL}/rest/v1/bloques_agenda?select=*&activo=eq.true`, {
+          headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
+        });
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length) {
+          state.blocks = rows.map((b) => ({
+            sede: b.sede_slug,
+            modalidad: b.modalidad_habilitada || (b.sede_slug === 'online' ? 'online' : 'presencial'),
+            type: b.fecha_especifica ? 'date' : 'weekly',
+            day: b.dia_semana,
+            date: b.fecha_especifica || '',
+            start: String(b.hora_inicio).slice(0, 5),
+            end: String(b.hora_fin).slice(0, 5),
+            dur: b.duracion_min,
+            active: b.activo
+          }));
+        }
+      } catch (_) {}
+
+      renderCalendar();
+      const firstOpen = document.querySelector('#cal-grid button[onclick^="pickDate"]');
+      if (firstOpen) firstOpen.click();
+      goBookingStep(preSrv ? 2 : 1);
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+
+</html>

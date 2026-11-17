@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ingreso Paciente | Nicole Borguenson</title>
+  <meta name="description"
+    content="Formulario de ingreso clínico paso a paso para pacientes de Nicole Borguenson - Nutrición Integrativa & Clínica." />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="favicon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            coral: { DEFAULT: "#E07A5F", dark: "#C65C40" },
+            sage: { DEFAULT: "#81B29A", light: "#B8D4C7", deep: "#2C5240", dark: "#1E3B2E" },
+            charcoal: { DEFAULT: "#3D405B", muted: "#57534E" }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            body: ['Poppins', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Poppins', system-ui, sans-serif;
+      background-color: #F4F8F6;
+      color: #2C5240;
+      -webkit-tap-highlight-color: transparent;
+    }
+    h1, h2, h3, h4, button, label {
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    /* Evita zoom automático en iOS Safari */
+    input, textarea, select {
+      font-size: 16px !important;
+    }
+    .step-enter {
+      animation: stepFadeIn 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes stepFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+  <!-- TOP STICKY MOBILE HEADER -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-sage-deep/10">
+    <div class="max-w-xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+      <a href="index.html" class="inline-flex items-center gap-1.5 text-xs font-semibold text-sage-deep hover:text-coral transition-colors py-2 pr-2">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span>Inicio</span>
+      </a>
+      <div class="text-center">
+        <p class="text-xs font-bold tracking-wide text-sage-deep leading-none">Ingreso Paciente</p>
+        <p id="header-step-label" class="text-[11px] text-charcoal-muted mt-0.5">Paso 1 de 16</p>
+      </div>
+      <span id="header-step-pct" class="text-xs font-bold text-coral tabular-nums">6%</span>
+    </div>
+    <div class="w-full h-1 bg-sage-deep/10">
+      <div id="header-progress-bar" class="h-full bg-coral transition-all duration-300" style="width: 6.25%;"></div>
+    </div>
+  </header>
+
+  <!-- MAIN MOBILE TYPEFORM CONTAINER -->
+  <main class="flex-1 w-full max-w-xl mx-auto px-4 pt-6 pb-28 flex flex-col justify-center">
+    <!-- PANTALLA DE BLOQUEO SI NO VIENE CON RESERVA / ABONO CONFIRMADO -->
+    <section id="access-gate-screen" class="hidden step-enter bg-white rounded-3xl p-6 sm:p-8 border border-sage-deep/15 shadow-sm text-center space-y-5">
+      <div class="w-14 h-14 rounded-2xl bg-[#F9ECE8] text-coral flex items-center justify-center mx-auto">
+        <i data-lucide="lock" class="w-7 h-7"></i>
+      </div>
+      <div class="space-y-2">
+        <h1 class="text-xl sm:text-2xl font-semibold text-sage-deep">Acceso exclusivo para pacientes con reserva</h1>
+        <p id="gate-message" class="text-sm text-charcoal-muted leading-relaxed font-body">
+          Esta ficha clínica se habilita automáticamente después de agendar tu hora y confirmar tu abono de reserva.
+        </p>
+      </div>
+      <div class="pt-2 flex flex-col gap-3">
+        <a href="index.html#reservas" class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-coral text-white text-sm font-semibold shadow-sm">
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+          <span>Ir a Reservar y Abonar</span>
+        </a>
+        <a href="index.html" class="text-xs font-semibold text-sage-deep underline underline-offset-4">Volver al sitio principal</a>
+      </div>
+    </section>
+
+    <form id="real-intake-form" onsubmit="event.preventDefault(); submitFormToDB();" novalidate>
+
+      <!-- PASO 1: FECHA DE HOY (id: 35) -->
+      <section data-step="1" class="step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 1 de 16</span>
+        <div>
+          <label for="q-35" class="block text-xl font-semibold text-sage-deep leading-snug">¿Cuál es la fecha de hoy?</label>
+          <p class="text-xs text-charcoal-muted mt-1">Tu avance se guarda automáticamente en este dispositivo.</p>
+        </div>
+        <input id="q-35" type="date" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+      </section>
+
+      <!-- PASO 2: NOMBRE COMPLETO (id: 1) -->
+      <section data-step="2" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 2 de 16</span>
+        <label for="q-1" class="block text-xl font-semibold text-sage-deep leading-snug">¿Cuál es su nombre completo? <span class="text-coral">*</span></label>
+        <input id="q-1" type="text" autocomplete="name" required placeholder="Escribe tu nombre y apellidos" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+        <p id="err-step-2" class="hidden text-xs font-semibold text-coral">Por favor ingresa tu nombre completo.</p>
+      </section>
+
+      <!-- PASO 3: TELÉFONO DE CONTACTO (id: 3) -->
+      <section data-step="3" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 3 de 16</span>
+        <label for="q-3" class="block text-xl font-semibold text-sage-deep leading-snug">¿Cuál es su número de teléfono de contacto? <span class="text-coral">*</span></label>
+        <input id="q-3" type="tel" autocomplete="tel" required placeholder="+56 9 1234 5678" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+        <p id="err-step-3" class="hidden text-xs font-semibold text-coral">Por favor ingresa tu número de contacto.</p>
+      </section>
+
+      <!-- PASO 4: RUT (id: 4) -->
+      <section data-step="4" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 4 de 16</span>
+        <label for="q-4" class="block text-xl font-semibold text-sage-deep leading-snug">¿Cuál es su número de identificación (RUT)?</label>
+        <input id="q-4" type="text" placeholder="Ej: 12.345.678-9" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+      </section>
+
+      <!-- PASO 5: DIRECCIÓN COMPLETA (id: 5) -->
+      <section data-step="5" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 5 de 16</span>
+        <label for="q-5" class="block text-xl font-semibold text-sage-deep leading-snug">¿Dónde vive actualmente? (Por favor, indique su dirección completa)</label>
+        <input id="q-5" type="text" autocomplete="street-address" placeholder="Calle, número, villa/comuna, ciudad" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+      </section>
+
+      <!-- PASO 6: CORREO ELECTRÓNICO (id: 6) -->
+      <section data-step="6" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 6 de 16</span>
+        <label for="q-6" class="block text-xl font-semibold text-sage-deep leading-snug">¿Cuál es su correo electrónico? <span class="text-coral">*</span></label>
+        <input id="q-6" type="email" autocomplete="email" required placeholder="nombre@correo.cl" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+        <p id="err-step-6" class="hidden text-xs font-semibold text-coral">Por favor ingresa un correo electrónico válido.</p>
+      </section>
+
+      <!-- PASO 7: FECHA DE NACIMIENTO (id: 34) -->
+      <section data-step="7" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 7 de 16</span>
+        <label for="q-34" class="block text-xl font-semibold text-sage-deep leading-snug">¿Cuál es su fecha de nacimiento?</label>
+        <input id="q-34" type="date" onchange="autoCalcAge()" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+      </section>
+
+      <!-- PASO 8: EDAD ACTUAL (id: 8) -->
+      <section data-step="8" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 8 de 16</span>
+        <label for="q-8" class="block text-xl font-semibold text-sage-deep leading-snug">¿Qué edad tiene actualmente?</label>
+        <input id="q-8" type="number" min="0" max="120" inputmode="numeric" placeholder="Ej: 34" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+      </section>
+
+      <!-- PASO 9: ACTIVIDAD LABORAL O DIARIA (id: 10) -->
+      <section data-step="9" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 9 de 16</span>
+        <label for="q-10" class="block text-xl font-semibold text-sage-deep leading-snug">¿Qué actividad laboral o diaria realiza regularmente?</label>
+        <input id="q-10" type="text" placeholder="Ej: Administrativa, enfermera, estudiante, docente..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+      </section>
+
+      <!-- PASO 10: ENFERMEDADES ACTUALES (id: 11) -->
+      <section data-step="10" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 10 de 16</span>
+        <label for="q-11" class="block text-xl font-semibold text-sage-deep leading-snug">¿Padece alguna enfermedad actualmente? Si es así, ¿cuáles?</label>
+        <textarea id="q-11" rows="4" placeholder="Ej: Hipotiroidismo, resistencia a la insulina, hipertensión, ninguna..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
+      </section>
+
+      <!-- PASO 11: TRATAMIENTO MÉDICO ACTUAL (id: 12) -->
+      <section data-step="11" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 11 de 16</span>
+        <label for="q-12" class="block text-xl font-semibold text-sage-deep leading-snug">¿Está en tratamiento médico en este momento? Por favor, indique sus diagnósticos médicos y si toma algún medicamento</label>
+        <textarea id="q-12" rows="4" placeholder="Indique diagnósticos médicos y fármacos/dosis..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
+      </section>
+
+      <!-- PASO 12: HISTORIA CLÍNICA CRONOLÓGICA (id: 13) -->
+      <section data-step="12" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-4">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 12 de 16</span>
+        <label for="q-13" class="block text-base sm:text-lg font-semibold text-sage-deep leading-snug">
+          Importante esta pregunta: a lo largo de su vida si ha tenido algún diagnóstico de enfermedad, síntoma, hospitalización, accidente relevante cronológicamente responder (si puede con edad):
+        </label>
+        <p class="text-[11px] text-charcoal-muted leading-relaxed">
+          Ejemplos: dermatitis, resfríos recurrentes, asma, rinitis alérgica, fractura, constipación crónica, dolor de estómago recurrente, colon irritable, selectividad alimentaria, depresión, infecciones urinarias, cándidas, caída de pelo, operaciones u otro hito importante.
+        </p>
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="addHistoryChip('Dermatitis')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Dermatitis</button>
+          <button type="button" onclick="addHistoryChip('Resfríos recurrentes')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Resfríos</button>
+          <button type="button" onclick="addHistoryChip('Asma / Rinitis alérgica')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Asma/Rinitis</button>
+          <button type="button" onclick="addHistoryChip('Colon irritable / Constipación')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Colon irritable</button>
+          <button type="button" onclick="addHistoryChip('Selectividad alimentaria')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Selectividad</button>
+          <button type="button" onclick="addHistoryChip('ITU / Cándida recurrente')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ ITU/Cándida</button>
+          <button type="button" onclick="addHistoryChip('Caída de pelo')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Caída de pelo</button>
+          <button type="button" onclick="addHistoryChip('Depresión / Ansiedad')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Ansiedad</button>
+          <button type="button" onclick="addHistoryChip('Operaciones / Fracturas')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Operaciones</button>
+        </div>
+        <textarea id="q-13" rows="5" placeholder="Ej: Niñez: rinitis alérgica. 15 años: fractura. 2023: colon irritable..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
+      </section>
+
+      <!-- PASO 13: ACTIVIDAD FÍSICA + RASTREO METABÓLICO ÚLTIMOS 6 MESES (id: 16, 70..84) -->
+      <section data-step="13" class="hidden step-enter space-y-4">
+        <div class="bg-white rounded-3xl p-5 border border-sage-deep/10 shadow-sm space-y-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Bloque 13 de 16</span>
+          <label for="q-16" class="block text-base font-semibold text-sage-deep leading-snug">¿Realiza alguna actividad física? En caso afirmativo, ¿qué tipo de actividad y con qué frecuencia?</label>
+          <input id="q-16" type="text" placeholder="Ej: Gimnasia 3 veces/semana, caminata diaria, no realizo..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+        </div>
+
+        <div class="bg-[#EAF3EE] rounded-3xl p-5 border border-sage-deep/15 space-y-3">
+          <h2 class="text-sm font-semibold text-sage-deep leading-snug">
+            Este es un cuestionario para poder hacer un rastreo metabólico, de acuerdo a los últimos 6 meses.
+          </h2>
+          <p class="text-xs text-charcoal-muted leading-relaxed">
+            Por favor valore la aparición de los siguientes síntomas basándose en su perfil de salud más típico: describa si es <strong>nunca</strong>, <strong>a menudo</strong>, si la frecuencia es un problema o algo <strong>grave</strong>.
+          </p>
+          <input id="q-70" type="text" placeholder="Comentario general inicial (opcional)" class="w-full rounded-2xl border border-sage-deep/20 bg-white px-4 py-2.5 text-sage-deep focus:border-coral focus:outline-none" />
+        </div>
+
+        <div id="metabolic-cards" class="space-y-3"></div>
+      </section>
+
+      <!-- PASO 14: MOTIVO DE CONSULTA (id: 31) -->
+      <section data-step="14" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 14 de 16</span>
+        <label for="q-31" class="block text-xl font-semibold text-sage-deep leading-snug">¿Cuál es el motivo principal de su consulta? ¿Qué objetivos desea alcanzar con este tratamiento?</label>
+        <textarea id="q-31" rows="4" placeholder="Ej: Ordenar mi alimentación, bajar inflamación, controlar mi composición corporal, mejorar energía..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
+      </section>
+
+      <!-- PASO 15: DÍA TÍPICO CON HORARIOS (id: 32) -->
+      <section data-step="15" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 15 de 16</span>
+        <label for="q-32" class="block text-xl font-semibold text-sage-deep leading-snug">Por favor, indique lo que generalmente consume en un día típico, incluyendo los horarios de cada comida.</label>
+        <textarea id="q-32" rows="5" placeholder="Ej: 08:30 Desayuno pan con palta y café. 13:30 Almuerzo pollo con arroz y ensalada. 19:30 Once..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
+      </section>
+
+      <!-- PASO 16: EXÁMENES Y SUBIDA DE ARCHIVOS (id: 85, 88, 87) -->
+      <section data-step="16" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Último paso · 16 de 16</span>
+        <div class="space-y-2">
+          <h2 class="text-lg font-semibold text-sage-deep leading-snug">
+            Suba los últimos exámenes bioquímicos, ecografías, imágenes que tenga desde los últimos 6 meses.
+          </h2>
+          <p class="text-xs text-charcoal-muted leading-relaxed">
+            ¿Cuentas con exámenes médicos de menos de seis meses (como exámenes bioquímicos, imágenes, radiografías, ecotomografías, entre otros)? Si los tienes, puedes adjuntarlos aquí o llevarlos / tenerlos disponibles en tu celular para complementar tu evaluación de manera integrativa.
+          </p>
+        </div>
+
+        <label for="q-87" class="block border-2 border-dashed border-sage-deep/25 rounded-2xl p-6 text-center bg-[#F9FBFA] hover:border-coral cursor-pointer transition-colors">
+          <i data-lucide="upload-cloud" class="w-8 h-8 text-coral mx-auto mb-2"></i>
+          <span class="block text-sm font-semibold text-sage-deep">Toca para adjuntar archivos</span>
+          <span class="block text-[11px] text-charcoal-muted mt-1">Máximo 5 archivos · hasta 5 MB cada uno (PDF, JPG, PNG, HEIC)</span>
+          <input id="q-87" type="file" multiple accept=".pdf,image/*" onchange="handleFilesSelected(this.files)" class="hidden" />
+        </label>
+
+        <div id="file-list" class="space-y-2"></div>
+        <p id="file-err" class="hidden text-xs font-semibold text-coral"></p>
+      </section>
+
+      <!-- PANTALLA CONFIRMACIÓN FINAL (COPY OFICIAL DE NICOLE) -->
+      <section id="confirmation-screen" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/15 shadow-sm space-y-5">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-[#EAF3EE] flex items-center justify-center text-sage-deep shrink-0">
+            <i data-lucide="check-circle-2" class="w-6 h-6 text-coral"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-semibold text-sage-deep">¡Ficha enviada!</h2>
+            <p id="conf-patient-meta" class="text-xs text-charcoal-muted"></p>
+          </div>
+        </div>
+
+        <div id="db-status-banner" class="rounded-2xl px-4 py-3 text-xs border bg-[#EAF3EE] border-sage-deep/20 text-sage-deep flex items-center gap-2.5">
+          <i data-lucide="database" class="w-4 h-4 shrink-0"></i>
+          <span id="db-status-text">Guardando información en la base de datos...</span>
+        </div>
+
+        <div class="bg-[#F9FBFA] rounded-2xl p-4 border border-sage-deep/10 text-xs sm:text-sm text-charcoal-muted leading-relaxed font-body">
+          ¡Gracias por tomarte el tiempo de completar el formulario! Toda esta información me permitirá conocerte mejor y personalizar tu plan desde un enfoque integrativo y biorregulador. Mi objetivo es ayudarte a alcanzar un equilibrio en tu salud, respetando las necesidades únicas de tu cuerpo. Si tienes alguna duda o hay algo que quieras agregar, no dudes en escribirme. ¡Nos vemos en consulta! 😊 – <strong class="text-sage-deep">Nicole Borguenson Fraga.</strong>
+        </div>
+
+        <div class="space-y-2.5">
+          <a id="conf-wa-btn" href="https://wa.me/56976232766" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-[#25D366] text-white text-sm font-semibold shadow-sm">
+            <i data-lucide="message-circle" class="w-4 h-4"></i>
+            <span>Enviar copia por WhatsApp</span>
+          </a>
+          <a href="index.html#reservas" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-sage-deep text-white text-sm font-semibold shadow-sm">
+            <i data-lucide="calendar" class="w-4 h-4"></i>
+            <span>Ir a Agendar Hora</span>
+          </a>
+          <button type="button" onclick="downloadRealCSV()" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white border border-sage-deep/20 text-sage-deep text-sm font-semibold">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Descargar respaldo CSV</span>
+          </button>
+        </div>
+      </section>
+
+    </form>
+  </main>
+
+  <!-- STICKY BOTTOM MOBILE NAVIGATION BAR -->
+  <footer id="mobile-bottom-bar" class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-sage-deep/10 pb-[env(safe-area-inset-bottom)]">
+    <div class="max-w-xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <button type="button" id="btn-prev" onclick="prevStep()" class="px-4 py-3.5 rounded-2xl bg-[#F4F8F6] text-sage-deep text-sm font-semibold inline-flex items-center gap-1 disabled:opacity-40">
+        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        <span>Anterior</span>
+      </button>
+      <button type="button" id="btn-next" onclick="nextStep()" class="flex-1 py-3.5 px-5 rounded-2xl bg-sage-deep text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm">
+        <span id="btn-next-text">Siguiente</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    // =========================================================================
+    // CONFIGURACIÓN SUPABASE (PROYECTO: pacientes)
+    // =========================================================================
+    const DB_CONFIG = {
+      supabaseUrl: 'https://bfzeejjzgvhfybtfeajg.supabase.co',
+      supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmemVlamp6Z3ZoZnlidGZlYWpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4NDY2NDYsImV4cCI6MjExMDQyMjY0Nn0.RdHRAyybuLjwdVThhX2I2_vF4Y4JFsspdiTJ733-8AU',
+      supabaseTable: 'fichas_ingreso_pacientes',
+      storageBucket: 'examenes-pacientes'
+    };
+
+    const TOTAL_STEPS = 16;
+    const DRAFT_KEY = 'nicole_real_intake_draft_v2';
+    const LOCAL_KEY = 'nicole_real_intake_records_v2';
+
+    const METABOLIC_ITEMS = [
+      { id: 'q-71', title: 'Sueño', prompt: 'Su sueño, es reparador?, por ejemplo, le cuesta conciliar sueño o se despierta muchas veces en la noche o duerme sus horas, pero se levanta cansado de forma habitual?. Describa.' },
+      { id: 'q-72', title: 'Cabeza', prompt: 'Cabeza: presenta usted dolores de cabeza , sensación de desmayo, mareos, insomnio de manera habitual?. Describa.' },
+      { id: 'q-73', title: 'Nariz', prompt: 'Nariz: le cuesta a usted respirar a menudo?, presenta habitualmente: sinusitis, rinitis o ataque de estornudos con excesiva mucosidad? Porfavor describa.' },
+      { id: 'q-74', title: 'Ojos', prompt: 'Ojos: presenta usted ojos llorosos con picor, hinchazón o enrojecimiento, ojeras o bolsas bajo sus ojos, visión borrosa que no sea el causal de una miopia o astigmatismo?. Describa' },
+      { id: 'q-75', title: 'Pulmón', prompt: 'Pulmón: presenta usted congestión torácica, asma o bronquitis, falta de aliento o dificultad para respirar? Describa' },
+      { id: 'q-76', title: 'Corazón', prompt: 'Corazón: presenta usted de manera regular, latidos rápidos, latidos irregulares o dolor en el pecho. Describa' },
+      { id: 'q-18', title: 'Piel', prompt: 'Piel: presenta usted : acné , llagas que pican o piel seca, caída de cabello y/o enrojecimiento excesivo. Describa' },
+      { id: 'q-77', title: 'Boca / garganta', prompt: 'Boca/garganta: necesidad frecuente de carraspear, dolor de garganta, ronquera o pérdida de voz, lengua, encías o labios hinchados, y/o úlceras bucales. Describa siempre si es de manera frecuente, ocacional, si son graves o no.' },
+      { id: 'q-78', title: 'Articulaciones y músculo', prompt: 'Articulaciones y músculo: presenta usted dolor articular o artritis, rigidez, limitación de movimiento, dolor articular, sensación de debilidad o fatiga muscular.Describa' },
+      { id: 'q-79', title: 'Peso', prompt: 'Peso: presenta usted deseo excesivo de alimentos específicos, compulsión por la comida, exceso de peso, retención de liquidos.Describa.' },
+      { id: 'q-80', title: 'Energía', prompt: 'Energía: presenta a menudo fatiga o letargo, o hiperactividad o dificultad para descansar y relajarse. Describa' },
+      { id: 'q-81', title: 'Sistema digestivo', prompt: 'Sistema digestivo: presenta usted a menudo hinchazon abdominal , eructos recurrentes o gases recurrentes , acidez de estomago, congestión en el abdomen, dolor estomacal o intestinal' },
+      { id: 'q-82', title: 'Emociones', prompt: 'Emociones: presenta usted cambios de humor, ansiedad o miedo o nerviosismo, ira irritabilidad agresividad, depresión. describa.' },
+      { id: 'q-83', title: 'Mente', prompt: 'Mente: mala memoria, confusión mental, falta de concentración, falta de coordinación motora, dificultad para aprender. Describa.' },
+      { id: 'q-84', title: 'Otros', prompt: 'Otros: intolerancias alimentarias, nauseas recurrentes, necesidad urgente de orinar, picor o secreción genital' }
+    ];
+
+    const CSV_HEADERS = [
+      '¿Cuál es la fecha de hoy?',
+      '¿Cuál es su nombre completo?',
+      '¿Cuál es su número de teléfono de contacto?',
+      '¿Cuál es su número de identificación (RUT)?',
+      '¿Dónde vive actualmente? (Por favor, indique su dirección completa)',
+      '¿Cuál es su correo electrónico?',
+      '¿Cuál es su fecha de nacimiento?',
+      '¿Qué edad tiene actualmente?',
+      '¿Qué actividad laboral o diaria realiza regularmente?',
+      '¿Padece alguna enfermedad actualmente? Si es así, ¿cuáles?',
+      '¿Está en tratamiento médico en este momento? Por favor, indique sus diagnosticos medicos y si toma algun medicamento',
+      'Importante esta pregunta: a lo largo de su vida si ha tenido algún diagnóstico de enfermedad, síntoma, hospitalización, accidente relevante cronologicamente responder(si puede con edad; por ejemplo de niñ@ dermatitis, resfrios recurrentes, asma, rinitis alérgica, fractura de tobillo, constipación crónica, dolor de estómago recurrente, colon irritable, selectividad por ciertos alimentos, depresión, infecciones urinarias recurrentes, cándidas recurrentes, caídas de pelo, operaciones. o algo importate que quiera comunicar..',
+      '¿Realiza alguna actividad física? En caso afirmativo, ¿qué tipo de actividad y con qué frecuencia?',
+      'Este es un cuestionario para poder hacer un rastreo metabólico, de acuerdo a los últimos 6 meses. Por favor valore la aparición de los siguientes síntomas , basándose en su perfil de salud mas típico, describa si es nunca a menudo frecuencia es un problema , o algo grave..COMENCEMOS...',
+      'Su sueño, es reparador?, por ejemplo, le cuesta conciliar sueño o se despierta muchas veces en la noche o duerme sus horas, pero se levanta cansado de forma habitual?. Describa.',
+      'Cabeza: presenta usted dolores de cabeza , sensación de desmayo, mareos, insomnio de manera habitual?. Describa.',
+      'Nariz: le cuesta a usted respirar a menudo?, presenta habitualmente: sinusitis, rinitis o ataque de estornudos con excesiva mucosidad? Porfavor describa.',
+      'Ojos: presenta usted ojos llorosos con picor, hinchazón o enrojecimiento, ojeras o bolsas bajo sus ojos, visión borrosa que no sea el causal de una miopia o astigmatismo?. Describa',
+      'Pulmón: presenta usted congestión torácica, asma o bronquitis, falta de aliento o dificultad para respirar? Describa',
+      'Corazón: presenta usted de manera regular, latidos rápidos, latidos irregulares o dolor en el pecho. Describa',
+      'Piel: presenta usted : acné , llagas que pican o piel seca, caída de cabello y/o enrojecimiento excesivo. Describa',
+      'Boca/garganta: necesidad frecuente de carraspear, dolor de garganta, ronquera o pérdida de voz, lengua, encías o labios hinchados, y/o úlceras bucales. Describa siempre si es de manera frecuente, ocacional, si son graves o no.',
+      'Articulaciones y músculo: presenta usted dolor articular o artritis, rigidez, limitación de movimiento, dolor articular, sensación de debilidad o fatiga muscular.Describa',
+      'Peso: presenta usted deseo excesivo de alimentos específicos, compulsión por la comida, exceso de peso, retención de liquidos.Describa.',
+      'Energía: presenta a menudo fatiga o letargo, o hiperactividad o dificultad para descansar y relajarse. Describa',
+      'Sistema digestivo: presenta usted a menudo hinchazon abdominal , eructos recurrentes o gases recurrentes , acidez de estomago, congestión en el abdomen, dolor estomacal o intestinal',
+      'Emociones: presenta usted cambios de humor, ansiedad o miedo o nerviosismo, ira irritabilidad agresividad, depresión. describa.',
+      'Mente: mala memoria, confusión mental, falta de concentración, falta de coordinación motora, dificultad para aprender. Describa.',
+      'Otros: intolerancias alimentarias, nauseas recurrentes, necesidad urgente de orinar, picor o secreción genital',
+      '¿Cuál es el motivo principal de su consulta? ¿Qué objetivos desea alcanzar con este tratamiento?',
+      'Por favor, indique lo que generalmente consume en un día típico, incluyendo los horarios de cada comida.',
+      'Archivo'
+    ];
+
+    let currentStep = 1;
+    let selectedFiles = [];
+
+    function renderMetabolicQuestions() {
+      const container = document.getElementById('metabolic-cards');
+      if (!container) return;
+      const quickOptions = ['Nunca', 'A veces', 'Frecuente', 'Grave'];
+
+      container.innerHTML = METABOLIC_ITEMS.map((item) => {
+        const chips = quickOptions.map((opt) =>
+          `<button type="button" onclick="setMetabolicQuick('${item.id}', '${opt}')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-semibold text-sage-deep hover:border-coral">${opt}</button>`
+        ).join('');
+        return `
+          <div class="bg-white rounded-3xl p-4 border border-sage-deep/10 shadow-sm space-y-2.5">
+            <label for="${item.id}" class="block text-xs sm:text-sm font-semibold text-sage-deep leading-snug">${item.prompt}</label>
+            <div class="flex flex-wrap gap-1.5">${chips}</div>
+            <input id="${item.id}" type="text" placeholder="Describe frecuencia o síntomas..." oninput="saveDraft()" class="w-full rounded-xl border border-sage-deep/15 bg-[#F9FBFA] px-3.5 py-2.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setMetabolicQuick(id, label) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const cur = el.value.trim();
+      if (!cur || ['Nunca', 'A veces', 'Frecuente', 'Grave'].includes(cur)) {
+        el.value = label;
+      } else if (!cur.toLowerCase().startsWith(label.toLowerCase())) {
+        el.value = `${label}: ${cur}`;
+      }
+      saveDraft();
+    }
+
+    function addHistoryChip(label) {
+      const el = document.getElementById('q-13');
+      if (!el) return;
+      const cur = el.value.trim();
+      el.value = cur ? `${cur}, ${label}` : label;
+      saveDraft();
+    }
+
+    function autoCalcAge() {
+      const dobVal = document.getElementById('q-34')?.value;
+      const ageEl = document.getElementById('q-8');
+      if (!dobVal || !ageEl) return;
+      const dob = new Date(dobVal + 'T00:00:00');
+      const now = new Date();
+      let age = now.getFullYear() - dob.getFullYear();
+      const m = now.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+      if (age >= 0 && age <= 120) {
+        ageEl.value = String(age);
+        saveDraft();
+      }
+    }
+
+    function handleFilesSelected(fileList) {
+      const errEl = document.getElementById('file-err');
+      errEl.classList.add('hidden');
+      const incoming = Array.from(fileList || []);
+      for (const file of incoming) {
+        if (selectedFiles.length >= 5) {
+          errEl.textContent = 'Máximo 5 archivos permitidos.';
+          errEl.classList.remove('hidden');
+          break;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          errEl.textContent = `El archivo "${file.name}" supera los 5 MB.`;
+          errEl.classList.remove('hidden');
+          continue;
+        }
+        selectedFiles.push(file);
+      }
+      renderFileList();
+    }
+
+    function removeFileAt(idx) {
+      selectedFiles.splice(idx, 1);
+      renderFileList();
+    }
+
+    function renderFileList() {
+      const list = document.getElementById('file-list');
+      if (!list) return;
+      list.innerHTML = selectedFiles.map((f, idx) => `
+        <div class="flex items-center justify-between gap-2 bg-[#F9FBFA] border border-sage-deep/15 rounded-xl px-3.5 py-2 text-xs">
+          <span class="truncate text-sage-deep font-medium">${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+          <button type="button" onclick="removeFileAt(${idx})" class="text-coral font-bold shrink-0">Quitar</button>
+        </div>
+      `).join('');
+    }
+
+    function goStep(step) {
+      currentStep = step;
+      document.getElementById('confirmation-screen')?.classList.add('hidden');
+      document.getElementById('mobile-bottom-bar')?.classList.remove('hidden');
+
+      document.querySelectorAll('[data-step]').forEach((sec) => {
+        sec.classList.toggle('hidden', Number(sec.dataset.step) !== step);
+      });
+
+      const pct = Math.round((step / TOTAL_STEPS) * 100);
+      document.getElementById('header-step-label').textContent = `Paso ${step} de ${TOTAL_STEPS}`;
+      document.getElementById('header-step-pct').textContent = `${pct}%`;
+      document.getElementById('header-progress-bar').style.width = `${pct}%`;
+
+      document.getElementById('btn-prev').disabled = step === 1;
+      document.getElementById('btn-next-text').textContent = step === TOTAL_STEPS ? 'Enviar Ficha' : 'Siguiente';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      saveDraft();
+    }
+
+    function prevStep() {
+      if (currentStep > 1) goStep(currentStep - 1);
+    }
+
+    function nextStep() {
+      if (currentStep === 2 && !(document.getElementById('q-1')?.value || '').trim()) {
+        document.getElementById('err-step-2')?.classList.remove('hidden');
+        return;
+      }
+      document.getElementById('err-step-2')?.classList.add('hidden');
+
+      if (currentStep === 3 && !(document.getElementById('q-3')?.value || '').trim()) {
+        document.getElementById('err-step-3')?.classList.remove('hidden');
+        return;
+      }
+      document.getElementById('err-step-3')?.classList.add('hidden');
+
+      if (currentStep === 6 && !(document.getElementById('q-6')?.value || '').trim()) {
+        document.getElementById('err-step-6')?.classList.remove('hidden');
+        return;
+      }
+      document.getElementById('err-step-6')?.classList.add('hidden');
+
+      if (currentStep < TOTAL_STEPS) {
+        goStep(currentStep + 1);
+      } else {
+        submitFormToDB();
+      }
+    }
+
+    function collectValues() {
+      const val = (id) => (document.getElementById(id)?.value || '').trim();
+      const rastreoSistemas = {};
+      METABOLIC_ITEMS.forEach((m) => {
+        rastreoSistemas[m.title] = val(m.id);
+      });
+      return {
+        fechaHoy: val('q-35'),
+        nombre: val('q-1'),
+        telefono: val('q-3'),
+        rut: val('q-4'),
+        direccion: val('q-5'),
+        email: val('q-6'),
+        dob: val('q-34'),
+        edad: val('q-8'),
+        actividadLaboral: val('q-10'),
+        enfermedades: val('q-11'),
+        tratamiento: val('q-12'),
+        historia: val('q-13'),
+        actividadFisica: val('q-16'),
+        rastreoIntro: val('q-70'),
+        rastreoSistemas,
+        motivo: val('q-31'),
+        diaTipico: val('q-32'),
+        archivosNombres: selectedFiles.map((f) => f.name)
+      };
+    }
+
+    function saveDraft() {
+      try {
+        const d = collectValues();
+        d._step = currentStep;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+      } catch (_) {}
+    }
+
+    function restoreDraft() {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        const map = {
+          'q-35': d.fechaHoy, 'q-1': d.nombre, 'q-3': d.telefono, 'q-4': d.rut,
+          'q-5': d.direccion, 'q-6': d.email, 'q-34': d.dob, 'q-8': d.edad,
+          'q-10': d.actividadLaboral, 'q-11': d.enfermedades, 'q-12': d.tratamiento,
+          'q-13': d.historia, 'q-16': d.actividadFisica, 'q-70': d.rastreoIntro,
+          'q-31': d.motivo, 'q-32': d.diaTipico
+        };
+        Object.entries(map).forEach(([id, v]) => {
+          const el = document.getElementById(id);
+          if (el && v) el.value = v;
+        });
+        if (d.rastreoSistemas) {
+          METABOLIC_ITEMS.forEach((m) => {
+            const el = document.getElementById(m.id);
+            if (el && d.rastreoSistemas[m.title]) el.value = d.rastreoSistemas[m.title];
+          });
+        }
+      } catch (_) {}
+    }
+
+    async function uploadFilesToSupabase(nombrePaciente) {
+      if (!DB_CONFIG.supabaseAnonKey || !selectedFiles.length) return [];
+      const base = DB_CONFIG.supabaseUrl.replace(/\/$/, '');
+      const folder = `${new Date().toISOString().slice(0, 10)}/${(nombrePaciente || 'paciente').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      const paths = [];
+      for (const file of selectedFiles) {
+        const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const path = `${folder}/${safeName}`;
+        const res = await fetch(`${base}/storage/v1/object/${DB_CONFIG.storageBucket}/${path}`, {
+          method: 'POST',
+          headers: {
+            'apikey': DB_CONFIG.supabaseAnonKey,
+            'Authorization': `Bearer ${DB_CONFIG.supabaseAnonKey}`,
+            'Content-Type': file.type || 'application/octet-stream'
+          },
+          body: file
+        });
+        if (res.ok) paths.push(path);
+      }
+      return paths;
+    }
+
+    async function submitFormToDB() {
+      const data = collectValues();
+
+      document.querySelectorAll('[data-step]').forEach((s) => s.classList.add('hidden'));
+      document.getElementById('mobile-bottom-bar')?.classList.add('hidden');
+      document.getElementById('confirmation-screen')?.classList.remove('hidden');
+      document.getElementById('header-step-label').textContent = 'Completado';
+      document.getElementById('header-step-pct').textContent = '100%';
+      document.getElementById('header-progress-bar').style.width = '100%';
+      document.getElementById('conf-patient-meta').textContent = [data.nombre, data.rut, data.telefono].filter(Boolean).join(' · ');
+
+      const waText = [
+        `*INGRESO PACIENTE — NICOLE BORGUENSON*`,
+        `Fecha: ${data.fechaHoy} | Nombre: ${data.nombre}`,
+        `Tel: ${data.telefono} | RUT: ${data.rut || '-'} | Email: ${data.email}`,
+        `Nacimiento: ${data.dob || '-'} (${data.edad || '-'} años)`,
+        `Dirección: ${data.direccion || '-'}`,
+        `Actividad: ${data.actividadLaboral || '-'}`,
+        `Enfermedades: ${data.enfermedades || '-'}`,
+        `Tratamiento: ${data.tratamiento || '-'}`,
+        `Historia: ${data.historia || '-'}`,
+        `Actividad física: ${data.actividadFisica || '-'}`,
+        `*Rastreo 6 meses:*`,
+        ...METABOLIC_ITEMS.filter((m) => data.rastreoSistemas[m.title]).map((m) => `• ${m.title}: ${data.rastreoSistemas[m.title]}`),
+        `Motivo: ${data.motivo || '-'}`,
+        `Día típico: ${data.diaTipico || '-'}`
+      ].join('\n');
+      document.getElementById('conf-wa-btn').href = `https://wa.me/56976232766?text=${encodeURIComponent(waText)}`;
+
+      const statusBanner = document.getElementById('db-status-banner');
+      const statusText = document.getElementById('db-status-text');
+
+      try {
+        const uploadedPaths = await uploadFilesToSupabase(data.nombre);
+        const payload = {
+          reserva_id: activeBookingContext?.reserva_id || null,
+          paciente_id: activeBookingContext?.paciente_id || null,
+          intake_token: activeBookingContext?.token || null,
+          fecha_hoy: data.fechaHoy || null,
+          nombre_completo: data.nombre || 'Sin nombre',
+          telefono: data.telefono || '',
+          rut: data.rut,
+          direccion: data.direccion,
+          email: data.email || '',
+          fecha_nacimiento: data.dob || null,
+          edad: data.edad ? Number(data.edad) : null,
+          actividad_laboral: data.actividadLaboral,
+          enfermedades_actuales: data.enfermedades,
+          tratamiento_actual: data.tratamiento,
+          historia_clinica: data.historia,
+          actividad_fisica: data.actividadFisica,
+          rastreo_resumen: data.rastreoIntro,
+          rastreo_sistemas: data.rastreoSistemas,
+          motivo_consulta: data.motivo,
+          dia_tipico: data.diaTipico,
+          archivos_urls: uploadedPaths.length ? uploadedPaths : data.archivosNombres,
+          origen: window.location.href
+        };
+
+        try {
+          const list = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+          list.push({ ...payload, saved_at: new Date().toISOString() });
+          localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
+        } catch (_) {}
+
+        if (DB_CONFIG.supabaseAnonKey) {
+          const endpoint = `${DB_CONFIG.supabaseUrl.replace(/\/$/, '')}/rest/v1/${DB_CONFIG.supabaseTable}`;
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': DB_CONFIG.supabaseAnonKey,
+              'Authorization': `Bearer ${DB_CONFIG.supabaseAnonKey}`,
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          statusBanner.className = 'rounded-2xl px-4 py-3 text-xs border bg-[#EAF3EE] border-sage-deep/20 text-sage-deep flex items-center gap-2.5';
+          statusText.textContent = 'Ficha guardada exitosamente en la base de datos (Supabase).';
+        } else {
+          statusBanner.className = 'rounded-2xl px-4 py-3 text-xs border bg-[#F9ECE8] border-coral/25 text-sage-deep flex items-center gap-2.5';
+          statusText.textContent = 'Respaldo guardado en el navegador. Falta pegar supabaseAnonKey para guardar en Supabase.';
+        }
+      } catch (e) {
+        statusBanner.className = 'rounded-2xl px-4 py-3 text-xs border bg-[#F9ECE8] border-coral/40 text-coral flex items-center gap-2.5';
+        statusText.textContent = 'Guardado local realizado. No se pudo conectar a Supabase; envía también una copia por WhatsApp.';
+      }
+
+      if (window.lucide) lucide.createIcons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function downloadRealCSV() {
+      const d = collectValues();
+      const row = [
+        d.fechaHoy, d.nombre, d.telefono, d.rut, d.direccion, d.email, d.dob, d.edad,
+        d.actividadLaboral, d.enfermedades, d.tratamiento, d.historia, d.actividadFisica,
+        d.rastreoIntro,
+        ...METABOLIC_ITEMS.map((m) => d.rastreoSistemas[m.title] || ''),
+        d.motivo, d.diaTipico, d.archivosNombres.join(' , ')
+      ];
+      const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const csv = '\uFEFF' + [CSV_HEADERS.map(esc).join(','), row.map(esc).join(',')].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ingreso-paciente-${(d.nombre || 'ficha').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    let activeBookingContext = null;
+
+    async function verifyBookingTokenAccess() {
+      const params = new URLSearchParams(window.location.search);
+      const token = (params.get('token') || '').trim();
+      const gate = document.getElementById('access-gate-screen');
+      const form = document.getElementById('real-intake-form');
+      const bar = document.getElementById('mobile-bottom-bar');
+
+      const lockScreen = (msg) => {
+        if (msg) document.getElementById('gate-message').textContent = msg;
+        gate?.classList.remove('hidden');
+        form?.classList.add('hidden');
+        bar?.classList.add('hidden');
+        document.getElementById('header-step-label').textContent = 'Acceso restringido';
+        document.getElementById('header-step-pct').textContent = '0%';
+        document.getElementById('header-progress-bar').style.width = '0%';
+      };
+
+      // Modo prueba local mientras aún no se configura supabaseAnonKey
+      if (!DB_CONFIG.supabaseAnonKey) {
+        if (token === 'demo') {
+          activeBookingContext = { token: 'demo' };
+          return true;
+        }
+        lockScreen('Esta ficha clínica se habilita automáticamente después de agendar tu hora y confirmar tu abono de reserva.');
+        return false;
+      }
+
+      if (!token) {
+        lockScreen('Esta ficha clínica se habilita automáticamente después de agendar tu hora y confirmar tu abono de reserva.');
+        return false;
+      }
+
+      try {
+        const res = await fetch(`${DB_CONFIG.supabaseUrl.replace(/\/$/, '')}/rest/v1/rpc/validar_token_ingreso`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': DB_CONFIG.supabaseAnonKey,
+            'Authorization': `Bearer ${DB_CONFIG.supabaseAnonKey}`
+          },
+          body: JSON.stringify({ p_token: token })
+        });
+        const rows = await res.json();
+        const booking = Array.isArray(rows) ? rows[0] : rows;
+        if (!booking || !booking.valido) {
+          lockScreen('Tu enlace de reserva aún no registra un abono confirmado o ya expiró.');
+          return false;
+        }
+        activeBookingContext = { ...booking, token };
+        if (booking.nombre_completo && !document.getElementById('q-1').value) document.getElementById('q-1').value = booking.nombre_completo;
+        if (booking.telefono && !document.getElementById('q-3').value) document.getElementById('q-3').value = booking.telefono;
+        if (booking.rut && !document.getElementById('q-4').value) document.getElementById('q-4').value = booking.rut;
+        if (booking.email && !document.getElementById('q-6').value) document.getElementById('q-6').value = booking.email;
+        return true;
+      } catch (_) {
+        lockScreen('No pudimos verificar tu reserva en este momento. Intenta nuevamente desde el enlace de tu confirmación.');
+        return false;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const todayEl = document.getElementById('q-35');
+      if (todayEl && !todayEl.value) {
+        const n = new Date();
+        todayEl.value = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+      }
+      renderMetabolicQuestions();
+      restoreDraft();
+      await verifyBookingTokenAccess();
+      document.querySelectorAll('#real-intake-form input, #real-intake-form textarea').forEach((el) => {
+        el.addEventListener('input', saveDraft);
+      });
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+
+</html>

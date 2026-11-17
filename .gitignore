@@ -1,0 +1,9 @@
+.env
+.env.local
+.env*.local
+Pacientes/
+*.dump
+*.bak
+node_modules
+.vercel
+._*

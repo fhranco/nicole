@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Gestión Clínica | Nicole Borguenson</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: { DEFAULT: "#81B29A", soft: "#EAF3EE", deep: "#294E40" },
+            coral: { DEFAULT: "#E07A5F", soft: "#F9ECE8" },
+            cream: { DEFAULT: "#F4E8BD", soft: "#FAF7EF" }
+          },
+          fontFamily: {
+            sans: ['Manrope', 'system-ui', 'sans-serif'],
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Manrope', system-ui, sans-serif;
+      background-color: #FAF9F6;
+      color: #294E40;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-editorial { font-family: 'Cormorant Garamond', Georgia, serif; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid #E07A5F;
+      outline-offset: 2px;
+    }
+    @keyframes pulseSoft {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+    .skeleton-box {
+      animation: pulseSoft 1.4s ease-in-out infinite;
+      background-color: #EAF3EE;
+      border-radius: 1rem;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col lg:flex-row">
+
+  <!-- TOAST DE NOTIFICACIONES (ARIA-LIVE) -->
+  <div id="toast-container" aria-live="polite" class="fixed top-4 right-4 z-[70] space-y-2 max-w-sm w-[calc(100%-2rem)] pointer-events-none"></div>
+
+  <!-- SIDEBAR ESCRITORIO -->
+  <aside class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-sage/20 z-30">
+    <div class="px-6 py-6 flex items-center gap-3 border-b border-sage/15">
+      <img src="logo-icon.png" alt="Nicole Borguenson" class="w-10 h-10 rounded-2xl border border-sage/25 p-1.5 bg-white object-contain" />
+      <div>
+        <p class="font-editorial text-xl font-semibold text-sage-deep leading-none">Nicole Borguenson</p>
+        <p class="text-xs text-sage-deep/70 mt-1">Gestión Clínica</p>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-4 py-5 space-y-1.5" aria-label="Navegación principal">
+      <button type="button" onclick="navigateTo('resumen')" data-nav="resumen" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-colors bg-sage/15 text-sage-deep">
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Resumen</span>
+      </button>
+      <button type="button" onclick="navigateTo('agenda')" data-nav="agenda" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors text-sage-deep/75 hover:bg-sage/10">
+        <i data-lucide="calendar-days" class="w-4 h-4"></i><span>Agenda</span>
+      </button>
+      <button type="button" onclick="navigateTo('pacientes')" data-nav="pacientes" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors text-sage-deep/75 hover:bg-sage/10">
+        <i data-lucide="users" class="w-4 h-4"></i><span>Pacientes</span>
+      </button>
+      <button type="button" onclick="navigateTo('finanzas')" data-nav="finanzas" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors text-sage-deep/75 hover:bg-sage/10">
+        <i data-lucide="wallet" class="w-4 h-4"></i><span>Finanzas</span>
+      </button>
+      <button type="button" onclick="navigateTo('configuracion')" data-nav="configuracion" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors text-sage-deep/75 hover:bg-sage/10">
+        <i data-lucide="settings" class="w-4 h-4"></i><span>Configuración</span>
+      </button>
+    </nav>
+
+    <div class="p-4 border-t border-sage/15 space-y-2.5">
+      <button type="button" onclick="navigateTo('configuracion')" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-sage-soft/60 text-xs font-semibold text-sage-deep">
+        <span class="inline-flex items-center gap-2">
+          <span id="sidebar-auth-dot" class="w-2 h-2 rounded-full bg-coral"></span>
+          <span id="sidebar-auth-text">Modo DEMO</span>
+        </span>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+      </button>
+      <a href="index.html" class="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-2xl border border-sage/25 text-xs font-semibold text-sage-deep hover:bg-sage-soft/40 transition-colors">
+        <i data-lucide="external-link" class="w-3.5 h-3.5"></i><span>Ir al sitio público</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- HEADER MÓVIL -->
+  <header class="lg:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-sage/20 px-4 h-14 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <img src="logo-icon.png" alt="NB" class="w-8 h-8 rounded-xl border border-sage/20 p-1 bg-white object-contain" />
+      <span class="font-editorial text-lg font-semibold text-sage-deep">Nicole Borguenson</span>
+    </div>
+    <button type="button" onclick="navigateTo('configuracion')" class="px-3 py-1.5 rounded-full bg-sage-soft text-xs font-semibold text-sage-deep inline-flex items-center gap-1.5">
+      <span id="mobile-auth-dot" class="w-2 h-2 rounded-full bg-coral"></span>
+      <span id="mobile-auth-text">DEMO</span>
+    </button>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 lg:pl-64 pb-24 lg:pb-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
+
+      <!-- BANNER SEPARACIÓN ESTRICTA DEMO VS PRODUCCIÓN -->
+      <div id="env-banner" class="rounded-2xl px-4 py-3 border bg-cream-soft border-cream text-xs text-sage-deep flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="info" class="w-4 h-4 text-coral shrink-0"></i>
+          <span><strong>Modo Demostración (datos ficticios):</strong> Los cambios se prueban localmente y no afectan pacientes reales.</span>
+        </div>
+        <button type="button" onclick="navigateTo('configuracion')" class="text-xs font-bold text-coral underline underline-offset-2 self-start sm:self-auto shrink-0">
+          Conectar cuenta real
+        </button>
+      </div>
+
+      <!-- BANNER DE ERROR DE CONEXIÓN (SI FALLA SUPABASE EN PRODUCCIÓN) -->
+      <div id="prod-error-banner" class="hidden rounded-2xl px-4 py-3 border bg-coral-soft border-coral/35 text-xs text-sage-deep flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-coral shrink-0"></i>
+          <span id="prod-error-text">No pudimos conectar con la base de datos. Los cambios no se han guardado.</span>
+        </div>
+        <button type="button" onclick="loadOperationalData()" class="px-3 py-1.5 rounded-xl bg-white border border-coral/30 text-xs font-semibold text-coral shrink-0">Reintentar</button>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- ÁREA 1: RESUMEN GENERAL                                             -->
+      <!-- =================================================================== -->
+      <section id="view-resumen" class="space-y-7">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <p id="greeting-date" class="text-xs font-semibold uppercase tracking-wider text-sage-deep/65"></p>
+            <h1 id="greeting-title" class="font-editorial text-3xl sm:text-4xl font-semibold text-sage-deep mt-1">Buenos días, Nicole</h1>
+          </div>
+          <div class="inline-flex p-1 rounded-2xl bg-white border border-sage/20 self-start" role="group" aria-label="Selector de período">
+            <button type="button" onclick="setPeriod('hoy')" data-period="hoy" class="period-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-sage-deep/75">Hoy</button>
+            <button type="button" onclick="setPeriod('semana')" data-period="semana" class="period-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-sage-deep/75">Esta semana</button>
+            <button type="button" onclick="setPeriod('mes')" data-period="mes" class="period-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-sage-deep text-white">Este mes</button>
+          </div>
+        </div>
+
+        <!-- 5 Indicadores principales -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div class="bg-sage-soft/75 border border-sage/30 rounded-3xl p-4 sm:p-5" title="Suma de pagos confirmados en la fecha efectiva del período seleccionado.">
+            <p class="text-xs font-semibold text-sage-deep/85">Ingresos recibidos</p>
+            <p id="sum-ingresos" class="text-2xl font-bold text-sage-deep mt-1.5">$0</p>
+            <p id="sum-ingresos-sub" class="text-xs text-sage-deep/70 mt-1">Pagos del período</p>
+          </div>
+          <div class="bg-coral-soft/75 border border-coral/25 rounded-3xl p-4 sm:p-5" title="Obligaciones totales vigentes por cobrar en citas activas.">
+            <p class="text-xs font-semibold text-coral">Saldos pendientes</p>
+            <p id="sum-saldos" class="text-2xl font-bold text-coral mt-1.5">$0</p>
+            <p id="sum-saldos-sub" class="text-xs text-sage-deep/70 mt-1">Total vigente</p>
+          </div>
+          <div class="bg-cream-soft border border-cream rounded-3xl p-4 sm:p-5" title="Atenciones programadas dentro del período seleccionado.">
+            <p class="text-xs font-semibold text-sage-deep/85">Atenciones</p>
+            <p id="sum-citas" class="text-2xl font-bold text-sage-deep mt-1.5">0</p>
+            <p id="sum-citas-sub" class="text-xs text-sage-deep/70 mt-1">En el período</p>
+          </div>
+          <div class="bg-white border border-sage/25 rounded-3xl p-4 sm:p-5" title="Porcentaje de cupos reservados respecto a los habilitados en el período.">
+            <p class="text-xs font-semibold text-sage-deep/85">Ocupación</p>
+            <p id="sum-ocupacion" class="text-2xl font-bold text-sage-deep mt-1.5">0%</p>
+            <p id="sum-ocupacion-sub" class="text-xs text-sage-deep/70 mt-1">Cupos del período</p>
+          </div>
+          <div class="col-span-2 lg:col-span-1 bg-white border border-sage/25 rounded-3xl p-4 sm:p-5" title="Pacientes actualmente en Evaluación Integral + Epixlife o Programa 90 Días.">
+            <p class="text-xs font-semibold text-sage-deep/85">Programas activos</p>
+            <p id="sum-programas" class="text-2xl font-bold text-sage-deep mt-1.5">0</p>
+            <p class="text-xs text-sage-deep/70 mt-1">Epixlife &amp; 90 Días</p>
+          </div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div class="space-y-3">
+          <h2 class="text-sm font-semibold text-sage-deep">Acciones rápidas</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <a href="reservar.html" target="_blank" class="min-h-[52px] bg-white hover:bg-sage-soft/40 border border-sage/25 rounded-2xl px-4 py-3 flex items-center gap-3 transition-colors">
+              <span class="w-9 h-9 rounded-xl bg-coral-soft text-coral flex items-center justify-center shrink-0">
+                <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+              </span>
+              <span class="text-xs sm:text-sm font-semibold text-sage-deep">Agendar consulta</span>
+            </a>
+            <button type="button" onclick="openAvailabilityWizard()" class="min-h-[52px] bg-white hover:bg-sage-soft/40 border border-sage/25 rounded-2xl px-4 py-3 flex items-center gap-3 transition-colors text-left">
+              <span class="w-9 h-9 rounded-xl bg-sage-soft text-sage-deep flex items-center justify-center shrink-0">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+              </span>
+              <span class="text-xs sm:text-sm font-semibold text-sage-deep">Configurar horarios</span>
+            </button>
+            <button type="button" onclick="openQuickPaymentModal()" class="min-h-[52px] bg-white hover:bg-sage-soft/40 border border-sage/25 rounded-2xl px-4 py-3 flex items-center gap-3 transition-colors text-left">
+              <span class="w-9 h-9 rounded-xl bg-cream-soft text-sage-deep flex items-center justify-center shrink-0">
+                <i data-lucide="credit-card" class="w-4 h-4"></i>
+              </span>
+              <span class="text-xs sm:text-sm font-semibold text-sage-deep">Registrar pago</span>
+            </button>
+            <button type="button" onclick="navigateTo('pacientes')" class="min-h-[52px] bg-white hover:bg-sage-soft/40 border border-sage/25 rounded-2xl px-4 py-3 flex items-center gap-3 transition-colors text-left">
+              <span class="w-9 h-9 rounded-xl bg-sage-soft text-sage-deep flex items-center justify-center shrink-0">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+              </span>
+              <span class="text-xs sm:text-sm font-semibold text-sage-deep">Ver pacientes</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-6 border border-sage/20 space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-semibold text-sage-deep">Atenciones del período</h2>
+              <button type="button" onclick="navigateTo('agenda')" class="text-xs font-semibold text-coral hover:underline">Ver calendario</button>
+            </div>
+            <div id="home-upcoming-list" class="space-y-2.5"></div>
+          </div>
+
+          <div class="lg:col-span-5 space-y-5">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-sage/20 space-y-3.5">
+              <h2 class="text-base font-semibold text-sage-deep">Pendientes de Nicole</h2>
+              <div id="home-tasks-list" class="space-y-2.5"></div>
+            </div>
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-sage/20 space-y-4">
+              <h2 class="text-base font-semibold text-sage-deep">Ingresos por servicio (período)</h2>
+              <div id="home-services-chart" class="space-y-3.5"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- ÁREA 2: AGENDA Y ASISTENTE DE DISPONIBILIDAD                        -->
+      <!-- =================================================================== -->
+      <section id="view-agenda" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="font-editorial text-3xl font-semibold text-sage-deep">Agenda y disponibilidad</h1>
+            <p class="text-sm text-sage-deep/75 mt-0.5">Nicole atiende un paciente por bloque. Las citas confirmadas no se cancelan al pausar bloques.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="inline-flex p-1 rounded-2xl bg-white border border-sage/20" role="group" aria-label="Vista de calendario">
+              <button type="button" onclick="setCalendarView('dia')" data-calview="dia" class="calview-btn px-3 py-2 rounded-xl text-xs font-semibold text-sage-deep/75">Día</button>
+              <button type="button" onclick="setCalendarView('semana')" data-calview="semana" class="calview-btn px-3 py-2 rounded-xl text-xs font-semibold bg-sage-deep text-white">Semana</button>
+              <button type="button" onclick="setCalendarView('mes')" data-calview="mes" class="calview-btn px-3 py-2 rounded-xl text-xs font-semibold text-sage-deep/75">Mes</button>
+            </div>
+            <button type="button" onclick="openAvailabilityWizard()" class="min-h-[44px] px-5 py-2.5 rounded-2xl bg-coral text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs">
+              <i data-lucide="plus" class="w-4 h-4"></i><span>Configurar disponibilidad</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl px-4 py-3 border border-sage/20 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-sage-deep">
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sage"></span> Disponible</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-coral"></span> Reservado</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sage-deep/30"></span> Pausado</span>
+          <span class="text-sage-deep/40">|</span>
+          <span class="px-2 py-0.5 rounded-full bg-sage-soft text-sage-deep">Online</span>
+          <span class="px-2 py-0.5 rounded-full bg-coral-soft text-coral">Presencial</span>
+          <span class="px-2 py-0.5 rounded-full bg-cream-soft text-sage-deep border border-cream">Gira clínica</span>
+        </div>
+
+        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-sage/20 space-y-5">
+          <div class="flex items-center justify-between">
+            <h2 id="agenda-range-title" class="text-base font-semibold text-sage-deep">Semana actual</h2>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="shiftAgendaDate(-1)" class="w-10 h-10 rounded-full border border-sage/25 flex items-center justify-center text-sage-deep hover:bg-sage-soft/50" aria-label="Período anterior">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+              </button>
+              <button type="button" onclick="shiftAgendaDate(1)" class="w-10 h-10 rounded-full border border-sage/25 flex items-center justify-center text-sage-deep hover:bg-sage-soft/50" aria-label="Siguiente período">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <div id="agenda-calendar-body"></div>
+        </div>
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- ÁREA 3: PACIENTES Y FICHAS CLÍNICAS                                 -->
+      <!-- =================================================================== -->
+      <section id="view-pacientes" class="hidden space-y-6">
+        <div>
+          <h1 class="font-editorial text-3xl font-semibold text-sage-deep">Pacientes y fichas clínicas</h1>
+          <p class="text-sm text-sage-deep/75 mt-0.5">Los antecedentes clínicos se cargan solo al abrir la ficha de cada paciente.</p>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="relative flex-1 max-w-md">
+            <i data-lucide="search" class="w-4 h-4 text-sage-deep/50 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input id="patient-search" type="search" oninput="renderPatientsView()" placeholder="Buscar paciente o servicio..." class="w-full min-h-[44px] pl-10 pr-4 rounded-2xl border border-sage/25 bg-white text-sm text-sage-deep" />
+          </div>
+          <div class="flex flex-wrap gap-1.5" role="group" aria-label="Filtros de pacientes">
+            <button type="button" onclick="setPatientFilter('todos')" data-pf="todos" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-sage-deep text-white">Todos</button>
+            <button type="button" onclick="setPatientFilter('nuevo')" data-pf="nuevo" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Nuevos</button>
+            <button type="button" onclick="setPatientFilter('control')" data-pf="control" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Controles</button>
+            <button type="button" onclick="setPatientFilter('programa')" data-pf="programa" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Programas activos</button>
+            <button type="button" onclick="setPatientFilter('ficha_pendiente')" data-pf="ficha_pendiente" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Ficha pendiente</button>
+          </div>
+        </div>
+
+        <div id="patients-list" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- ÁREA 4: FINANZAS Y SEGUIMIENTO DE PAGOS                             -->
+      <!-- =================================================================== -->
+      <section id="view-finanzas" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="font-editorial text-3xl font-semibold text-sage-deep">Finanzas y seguimiento de pagos</h1>
+            <p class="text-sm text-sage-deep/75 mt-0.5">Pagos TUU electrónicos y registros manuales diferenciados, con abonos acumulativos en CLP enteros.</p>
+          </div>
+          <div class="flex flex-wrap gap-1.5" role="group" aria-label="Filtros financieros">
+            <button type="button" onclick="setFinanceFilter('todas')" data-ff="todas" class="ff-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-sage-deep text-white">Todas</button>
+            <button type="button" onclick="setFinanceFilter('saldo')" data-ff="saldo" class="ff-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Con saldo pendiente</button>
+            <button type="button" onclick="setFinanceFilter('pagada')" data-ff="pagada" class="ff-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Pagadas 100%</button>
+          </div>
+        </div>
+
+        <div id="finance-list" class="space-y-4"></div>
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- ÁREA 5: CONFIGURACIÓN                                               -->
+      <!-- =================================================================== -->
+      <section id="view-configuracion" class="hidden space-y-6">
+        <div>
+          <h1 class="font-editorial text-3xl font-semibold text-sage-deep">Configuración</h1>
+          <p class="text-sm text-sage-deep/75 mt-0.5">Conexión de tu cuenta clínica, sedes habilitadas y tarifas de referencia.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-3xl p-6 border border-sage/20 space-y-4">
+            <h2 class="text-base font-semibold text-sage-deep">Cuenta profesional (Supabase)</h2>
+            <p id="cfg-auth-status" class="text-xs text-sage-deep/80 bg-sage-soft/60 rounded-2xl px-4 py-3">
+              Modo demostración activo. Inicia sesión para trabajar exclusivamente con datos reales en Supabase.
+            </p>
+            <form id="cfg-login-form" onsubmit="event.preventDefault(); signInNicole();" class="space-y-3">
+              <div>
+                <label for="cfg-email" class="block text-xs font-semibold text-sage-deep mb-1">Correo electrónico</label>
+                <input id="cfg-email" type="email" required placeholder="consulta@nicoleborguenson.cl" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-4 text-sm text-sage-deep" />
+              </div>
+              <div>
+                <label for="cfg-pass" class="block text-xs font-semibold text-sage-deep mb-1">Contraseña</label>
+                <input id="cfg-pass" type="password" required placeholder="••••••••" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-4 text-sm text-sage-deep" />
+              </div>
+              <button id="cfg-login-btn" type="submit" class="min-h-[44px] px-6 py-2.5 rounded-2xl bg-sage-deep text-white text-sm font-semibold">Conectar cuenta</button>
+            </form>
+            <button id="cfg-logout-btn" type="button" onclick="signOutNicole()" class="hidden min-h-[44px] px-6 py-2.5 rounded-2xl bg-coral-soft text-coral text-sm font-semibold">Cerrar sesión</button>
+          </div>
+
+          <div class="bg-white rounded-3xl p-6 border border-sage/20 space-y-4">
+            <h2 class="text-base font-semibold text-sage-deep">Sedes y tarifas vigentes</h2>
+            <div class="space-y-2.5 text-xs">
+              <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/15 flex justify-between">
+                <span><strong>Punta Arenas</strong> · Carlos Condell 065</span>
+                <span class="font-semibold text-sage-deep">Presencial</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/15 flex justify-between">
+                <span><strong>Puerto Natales</strong> · Gira clínica</span>
+                <span class="font-semibold text-coral">Por confirmar</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/15 flex justify-between">
+                <span><strong>Porvenir</strong> · Gira clínica</span>
+                <span class="font-semibold text-coral">Por confirmar</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/15 flex justify-between">
+                <span><strong>Online</strong> · Videollamada Meet</span>
+                <span class="font-semibold text-sage-deep">Todo Chile</span>
+              </div>
+            </div>
+            <p class="text-xs text-sage-deep/75 pt-1">
+              Abono estándar: <strong>$10.000 CLP</strong> · Consulta Inicial ($40.000–$45.000) · Epixlife ($120.000) · Programa 90 Días ($240.000).
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- NAVEGACIÓN INFERIOR MÓVIL -->
+  <nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-sage/20 pb-[env(safe-area-inset-bottom)]" aria-label="Navegación móvil">
+    <div class="grid grid-cols-5">
+      <button type="button" onclick="navigateTo('resumen')" data-mnav="resumen" class="mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold text-coral">
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Resumen</span>
+      </button>
+      <button type="button" onclick="navigateTo('agenda')" data-mnav="agenda" class="mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-sage-deep/60">
+        <i data-lucide="calendar-days" class="w-4 h-4"></i><span>Agenda</span>
+      </button>
+      <button type="button" onclick="navigateTo('pacientes')" data-mnav="pacientes" class="mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-sage-deep/60">
+        <i data-lucide="users" class="w-4 h-4"></i><span>Pacientes</span>
+      </button>
+      <button type="button" onclick="navigateTo('finanzas')" data-mnav="finanzas" class="mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-sage-deep/60">
+        <i data-lucide="wallet" class="w-4 h-4"></i><span>Finanzas</span>
+      </button>
+      <button type="button" onclick="navigateTo('configuracion')" data-mnav="configuracion" class="mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-sage-deep/60">
+        <i data-lucide="settings" class="w-4 h-4"></i><span>Ajustes</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL ASISTENTE GUIADO DE DISPONIBILIDAD -->
+  <div id="wizard-modal" class="hidden fixed inset-0 z-50 bg-sage-deep/40 backdrop-blur-xs flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 border border-sage/25 shadow-xl space-y-5 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 id="wizard-title" class="text-lg font-bold text-sage-deep">Configura tu disponibilidad</h2>
+          <p class="text-xs text-sage-deep/70 mt-0.5">Evita superponer horarios: Nicole atiende un bloque a la vez.</p>
+        </div>
+        <button type="button" onclick="closeModal('wizard-modal')" class="w-10 h-10 rounded-full hover:bg-sage-soft flex items-center justify-center text-sage-deep" aria-label="Cerrar asistente">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <p class="text-xs font-semibold text-sage-deep mb-2">1. ¿Cómo atenderás?</p>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="wizSetMod('presencial')" data-wmod="presencial" class="wmod-btn min-h-[48px] rounded-2xl border text-xs font-semibold bg-sage-deep text-white border-sage-deep">Presencial</button>
+            <button type="button" onclick="wizSetMod('online')" data-wmod="online" class="wmod-btn min-h-[48px] rounded-2xl border text-xs font-semibold bg-white text-sage-deep border-sage/25">Online</button>
+            <button type="button" onclick="wizSetMod('ambas')" data-wmod="ambas" class="wmod-btn min-h-[48px] rounded-2xl border text-xs font-semibold bg-white text-sage-deep border-sage/25">Ambas</button>
+          </div>
+        </div>
+
+        <div id="wiz-sede-wrap">
+          <p class="text-xs font-semibold text-sage-deep mb-2">2. ¿Dónde atenderás?</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2.5 p-3 rounded-2xl border border-sage/20 cursor-pointer text-xs font-medium">
+              <input type="radio" name="wiz-sede" value="punta_arenas" checked onchange="updateWizardPreview()" /> Punta Arenas · Carlos Condell 065
+            </label>
+            <label class="flex items-center gap-2.5 p-3 rounded-2xl border border-sage/20 cursor-pointer text-xs font-medium">
+              <input type="radio" name="wiz-sede" value="puerto_natales" onchange="updateWizardPreview()" /> Puerto Natales (Gira clínica)
+            </label>
+            <label class="flex items-center gap-2.5 p-3 rounded-2xl border border-sage/20 cursor-pointer text-xs font-medium">
+              <input type="radio" name="wiz-sede" value="porvenir" onchange="updateWizardPreview()" /> Porvenir (Gira clínica)
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-sage-deep mb-2">3. ¿Con qué frecuencia?</p>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <button type="button" onclick="wizSetFreq('weekly')" id="wfreq-weekly" class="min-h-[44px] rounded-2xl text-xs font-semibold border bg-sage-deep text-white border-sage-deep">Todas las semanas</button>
+            <button type="button" onclick="wizSetFreq('date')" id="wfreq-date" class="min-h-[44px] rounded-2xl text-xs font-semibold border bg-white text-sage-deep border-sage/25">Fecha específica / Gira</button>
+          </div>
+
+          <div id="wiz-days-wrap" class="grid grid-cols-7 gap-1.5">
+            <button type="button" onclick="wizToggleDay(1)" data-wday="1" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Lu</button>
+            <button type="button" onclick="wizToggleDay(2)" data-wday="2" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-sage-soft border-sage text-sage-deep">Ma</button>
+            <button type="button" onclick="wizToggleDay(3)" data-wday="3" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Mi</button>
+            <button type="button" onclick="wizToggleDay(4)" data-wday="4" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Ju</button>
+            <button type="button" onclick="wizToggleDay(5)" data-wday="5" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Vi</button>
+            <button type="button" onclick="wizToggleDay(6)" data-wday="6" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Sá</button>
+            <button type="button" onclick="wizToggleDay(0)" data-wday="0" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Do</button>
+          </div>
+
+          <div id="wiz-date-wrap" class="hidden">
+            <input id="wiz-date" type="date" onchange="updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="wiz-start" class="block text-xs font-semibold text-sage-deep mb-1">Hora de inicio</label>
+            <input id="wiz-start" type="time" value="09:00" onchange="updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+          </div>
+          <div>
+            <label for="wiz-end" class="block text-xs font-semibold text-sage-deep mb-1">Hora de término</label>
+            <input id="wiz-end" type="time" value="14:00" onchange="updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-4 bg-sage-soft/60 border border-sage/25 space-y-1">
+          <p class="text-xs font-bold text-sage-deep">Vista previa de disponibilidad</p>
+          <p id="wiz-preview-text" class="text-xs text-sage-deep/85"></p>
+        </div>
+
+        <p id="wiz-err" class="hidden text-xs font-semibold text-coral"></p>
+
+        <div class="flex gap-2.5 pt-1">
+          <button type="button" onclick="closeModal('wizard-modal')" class="flex-1 min-h-[48px] rounded-2xl border border-sage/25 text-sm font-semibold text-sage-deep">Cancelar</button>
+          <button id="wiz-save-btn" type="button" onclick="saveWizardAvailability()" class="flex-1 min-h-[48px] rounded-2xl bg-coral text-white text-sm font-semibold">Guardar disponibilidad</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER SECUNDARIO DE PACIENTE -->
+  <div id="patient-drawer" class="hidden fixed inset-0 z-50 bg-sage-deep/40 backdrop-blur-xs flex justify-end" role="dialog" aria-modal="true" aria-labelledby="drawer-patient-name">
+    <div class="bg-white w-full max-w-md h-full p-6 overflow-y-auto shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-sage/15 pb-4">
+        <div>
+          <span id="drawer-patient-tag" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sage-soft text-sage-deep">Servicio</span>
+          <h2 id="drawer-patient-name" class="font-editorial text-2xl font-semibold text-sage-deep mt-1.5">Paciente</h2>
+        </div>
+        <button type="button" onclick="closeModal('patient-drawer')" class="w-10 h-10 rounded-full hover:bg-sage-soft flex items-center justify-center text-sage-deep" aria-label="Cerrar detalle">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="drawer-patient-body" class="space-y-4 text-sm text-sage-deep"></div>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRAR PAGO -->
+  <div id="payment-modal" class="hidden fixed inset-0 z-50 bg-sage-deep/40 backdrop-blur-xs flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 border border-sage/25 shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 id="payment-modal-title" class="text-lg font-bold text-sage-deep">Registrar pago manual</h2>
+        <button type="button" onclick="closeModal('payment-modal')" class="w-10 h-10 rounded-full hover:bg-sage-soft flex items-center justify-center text-sage-deep" aria-label="Cerrar">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="event.preventDefault(); submitManualPayment();" class="space-y-3.5">
+        <div>
+          <label for="pay-booking-select" class="block text-xs font-semibold text-sage-deep mb-1">Reserva / Paciente</label>
+          <select id="pay-booking-select" onchange="prefillPaymentAmount()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="pay-amount" class="block text-xs font-semibold text-sage-deep mb-1">Monto entero (CLP)</label>
+            <input id="pay-amount" type="number" min="1" step="1" required class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+          </div>
+          <div>
+            <label for="pay-method" class="block text-xs font-semibold text-sage-deep mb-1">Medio de pago</label>
+            <select id="pay-method" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3 text-sm text-sage-deep">
+              <option value="POS TUU">POS TUU</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="pay-note" class="block text-xs font-semibold text-sage-deep mb-1">Concepto</label>
+          <input id="pay-note" type="text" value="Pago manual / Saldo de atención" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+        </div>
+        <p id="pay-err" class="hidden text-xs font-semibold text-coral"></p>
+        <div class="flex gap-2 pt-1">
+          <button type="button" onclick="closeModal('payment-modal')" class="flex-1 min-h-[46px] rounded-2xl border border-sage/25 text-sm font-semibold text-sage-deep">Cancelar</button>
+          <button id="pay-submit-btn" type="submit" class="flex-1 min-h-[46px] rounded-2xl bg-coral text-white text-sm font-semibold">Guardar pago</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMACIÓN SEGURA -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-sage-deep/40 backdrop-blur-xs flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 border border-coral/30 shadow-xl space-y-4">
+      <h2 id="confirm-title" class="text-base font-bold text-sage-deep">Confirmar cambio en agenda</h2>
+      <p id="confirm-message" class="text-sm text-sage-deep/80 leading-relaxed"></p>
+      <div class="flex gap-2.5">
+        <button type="button" onclick="closeModal('confirm-modal')" class="flex-1 min-h-[44px] rounded-2xl border border-sage/25 text-xs font-semibold text-sage-deep">Cancelar</button>
+        <button type="button" id="confirm-accept-btn" class="flex-1 min-h-[44px] rounded-2xl bg-coral text-white text-xs font-semibold">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://bfzeejjzgvhfybtfeajg.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmemVlamp6Z3ZoZnlidGZlYWpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4NDY2NDYsImV4cCI6MjExMDQyMjY0Nn0.RdHRAyybuLjwdVThhX2I2_vF4Y4JFsspdiTJ733-8AU';
+    const AUTH_TOKEN_KEY = 'nicole_sb_access_token';
+    const DEMO_BLOCKS_KEY = 'nicole_demo_blocks_v1';
+    const DEMO_BOOKINGS_KEY = 'nicole_demo_bookings_v1';
+
+    const SEDES = { punta_arenas: 'Punta Arenas', puerto_natales: 'Puerto Natales', porvenir: 'Porvenir', online: 'Online' };
+    const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const DAYS_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+    // =========================================================================
+    // F7.2: UTILIDADES CENTRALIZADAS EN ZONA HORARIA AMERICA/SANTIAGO (DST SAFE)
+    // =========================================================================
+    function formatDateSantiago(dateObj) {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(dateObj);
+    }
+
+    function santiagoTodayStr() {
+      return formatDateSantiago(new Date());
+    }
+
+    function toSantiagoParts(isoStr) {
+      const d = new Date(isoStr);
+      const dateIso = formatDateSantiago(d);
+      const hhmm = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+      return { dateIso, hhmm };
+    }
+
+    function getSantiagoOffset() {
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', timeZoneName: 'shortOffset' }).formatToParts(new Date());
+      const tz = parts.find((p) => p.type === 'timeZoneName')?.value || 'GMT-3';
+      const match = tz.match(/GMT([+-]\d+)/);
+      if (!match) return '-03:00';
+      const hr = Number(match[1]);
+      return `${hr < 0 ? '-' : '+'}${String(Math.abs(hr)).padStart(2, '0')}:00`;
+    }
+
+    // Datos ficticios EXCLUSIVOS para modo DEMO (nunca mezclados con producción)
+    const DEMO_DEFAULT_BLOCKS = [
+      { id: 'demo-b1', sede: 'punta_arenas', modalidad: 'presencial', type: 'weekly', day: 2, date: '', start: '10:00', end: '14:00', dur: 60, active: true },
+      { id: 'demo-b2', sede: 'punta_arenas', modalidad: 'ambas', type: 'weekly', day: 4, date: '', start: '09:00', end: '14:00', dur: 60, active: true },
+      { id: 'demo-b3', sede: 'online', modalidad: 'online', type: 'weekly', day: 4, date: '', start: '15:00', end: '19:00', dur: 60, active: true },
+      { id: 'demo-b4', sede: 'puerto_natales', modalidad: 'presencial', type: 'date', day: null, date: '2026-11-27', start: '09:00', end: '18:00', dur: 60, active: true }
+    ];
+
+    const DEMO_DEFAULT_BOOKINGS = [
+      {
+        id: 'demo-r1', paciente: 'Paciente Demo 1', email: 'demo1@ejemplo.cl', telefono: '+56 9 0000 0001',
+        categoria: 'programa', servicio: 'Evaluación Integral + Epixlife', slug: 'evaluacion_epixlife',
+        sede: 'punta_arenas', fechaIso: '2026-11-19', hora: '10:00', duracionMin: 60, total: 120000, credito: 40000, abonado: 10000, ficha: true, token: 'demo',
+        pagos: [
+          { fechaIso: '2026-11-02', concepto: 'Consulta Inicial previa (acumulativo)', monto: 40000, medio: 'TUU Online', esTuu: true },
+          { fechaIso: '2026-11-16', concepto: 'Abono reserva Epixlife', monto: 10000, medio: 'TUU Online', esTuu: true }
+        ]
+      },
+      {
+        id: 'demo-r2', paciente: 'Paciente Demo 2', email: 'demo2@ejemplo.cl', telefono: '+56 9 0000 0002',
+        categoria: 'nuevo', servicio: 'Consulta Nutricional Inicial', slug: 'consulta_inicial_online',
+        sede: 'online', fechaIso: '2026-11-19', hora: '16:00', duracionMin: 60, total: 40000, credito: 0, abonado: 10000, ficha: false, token: 'demo',
+        pagos: [
+          { fechaIso: '2026-11-16', concepto: 'Abono reserva Online', monto: 10000, medio: 'TUU Online', esTuu: true }
+        ]
+      },
+      {
+        id: 'demo-r3', paciente: 'Paciente Demo 3', email: 'demo3@ejemplo.cl', telefono: '+56 9 0000 0003',
+        categoria: 'control', servicio: 'Programa Integral de 90 Días', slug: 'programa_90_dias',
+        sede: 'puerto_natales', fechaIso: '2026-11-27', hora: '11:00', duracionMin: 60, total: 240000, credito: 120000, abonado: 120000, ficha: true, token: 'demo',
+        pagos: [
+          { fechaIso: '2026-10-20', concepto: 'Evaluación Epixlife previa', monto: 120000, medio: 'TUU Online', esTuu: true },
+          { fechaIso: '2026-11-10', concepto: 'Abono reserva Programa 90 Días', monto: 10000, medio: 'TUU Online', esTuu: true },
+          { fechaIso: '2026-11-15', concepto: 'Saldo Programa 90 Días', monto: 110000, medio: 'POS TUU', esTuu: false }
+        ]
+      }
+    ];
+
+    const appState = {
+      view: 'resumen',
+      period: 'mes',
+      calView: 'semana',
+      calCursorDate: santiagoTodayStr(),
+      patientFilter: 'todos',
+      financeFilter: 'todas',
+      loading: false,
+      submitting: false,
+      prodBlocks: [],
+      prodBookings: [],
+      wizard: { editId: null, mod: 'presencial', freq: 'weekly', days: [2] },
+      confirmAction: null,
+      activeModalId: null,
+      lastFocusedEl: null
+    };
+
+    const fmtCLP = (n) => '$' + Math.round(Number(n || 0)).toLocaleString('es-CL');
+    const isAuthenticated = () => !!localStorage.getItem(AUTH_TOKEN_KEY);
+
+    // =========================================================================
+    // F7.6: TOASTS, SKELETONS Y GESTIÓN DE FOCO / TECLADO EN MODALES
+    // =========================================================================
+    function showToast(message, type = 'success') {
+      const wrap = document.getElementById('toast-container');
+      if (!wrap) return;
+      const el = document.createElement('div');
+      const style = type === 'error'
+        ? 'bg-coral-soft border-coral/40 text-sage-deep'
+        : 'bg-white border-sage/35 text-sage-deep';
+      el.className = `pointer-events-auto rounded-2xl border px-4 py-3 shadow-lg text-xs font-semibold flex items-center justify-between gap-2 ${style}`;
+      el.innerHTML = `<span>${message}</span>`;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 3800);
+    }
+
+    function openModal(id) {
+      appState.lastFocusedEl = document.activeElement;
+      appState.activeModalId = id;
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      const focusable = modal.querySelector('button, [href], input, select, textarea');
+      if (focusable) focusable.focus();
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add('hidden');
+      if (appState.activeModalId === id) appState.activeModalId = null;
+      if (appState.lastFocusedEl && typeof appState.lastFocusedEl.focus === 'function') {
+        appState.lastFocusedEl.focus();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!appState.activeModalId) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeModal(appState.activeModalId);
+        return;
+      }
+      if (e.key === 'Tab') {
+        const modal = document.getElementById(appState.activeModalId);
+        if (!modal) return;
+        const nodes = Array.from(modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])')).filter((el) => el.offsetParent !== null);
+        if (!nodes.length) return;
+        const first = nodes[0];
+        const last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+
+    // =========================================================================
+    // F7.1: ACCESO ESTRICTO A DATOS (DEMO VS PRODUCCIÓN EN SUPABASE)
+    // =========================================================================
+    function getBlocks() {
+      if (isAuthenticated()) return appState.prodBlocks;
+      try {
+        const raw = localStorage.getItem(DEMO_BLOCKS_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (_) {}
+      localStorage.setItem(DEMO_BLOCKS_KEY, JSON.stringify(DEMO_DEFAULT_BLOCKS));
+      return DEMO_DEFAULT_BLOCKS;
+    }
+
+    function getBookings() {
+      if (isAuthenticated()) return appState.prodBookings;
+      try {
+        const raw = localStorage.getItem(DEMO_BOOKINGS_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (_) {}
+      localStorage.setItem(DEMO_BOOKINGS_KEY, JSON.stringify(DEMO_DEFAULT_BOOKINGS));
+      return DEMO_DEFAULT_BOOKINGS;
+    }
+
+    async function sbFetch(path, options = {}) {
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      if (!token) throw new Error('Sesión no iniciada');
+      const res = await fetch(`${SUPABASE_URL}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      if (res.status === 401) {
+        signOutNicole();
+        throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+      }
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`Error de servidor (${res.status}): ${errBody.slice(0, 80)}`);
+      }
+      const txt = await res.text();
+      return txt ? JSON.parse(txt) : null;
+    }
+
+    async function loadOperationalData() {
+      const errBanner = document.getElementById('prod-error-banner');
+      errBanner.classList.add('hidden');
+      if (!isAuthenticated()) {
+        renderAll();
+        return;
+      }
+
+      appState.loading = true;
+      renderAll();
+
+      try {
+        const [blocksRows, reservasRows, pagosRows] = await Promise.all([
+          sbFetch('/rest/v1/bloques_agenda?select=*&order=created_at.asc'),
+          sbFetch('/rest/v1/reservas?select=*,pacientes(nombre_completo,email,telefono),servicios(nombre,duracion_min)&order=fecha_hora.asc'),
+          sbFetch('/rest/v1/pagos_tuu?select=*&order=created_at.asc')
+        ]);
+
+        appState.prodBlocks = (blocksRows || []).map((b) => ({
+          id: b.id,
+          sede: b.sede_slug,
+          modalidad: b.modalidad_habilitada || (b.sede_slug === 'online' ? 'online' : 'presencial'),
+          type: b.fecha_especifica ? 'date' : 'weekly',
+          day: b.dia_semana,
+          date: b.fecha_especifica || '',
+          start: String(b.hora_inicio).slice(0, 5),
+          end: String(b.hora_fin).slice(0, 5),
+          dur: b.duracion_min || 60,
+          active: b.activo
+        }));
+
+        const pagosByReserva = {};
+        (pagosRows || []).forEach((p) => {
+          if (p.tuu_status !== 'paid') return;
+          const parts = toSantiagoParts(p.created_at);
+          pagosByReserva[p.reserva_id] = pagosByReserva[p.reserva_id] || [];
+          pagosByReserva[p.reserva_id].push({
+            id: p.id,
+            fechaIso: parts.dateIso,
+            concepto: p.concepto || 'Pago registrado',
+            monto: Number(p.monto_clp || 0),
+            medio: String(p.tuu_transaction_id || '').startsWith('manual-') ? 'Pago manual' : 'TUU Online',
+            esTuu: !String(p.tuu_transaction_id || '').startsWith('manual-')
+          });
+        });
+
+        appState.prodBookings = (reservasRows || []).map((r) => {
+          const parts = toSantiagoParts(r.fecha_hora);
+          return {
+            id: r.id,
+            pacienteId: r.paciente_id,
+            paciente: r.pacientes?.nombre_completo || 'Paciente',
+            email: r.pacientes?.email || '',
+            telefono: r.pacientes?.telefono || '',
+            categoria: r.credito_previo_clp > 0 ? 'control' : 'nuevo',
+            servicio: r.servicios?.nombre || r.servicio_slug,
+            slug: r.servicio_slug,
+            sede: r.sede_slug,
+            fechaIso: parts.dateIso,
+            hora: parts.hhmm,
+            duracionMin: r.servicios?.duracion_min || 60,
+            total: Number(r.precio_total_clp || 0),
+            credito: Number(r.credito_previo_clp || 0),
+            abonado: Number(r.monto_abonado_clp || 0),
+            estado: r.estado,
+            ficha: !!r.intake_completado,
+            token: r.intake_token,
+            pagos: pagosByReserva[r.id] || []
+          };
+        });
+      } catch (err) {
+        document.getElementById('prod-error-text').textContent = `${err.message}. Los datos no se pudieron actualizar.`;
+        errBanner.classList.remove('hidden');
+      } finally {
+        appState.loading = false;
+        renderAll();
+      }
+    }
+
+    // =========================================================================
+    // F7.5: NAVEGACIÓN Y FILTROS TEMPORALES REALES EN AMERICA/SANTIAGO
+    // =========================================================================
+    function getPeriodBounds(period) {
+      const today = santiagoTodayStr();
+      const [y, m, d] = today.split('-').map(Number);
+      const base = new Date(y, m - 1, d);
+      if (period === 'hoy') return { start: today, end: today };
+      if (period === 'semana') {
+        const diff = (base.getDay() + 6) % 7;
+        const mon = new Date(base); mon.setDate(base.getDate() - diff);
+        const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+        return { start: formatDateLocal(mon), end: formatDateLocal(sun) };
+      }
+      const first = `${y}-${String(m).padStart(2, '0')}-01`;
+      const lastDay = new Date(y, m, 0).getDate();
+      const last = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      return { start: first, end: last };
+    }
+
+    function formatDateLocal(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function countSlotsForPeriod(blocks, bounds) {
+      let total = 0;
+      const [sy, sm, sd] = bounds.start.split('-').map(Number);
+      const [ey, em, ed] = bounds.end.split('-').map(Number);
+      const cur = new Date(sy, sm - 1, sd);
+      const end = new Date(ey, em - 1, ed);
+      while (cur <= end) {
+        const ds = formatDateLocal(cur);
+        const dow = cur.getDay();
+        const dayBlocks = blocks.filter((b) => b.active && ((b.type === 'date' && b.date === ds) || (b.type === 'weekly' && Number(b.day) === dow)));
+        dayBlocks.forEach((b) => {
+          const [sh, smin] = b.start.split(':').map(Number);
+          const [eh, emin] = b.end.split(':').map(Number);
+          total += Math.max(0, Math.floor(((eh * 60 + emin) - (sh * 60 + smin)) / (b.dur || 60)));
+        });
+        cur.setDate(cur.getDate() + 1);
+      }
+      return total;
+    }
+
+    function navigateTo(view) {
+      appState.view = view;
+      ['resumen', 'agenda', 'pacientes', 'finanzas', 'configuracion'].forEach((v) => {
+        document.getElementById(`view-${v}`).classList.toggle('hidden', v !== view);
+      });
+      document.querySelectorAll('.nav-item').forEach((btn) => {
+        const active = btn.dataset.nav === view;
+        btn.className = active
+          ? 'nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-colors bg-sage/15 text-sage-deep'
+          : 'nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors text-sage-deep/75 hover:bg-sage/10';
+      });
+      document.querySelectorAll('.mnav-item').forEach((btn) => {
+        const active = btn.dataset.mnav === view;
+        btn.className = active
+          ? 'mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold text-coral'
+          : 'mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-sage-deep/60';
+      });
+    }
+
+    function setPeriod(p) {
+      appState.period = p;
+      document.querySelectorAll('.period-btn').forEach((b) => {
+        const active = b.dataset.period === p;
+        b.className = active
+          ? 'period-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-sage-deep text-white'
+          : 'period-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-sage-deep/75';
+      });
+      renderResumen();
+    }
+
+    function updateGreeting() {
+      const today = santiagoTodayStr();
+      const [y, m, d] = today.split('-').map(Number);
+      const localObj = new Date(y, m - 1, d);
+      const hr = Number(new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', hour12: false }).format(new Date()));
+      const greet = hr < 12 ? 'Buenos días, Nicole' : (hr < 20 ? 'Buenas tardes, Nicole' : 'Buenas noches, Nicole');
+      document.getElementById('greeting-title').textContent = greet;
+      document.getElementById('greeting-date').textContent = `${DAYS_FULL[localObj.getDay()]}, ${d} de ${MONTHS_ES[m - 1]} de ${y}`;
+    }
+
+    function renderResumen() {
+      if (appState.loading) {
+        document.getElementById('home-upcoming-list').innerHTML = '<div class="skeleton-box h-16"></div><div class="skeleton-box h-16"></div>';
+        return;
+      }
+
+      const bookings = getBookings();
+      const blocks = getBlocks();
+      const bounds = getPeriodBounds(appState.period);
+
+      // Criterio temporal estricto:
+      // - Ingresos recibidos: suma de pagos efectivos cuya fechaIso cae en el período (sin duplicar créditos previos)
+      const periodBookings = bookings.filter((r) => r.fechaIso >= bounds.start && r.fechaIso <= bounds.end && r.estado !== 'cancelada');
+      let ingresosPeriodo = 0;
+      const revBySlug = { programa_90_dias: 0, evaluacion_epixlife: 0, consulta_inicial: 0 };
+
+      bookings.forEach((r) => {
+        const key = r.slug.startsWith('consulta_inicial') ? 'consulta_inicial' : r.slug;
+        (r.pagos || []).forEach((p) => {
+          if (p.fechaIso >= bounds.start && p.fechaIso <= bounds.end) {
+            ingresosPeriodo += p.monto;
+            if (revBySlug[key] !== undefined) revBySlug[key] += p.monto;
+          }
+        });
+      });
+
+      const saldosVigentes = bookings.reduce((a, r) => a + Math.max(0, r.total - (r.credito || 0) - (r.abonado || 0)), 0);
+      const conSaldo = bookings.filter((r) => Math.max(0, r.total - (r.credito || 0) - (r.abonado || 0)) > 0).length;
+      const cuposPeriodo = countSlotsForPeriod(blocks, bounds);
+      const ocupPct = cuposPeriodo > 0 ? Math.min(100, Math.round((periodBookings.length / cuposPeriodo) * 100)) : 0;
+      const progCount = bookings.filter((r) => (r.slug === 'evaluacion_epixlife' || r.slug === 'programa_90_dias') && r.estado !== 'cancelada').length;
+
+      document.getElementById('sum-ingresos').textContent = fmtCLP(ingresosPeriodo);
+      document.getElementById('sum-saldos').textContent = fmtCLP(saldosVigentes);
+      document.getElementById('sum-saldos-sub').textContent = `${conSaldo} paciente(s) vigente(s)`;
+      document.getElementById('sum-citas').textContent = String(periodBookings.length);
+      document.getElementById('sum-ocupacion').textContent = `${ocupPct}%`;
+      document.getElementById('sum-ocupacion-sub').textContent = `${periodBookings.length} de ${cuposPeriodo} cupos`;
+      document.getElementById('sum-programas').textContent = String(progCount);
+
+      const upList = document.getElementById('home-upcoming-list');
+      upList.innerHTML = periodBookings.length ? periodBookings.map((r) => {
+        const [yy, mm, dd] = r.fechaIso.split('-');
+        const accent = r.sede === 'online' ? 'bg-sage' : (r.sede === 'puerto_natales' || r.sede === 'porvenir' ? 'bg-cream' : 'bg-coral');
+        return `
+          <button type="button" onclick="openPatientDrawer('${r.id}')" class="w-full text-left p-3.5 rounded-2xl border border-sage/20 hover:bg-sage-soft/35 flex items-center justify-between gap-3 transition-colors">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-12 h-12 rounded-2xl bg-[#FAF9F6] border border-sage/20 flex flex-col items-center justify-center shrink-0">
+                <span class="text-sm font-bold text-sage-deep leading-none">${dd}</span>
+                <span class="text-[10px] font-semibold uppercase text-sage-deep/65 mt-0.5">${MONTHS_ES[Number(mm) - 1].slice(0, 3)}</span>
+              </div>
+              <span class="w-1 h-9 rounded-full ${accent} shrink-0"></span>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-sage-deep truncate">${r.paciente}</p>
+                <p class="text-xs text-sage-deep/75 truncate">${r.servicio} · ${SEDES[r.sede] || r.sede} · ${r.hora} hrs</p>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-sage-deep/50 shrink-0"></i>
+          </button>
+        `;
+      }).join('') : '<p class="text-xs text-sage-deep/70 py-4">No hay atenciones agendadas en este período.</p>';
+
+      const pendingFichas = bookings.filter((b) => !b.ficha).length;
+      const tasks = [];
+      if (pendingFichas) tasks.push({ text: `${pendingFichas} ficha(s) de ingreso pendiente(s)`, action: "setPatientFilter('ficha_pendiente'); navigateTo('pacientes')", cta: 'Revisar' });
+      if (conSaldo) tasks.push({ text: `${conSaldo} saldo(s) por cobrar en sesiones activas`, action: "setFinanceFilter('saldo'); navigateTo('finanzas')", cta: 'Ver pagos' });
+      if (!tasks.length) tasks.push({ text: 'Tu consulta está al día en este período', action: "navigateTo('agenda')", cta: 'Ver agenda' });
+
+      document.getElementById('home-tasks-list').innerHTML = tasks.map((t) => `
+        <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/15 flex items-center justify-between gap-3">
+          <span class="text-xs font-medium text-sage-deep">${t.text}</span>
+          <button type="button" onclick="${t.action}" class="text-xs font-semibold text-coral shrink-0 hover:underline">${t.cta}</button>
+        </div>
+      `).join('');
+
+      const srvList = [
+        { slug: 'programa_90_dias', name: 'Programa 90 Días', bar: 'bg-sage-deep' },
+        { slug: 'evaluacion_epixlife', name: 'Integral + Epixlife', bar: 'bg-coral' },
+        { slug: 'consulta_inicial', name: 'Consulta Inicial', bar: 'bg-sage' }
+      ];
+      const maxRev = Math.max(1, ...srvList.map((s) => revBySlug[s.slug]));
+      document.getElementById('home-services-chart').innerHTML = srvList.map((s) => {
+        const rev = revBySlug[s.slug];
+        const pct = Math.round((rev / maxRev) * 100);
+        return `
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs font-semibold">
+              <span class="text-sage-deep">${s.name}</span>
+              <span class="text-sage-deep">${fmtCLP(rev)}</span>
+            </div>
+            <div class="w-full h-2.5 rounded-full bg-sage-soft overflow-hidden">
+              <div class="h-full rounded-full ${s.bar}" style="width: ${pct}%;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // F7.2: AGENDA, VALIDACIÓN DE SOLAPAMIENTOS Y PERSISTENCIA REAL
+    // =========================================================================
+    function setCalendarView(v) {
+      appState.calView = v;
+      document.querySelectorAll('.calview-btn').forEach((b) => {
+        const active = b.dataset.calview === v;
+        b.className = active
+          ? 'calview-btn px-3 py-2 rounded-xl text-xs font-semibold bg-sage-deep text-white'
+          : 'calview-btn px-3 py-2 rounded-xl text-xs font-semibold text-sage-deep/75';
+      });
+      renderAgendaCalendar();
+    }
+
+    function shiftAgendaDate(delta) {
+      const [y, m, d] = appState.calCursorDate.split('-').map(Number);
+      const c = new Date(y, m - 1, d);
+      if (appState.calView === 'dia') c.setDate(c.getDate() + delta);
+      else if (appState.calView === 'semana') c.setDate(c.getDate() + delta * 7);
+      else c.setMonth(c.getMonth() + delta);
+      appState.calCursorDate = formatDateLocal(c);
+      renderAgendaCalendar();
+    }
+
+    function blocksForDay(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dow = new Date(y, m - 1, d).getDay();
+      return getBlocks().filter((b) => (b.type === 'date' && b.date === dateStr) || (b.type === 'weekly' && Number(b.day) === dow));
+    }
+
+    function hasBookingsInBlock(b) {
+      return getBookings().some((r) => {
+        const [y, m, d] = r.fechaIso.split('-').map(Number);
+        const dow = new Date(y, m - 1, d).getDay();
+        const matchDate = b.type === 'date' ? r.fechaIso === b.date : dow === Number(b.day);
+        return matchDate && r.hora >= b.start && r.hora < b.end;
+      });
+    }
+
+    function findOverlappingBlock(candidate, ignoreId = null) {
+      return getBlocks().find((b) => {
+        if (!b.active || b.id === ignoreId) return false;
+        const timeOverlap = candidate.start < b.end && candidate.end > b.start;
+        if (!timeOverlap) return false;
+        if (candidate.type === 'weekly' && b.type === 'weekly') return Number(candidate.day) === Number(b.day);
+        if (candidate.type === 'date' && b.type === 'date') return candidate.date === b.date;
+        if (candidate.type === 'date' && b.type === 'weekly') {
+          const [y, m, d] = candidate.date.split('-').map(Number);
+          return new Date(y, m - 1, d).getDay() === Number(b.day);
+        }
+        if (candidate.type === 'weekly' && b.type === 'date') {
+          const [y, m, d] = b.date.split('-').map(Number);
+          return new Date(y, m - 1, d).getDay() === Number(candidate.day);
+        }
+        return false;
+      });
+    }
+
+    function renderBlockPill(b) {
+      const isGira = b.sede === 'puerto_natales' || b.sede === 'porvenir';
+      const mod = b.modalidad || (b.sede === 'online' ? 'online' : 'presencial');
+      const tone = !b.active
+        ? 'bg-stone-100 border-stone-200 text-sage-deep/50'
+        : (isGira ? 'bg-cream-soft border-cream text-sage-deep' : (mod === 'online' ? 'bg-sage-soft/75 border-sage/30 text-sage-deep' : 'bg-coral-soft/75 border-coral/30 text-sage-deep'));
+      const modText = mod === 'ambas' ? 'Presencial / Online' : (mod === 'online' ? 'Online' : `Presencial · ${SEDES[b.sede] || b.sede}`);
+      return `
+        <div class="p-3 rounded-2xl border ${tone} space-y-2 text-xs">
+          <div>
+            <p class="font-bold">${b.start} – ${b.end}</p>
+            <p class="text-[11px] opacity-85">${modText}${!b.active ? ' (Pausado)' : ''}</p>
+          </div>
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <button type="button" onclick="openAvailabilityWizard('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold">Editar</button>
+            <button type="button" onclick="duplicateBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold">Duplicar</button>
+            <button type="button" onclick="confirmToggleBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold">${b.active ? 'Pausar' : 'Activar'}</button>
+            <button type="button" onclick="confirmDeleteBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-coral/30 text-coral text-[11px] font-semibold">Eliminar</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAgendaCalendar() {
+      const container = document.getElementById('agenda-calendar-body');
+      const titleEl = document.getElementById('agenda-range-title');
+      if (appState.loading) {
+        container.innerHTML = '<div class="skeleton-box h-48"></div>';
+        return;
+      }
+
+      const [cy, cm, cd] = appState.calCursorDate.split('-').map(Number);
+      const c = new Date(cy, cm - 1, cd);
+      const bookings = getBookings();
+
+      if (appState.calView === 'dia') {
+        const ds = appState.calCursorDate;
+        titleEl.textContent = `${DAYS_FULL[c.getDay()]} ${cd} de ${MONTHS_ES[cm - 1]}`;
+        const dayBlocks = blocksForDay(ds);
+        const dayBookings = bookings.filter((r) => r.fechaIso === ds);
+        container.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2.5">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Bloques configurados</h3>
+              ${dayBlocks.length ? dayBlocks.map(renderBlockPill).join('') : '<p class="text-xs text-sage-deep/65">Sin bloques habilitados este día.</p>'}
+            </div>
+            <div class="space-y-2.5">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Citas reservadas</h3>
+              ${dayBookings.length ? dayBookings.map((r) => `
+                <div class="p-3.5 rounded-2xl bg-coral-soft/60 border border-coral/25 text-xs">
+                  <p class="font-bold text-sage-deep">${r.hora} hrs · ${r.paciente}</p>
+                  <p class="text-sage-deep/80 mt-0.5">${r.servicio} · ${SEDES[r.sede] || r.sede}</p>
+                </div>
+              `).join('') : '<p class="text-xs text-sage-deep/65">Sin citas reservadas este día.</p>'}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (appState.calView === 'semana') {
+        const monday = new Date(c);
+        monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+        const endWeek = new Date(monday);
+        endWeek.setDate(endWeek.getDate() + 6);
+        titleEl.textContent = `${monday.getDate()} ${MONTHS_ES[monday.getMonth()].slice(0, 3)} – ${endWeek.getDate()} ${MONTHS_ES[endWeek.getMonth()].slice(0, 3)} ${endWeek.getFullYear()}`;
+
+        let cols = '';
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(monday); d.setDate(monday.getDate() + i);
+          const ds = formatDateLocal(d);
+          const dayBlocks = blocksForDay(ds);
+          const dayBookings = bookings.filter((r) => r.fechaIso === ds);
+          cols += `
+            <div class="rounded-2xl border border-sage/20 bg-[#FAF9F6] p-3 space-y-2.5 min-h-[180px]">
+              <div class="flex items-center justify-between border-b border-sage/15 pb-1.5">
+                <span class="text-xs font-bold text-sage-deep">${DAYS_SHORT[d.getDay()]} ${d.getDate()}</span>
+                ${dayBookings.length ? `<span class="px-2 py-0.5 rounded-full bg-coral text-white text-[10px] font-bold">${dayBookings.length}</span>` : ''}
+              </div>
+              <div class="space-y-2">
+                ${dayBlocks.map(renderBlockPill).join('')}
+                ${dayBookings.map((r) => `
+                  <div class="p-2.5 rounded-xl bg-white border border-coral/35 text-[11px]">
+                    <p class="font-bold text-coral">${r.hora} · Reservado</p>
+                    <p class="text-sage-deep font-semibold truncate">${r.paciente}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+        container.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">${cols}</div>`;
+        return;
+      }
+
+      titleEl.textContent = `${MONTHS_ES[cm - 1]} ${cy}`;
+      const offset = (new Date(cy, cm - 1, 1).getDay() + 6) % 7;
+      const totalDays = new Date(cy, cm, 0).getDate();
+      let cells = '';
+      for (let i = 0; i < offset; i++) cells += '<div></div>';
+      for (let day = 1; day <= totalDays; day++) {
+        const ds = `${cy}-${String(cm).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const db = blocksForDay(ds).filter((b) => b.active);
+        const bk = bookings.filter((r) => r.fechaIso === ds);
+        cells += `
+          <button type="button" onclick="appState.calCursorDate='${ds}';setCalendarView('dia');" class="min-h-[68px] p-2 rounded-2xl border text-left transition-colors ${db.length ? 'bg-sage-soft/45 border-sage/30 hover:border-coral' : 'bg-[#FAF9F6] border-sage/10 text-sage-deep/45'}">
+            <span class="text-xs font-bold text-sage-deep">${day}</span>
+            <div class="flex flex-wrap gap-1 mt-1.5">
+              ${db.length ? '<span class="w-2 h-2 rounded-full bg-sage"></span>' : ''}
+              ${bk.length ? '<span class="w-2 h-2 rounded-full bg-coral"></span>' : ''}
+            </div>
+          </button>
+        `;
+      }
+      container.innerHTML = `
+        <div class="grid grid-cols-7 text-center text-xs font-semibold text-sage-deep/65 mb-2">
+          <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div class="grid grid-cols-7 gap-2">${cells}</div>
+      `;
+    }
+
+    function openAvailabilityWizard(editId = null) {
+      appState.wizard.editId = editId;
+      document.getElementById('wiz-err').classList.add('hidden');
+      if (editId) {
+        const b = getBlocks().find((x) => x.id === editId);
+        if (b) {
+          appState.wizard.mod = b.modalidad || 'presencial';
+          appState.wizard.freq = b.type;
+          appState.wizard.days = b.type === 'weekly' ? [Number(b.day)] : [];
+          document.getElementById('wiz-start').value = b.start;
+          document.getElementById('wiz-end').value = b.end;
+          if (b.date) document.getElementById('wiz-date').value = b.date;
+          const radio = document.querySelector(`input[name="wiz-sede"][value="${b.sede}"]`);
+          if (radio) radio.checked = true;
+        }
+      } else {
+        appState.wizard = { editId: null, mod: 'presencial', freq: 'weekly', days: [2] };
+      }
+      wizSetMod(appState.wizard.mod);
+      wizSetFreq(appState.wizard.freq);
+      renderWizardDays();
+      updateWizardPreview();
+      openModal('wizard-modal');
+    }
+
+    function wizSetMod(mod) {
+      appState.wizard.mod = mod;
+      document.querySelectorAll('.wmod-btn').forEach((b) => {
+        const active = b.dataset.wmod === mod;
+        b.className = active
+          ? 'wmod-btn min-h-[48px] rounded-2xl border text-xs font-semibold bg-sage-deep text-white border-sage-deep'
+          : 'wmod-btn min-h-[48px] rounded-2xl border text-xs font-semibold bg-white text-sage-deep border-sage/25';
+      });
+      document.getElementById('wiz-sede-wrap').classList.toggle('hidden', mod === 'online');
+      updateWizardPreview();
+    }
+
+    function wizSetFreq(freq) {
+      appState.wizard.freq = freq;
+      document.getElementById('wfreq-weekly').className = freq === 'weekly'
+        ? 'min-h-[44px] rounded-2xl text-xs font-semibold border bg-sage-deep text-white border-sage-deep'
+        : 'min-h-[44px] rounded-2xl text-xs font-semibold border bg-white text-sage-deep border-sage/25';
+      document.getElementById('wfreq-date').className = freq === 'date'
+        ? 'min-h-[44px] rounded-2xl text-xs font-semibold border bg-sage-deep text-white border-sage-deep'
+        : 'min-h-[44px] rounded-2xl text-xs font-semibold border bg-white text-sage-deep border-sage/25';
+      document.getElementById('wiz-days-wrap').classList.toggle('hidden', freq !== 'weekly');
+      document.getElementById('wiz-date-wrap').classList.toggle('hidden', freq !== 'date');
+      updateWizardPreview();
+    }
+
+    function wizToggleDay(d) {
+      const idx = appState.wizard.days.indexOf(d);
+      if (idx >= 0) appState.wizard.days.splice(idx, 1);
+      else appState.wizard.days.push(d);
+      renderWizardDays();
+      updateWizardPreview();
+    }
+
+    function renderWizardDays() {
+      document.querySelectorAll('.wday-btn').forEach((btn) => {
+        const active = appState.wizard.days.includes(Number(btn.dataset.wday));
+        btn.className = active
+          ? 'wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-sage-soft border-sage text-sage-deep'
+          : 'wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep';
+      });
+    }
+
+    function updateWizardPreview() {
+      const sede = appState.wizard.mod === 'online'
+        ? 'Online · Meet'
+        : SEDES[document.querySelector('input[name="wiz-sede"]:checked')?.value || 'punta_arenas'];
+      const modTxt = appState.wizard.mod === 'ambas' ? 'Presencial u Online' : (appState.wizard.mod === 'online' ? 'Solo Online' : 'Solo Presencial');
+      const start = document.getElementById('wiz-start').value;
+      const end = document.getElementById('wiz-end').value;
+      const when = appState.wizard.freq === 'weekly'
+        ? (appState.wizard.days.length ? appState.wizard.days.map((d) => DAYS_FULL[d]).join(', ') : 'Sin días seleccionados')
+        : (document.getElementById('wiz-date').value || 'Sin fecha seleccionada');
+      document.getElementById('wiz-preview-text').textContent = `${modTxt} · ${sede} · ${when} · ${start} a ${end} hrs`;
+    }
+
+    async function saveWizardAvailability() {
+      if (appState.submitting) return;
+      const err = document.getElementById('wiz-err');
+      const btn = document.getElementById('wiz-save-btn');
+      const start = document.getElementById('wiz-start').value;
+      const end = document.getElementById('wiz-end').value;
+      const dateVal = document.getElementById('wiz-date').value;
+
+      if (!start || !end || start >= end) { err.textContent = 'La hora de término debe ser mayor a la de inicio.'; err.classList.remove('hidden'); return; }
+      if (appState.wizard.freq === 'weekly' && !appState.wizard.days.length) { err.textContent = 'Selecciona al menos un día.'; err.classList.remove('hidden'); return; }
+      if (appState.wizard.freq === 'date' && !dateVal) { err.textContent = 'Selecciona una fecha específica.'; err.classList.remove('hidden'); return; }
+
+      const sede = appState.wizard.mod === 'online' ? 'online' : (document.querySelector('input[name="wiz-sede"]:checked')?.value || 'punta_arenas');
+      const candidates = appState.wizard.freq === 'weekly'
+        ? appState.wizard.days.map((day) => ({ sede, modalidad: appState.wizard.mod, type: 'weekly', day, date: '', start, end, dur: 60, active: true }))
+        : [{ sede, modalidad: appState.wizard.mod, type: 'date', day: null, date: dateVal, start, end, dur: 60, active: true }];
+
+      for (const cand of candidates) {
+        const conflict = findOverlappingBlock(cand, appState.wizard.editId);
+        if (conflict) {
+          err.textContent = `Superposición detectada con bloque existente (${conflict.start}–${conflict.end}). Nicole atiende un bloque a la vez.`;
+          err.classList.remove('hidden');
+          return;
+        }
+      }
+      err.classList.add('hidden');
+
+      appState.submitting = true;
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        if (isAuthenticated()) {
+          if (appState.wizard.editId) {
+            await sbFetch(`/rest/v1/bloques_agenda?id=eq.${appState.wizard.editId}`, { method: 'DELETE' });
+          }
+          await sbFetch('/rest/v1/bloques_agenda', {
+            method: 'POST',
+            body: JSON.stringify(candidates.map((c) => ({
+              sede_slug: c.sede,
+              modalidad_habilitada: c.modalidad,
+              dia_semana: c.type === 'weekly' ? c.day : null,
+              fecha_especifica: c.type === 'date' ? c.date : null,
+              hora_inicio: c.start,
+              hora_fin: c.end,
+              duracion_min: 60,
+              activo: true
+            })))
+          });
+          await loadOperationalData();
+        } else {
+          let list = getBlocks().filter((b) => b.id !== appState.wizard.editId);
+          candidates.forEach((c, idx) => list.push({ ...c, id: `demo-b-${Date.now()}-${idx}` }));
+          localStorage.setItem(DEMO_BLOCKS_KEY, JSON.stringify(list));
+          renderAll();
+        }
+        closeModal('wizard-modal');
+        showToast('Disponibilidad guardada correctamente.');
+      } catch (e) {
+        err.textContent = `${e.message}. La disponibilidad no se guardó.`;
+        err.classList.remove('hidden');
+        showToast('Error al guardar en Supabase.', 'error');
+      } finally {
+        appState.submitting = false;
+        btn.disabled = false;
+        btn.textContent = 'Guardar disponibilidad';
+      }
+    }
+
+    async function duplicateBlock(id) {
+      const b = getBlocks().find((x) => x.id === id);
+      if (!b) return;
+      showToast('Usa Editar en el nuevo día o fecha para evitar superponer este horario.', 'error');
+      openAvailabilityWizard(id);
+      appState.wizard.editId = null;
+    }
+
+    function openConfirmModal(msg, onConfirm) {
+      document.getElementById('confirm-message').textContent = msg;
+      appState.confirmAction = onConfirm;
+      document.getElementById('confirm-accept-btn').onclick = async () => {
+        if (appState.confirmAction) await appState.confirmAction();
+        closeModal('confirm-modal');
+      };
+      openModal('confirm-modal');
+    }
+
+    function confirmToggleBlock(id) {
+      const b = getBlocks().find((x) => x.id === id);
+      if (!b) return;
+      const exec = async () => {
+        try {
+          if (isAuthenticated()) {
+            await sbFetch(`/rest/v1/bloques_agenda?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ activo: !b.active }) });
+            await loadOperationalData();
+          } else {
+            localStorage.setItem(DEMO_BLOCKS_KEY, JSON.stringify(getBlocks().map((x) => x.id === id ? { ...x, active: !x.active } : x)));
+            renderAll();
+          }
+          showToast(b.active ? 'Bloque pausado.' : 'Bloque activado.');
+        } catch (e) {
+          showToast(`No se pudo actualizar: ${e.message}`, 'error');
+        }
+      };
+      if (b.active && hasBookingsInBlock(b)) {
+        openConfirmModal('Este bloque tiene reservas activas. Pausarlo evita nuevas citas sin cancelar las reservas existentes. ¿Pausar?', exec);
+      } else exec();
+    }
+
+    function confirmDeleteBlock(id) {
+      const b = getBlocks().find((x) => x.id === id);
+      if (!b) return;
+      const exec = async () => {
+        try {
+          if (isAuthenticated()) {
+            await sbFetch(`/rest/v1/bloques_agenda?id=eq.${id}`, { method: 'DELETE' });
+            await loadOperationalData();
+          } else {
+            localStorage.setItem(DEMO_BLOCKS_KEY, JSON.stringify(getBlocks().filter((x) => x.id !== id)));
+            renderAll();
+          }
+          showToast('Bloque eliminado.');
+        } catch (e) {
+          showToast(`No se pudo eliminar: ${e.message}`, 'error');
+        }
+      };
+      const msg = hasBookingsInBlock(b)
+        ? 'Hay citas activas en este bloque. Eliminarlo no cancela las reservas ya confirmadas. ¿Eliminar bloque?'
+        : '¿Deseas eliminar este bloque horario?';
+      openConfirmModal(msg, exec);
+    }
+
+    // =========================================================================
+    // F7.4: PACIENTES Y LECTURA BAJO DEMANDA DE FICHAS CLÍNICAS
+    // =========================================================================
+    function setPatientFilter(f) {
+      appState.patientFilter = f;
+      document.querySelectorAll('.pf-btn').forEach((b) => {
+        const active = b.dataset.pf === f;
+        b.className = active
+          ? 'pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-sage-deep text-white'
+          : 'pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep';
+      });
+      renderPatientsView();
+    }
+
+    function renderPatientsView() {
+      const q = (document.getElementById('patient-search')?.value || '').trim().toLowerCase();
+      const rows = getBookings().filter((r) => {
+        const matchQ = !q || r.paciente.toLowerCase().includes(q) || r.servicio.toLowerCase().includes(q);
+        if (!matchQ) return false;
+        if (appState.patientFilter === 'nuevo') return r.categoria === 'nuevo';
+        if (appState.patientFilter === 'control') return r.categoria === 'control';
+        if (appState.patientFilter === 'programa') return r.slug === 'evaluacion_epixlife' || r.slug === 'programa_90_dias';
+        if (appState.patientFilter === 'ficha_pendiente') return !r.ficha;
+        return true;
+      });
+
+      document.getElementById('patients-list').innerHTML = rows.length ? rows.map((r) => `
+        <div class="bg-white rounded-3xl p-5 border border-sage/20 flex items-center justify-between gap-4">
+          <div class="min-w-0 space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-sm font-bold text-sage-deep truncate">${r.paciente}</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${r.ficha ? 'bg-sage-soft text-sage-deep' : 'bg-coral-soft text-coral'}">
+                ${r.ficha ? 'Ficha lista' : 'Ficha pendiente'}
+              </span>
+            </div>
+            <p class="text-xs text-sage-deep/75 truncate">${r.servicio} · ${SEDES[r.sede] || r.sede}</p>
+          </div>
+          <button type="button" onclick="openPatientDrawer('${r.id}')" class="min-h-[44px] px-4 rounded-2xl bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep shrink-0">
+            Ver detalle
+          </button>
+        </div>
+      `).join('') : '<p class="text-sm text-sage-deep/70 col-span-2">No se encontraron pacientes con ese criterio.</p>';
+    }
+
+    async function openPatientDrawer(id) {
+      const r = getBookings().find((x) => x.id === id);
+      if (!r) return;
+      const paid = (r.credito || 0) + (r.abonado || 0);
+      const saldo = Math.max(0, r.total - paid);
+      document.getElementById('drawer-patient-name').textContent = r.paciente;
+      document.getElementById('drawer-patient-tag').textContent = r.servicio;
+      const bodyEl = document.getElementById('drawer-patient-body');
+      bodyEl.innerHTML = `
+        <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5 text-xs">
+          <p><strong>Contacto:</strong> ${r.telefono || '-'} · ${r.email || '-'}</p>
+          <p><strong>Cita:</strong> ${r.fechaIso.split('-').reverse().join('/')} · ${r.hora} hrs (${SEDES[r.sede] || r.sede})</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-sage-soft/50 border border-sage/20 space-y-1.5 text-xs">
+          <p><strong>Valor servicio:</strong> ${fmtCLP(r.total)}</p>
+          <p><strong>Total abonado / crédito:</strong> ${fmtCLP(paid)}</p>
+          <p><strong>Saldo pendiente:</strong> <span class="font-bold text-coral">${fmtCLP(saldo)}</span></p>
+        </div>
+        <div id="drawer-ficha-box" class="p-4 rounded-2xl bg-white border border-sage/20 text-xs space-y-1.5">
+          <div class="skeleton-box h-12"></div>
+        </div>
+        <div class="flex flex-col gap-2.5 pt-1">
+          <a href="ingreso-paciente.html?token=${r.token}" target="_blank" class="min-h-[46px] rounded-2xl bg-sage-deep text-white text-xs font-semibold flex items-center justify-center gap-2">
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Abrir enlace de ficha
+          </a>
+          ${saldo > 0 ? `<button type="button" onclick="closeModal('patient-drawer'); openQuickPaymentModal('${r.id}')" class="min-h-[46px] rounded-2xl bg-coral text-white text-xs font-semibold">Registrar pago de saldo</button>` : ''}
+        </div>
+      `;
+      openModal('patient-drawer');
+      if (window.lucide) lucide.createIcons();
+
+      const fichaBox = document.getElementById('drawer-ficha-box');
+      if (!isAuthenticated()) {
+        fichaBox.innerHTML = r.ficha
+          ? '<p><strong>Motivo (DEMO):</strong> Evaluación integral y hábitos alimentarios.</p>'
+          : '<p class="text-sage-deep/70">El paciente aún no ha enviado su ficha de ingreso.</p>';
+        return;
+      }
+
+      try {
+        const rows = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?reserva_id=eq.${r.id}&select=motivo_consulta,enfermedades_actuales,tratamiento_actual,fecha_hoy&limit=1`);
+        const f = rows?.[0];
+        fichaBox.innerHTML = f
+          ? `<p><strong>Fecha ficha:</strong> ${f.fecha_hoy || '-'}</p><p><strong>Motivo:</strong> ${f.motivo_consulta || '-'}</p><p><strong>Antecedentes:</strong> ${f.enfermedades_actuales || '-'}</p>`
+          : '<p class="text-sage-deep/70">Ficha clínica aún no ingresada para esta reserva.</p>';
+      } catch (e) {
+        fichaBox.innerHTML = `<p class="text-coral">No pudimos cargar los antecedentes (${e.message}).</p>`;
+      }
+    }
+
+    // =========================================================================
+    // F7.3: FINANZAS E INTEGRIDAD DE PAGOS MANUALES
+    // =========================================================================
+    function setFinanceFilter(f) {
+      appState.financeFilter = f;
+      document.querySelectorAll('.ff-btn').forEach((b) => {
+        const active = b.dataset.ff === f;
+        b.className = active
+          ? 'ff-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-sage-deep text-white'
+          : 'ff-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep';
+      });
+      renderFinanceView();
+    }
+
+    function renderFinanceView() {
+      const rows = getBookings().filter((r) => {
+        const saldo = Math.max(0, r.total - (r.credito || 0) - (r.abonado || 0));
+        if (appState.financeFilter === 'saldo') return saldo > 0;
+        if (appState.financeFilter === 'pagada') return saldo === 0;
+        return true;
+      });
+
+      document.getElementById('finance-list').innerHTML = rows.length ? rows.map((r) => {
+        const paid = (r.credito || 0) + (r.abonado || 0);
+        const saldo = Math.max(0, r.total - paid);
+        const pct = r.total > 0 ? Math.min(100, Math.round((paid / r.total) * 100)) : 100;
+        const hist = (r.pagos || []).map((p) => `
+          <div class="flex justify-between py-1.5 border-t border-sage/10 text-xs">
+            <span class="text-sage-deep/80">${p.fechaIso.split('-').reverse().join('/')} · ${p.concepto} <span class="px-1.5 py-0.5 rounded bg-sage-soft text-[10px] font-semibold">${p.esTuu ? 'TUU' : p.medio}</span></span>
+            <strong class="text-sage-deep">${fmtCLP(p.monto)}</strong>
+          </div>
+        `).join('');
+
+        return `
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-sage/20 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-base font-bold text-sage-deep">${r.paciente}</h3>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${saldo === 0 ? 'bg-sage-soft text-sage-deep' : 'bg-coral-soft text-coral'}">
+                    ${saldo === 0 ? 'Pagado 100%' : 'Abono parcial'}
+                  </span>
+                </div>
+                <p class="text-xs text-sage-deep/75 mt-0.5">${r.servicio}</p>
+              </div>
+              ${saldo > 0 ? `<button type="button" onclick="openQuickPaymentModal('${r.id}')" class="min-h-[44px] px-4 rounded-2xl bg-coral text-white text-xs font-semibold shrink-0">+ Registrar pago</button>` : ''}
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 text-xs bg-[#FAF9F6] p-3.5 rounded-2xl border border-sage/15">
+              <div><span class="block text-sage-deep/65">Valor servicio</span><strong class="text-sm">${fmtCLP(r.total)}</strong></div>
+              <div><span class="block text-sage-deep/65">Total abonado</span><strong class="text-sm text-sage-deep">${fmtCLP(paid)}</strong></div>
+              <div><span class="block text-sage-deep/65">Saldo pendiente</span><strong class="text-sm ${saldo ? 'text-coral' : 'text-sage-deep'}">${fmtCLP(saldo)}</strong></div>
+            </div>
+
+            <div class="w-full h-2.5 rounded-full bg-sage-soft overflow-hidden">
+              <div class="h-full rounded-full ${saldo === 0 ? 'bg-sage-deep' : 'bg-coral'}" style="width: ${pct}%;"></div>
+            </div>
+
+            <details class="text-xs">
+              <summary class="cursor-pointer font-semibold text-sage-deep/80 hover:text-sage-deep">Ver historial de pagos (${(r.pagos || []).length})</summary>
+              <div class="mt-2">${hist || '<p class="text-sage-deep/65">Sin movimientos registrados.</p>'}</div>
+            </details>
+          </div>
+        `;
+      }).join('') : '<p class="text-sm text-sage-deep/70">No hay registros en esta categoría.</p>';
+    }
+
+    function openQuickPaymentModal(preselectedId = null) {
+      const bookings = getBookings().filter((b) => Math.max(0, b.total - (b.credito || 0) - (b.abonado || 0)) > 0);
+      if (!bookings.length) {
+        showToast('No hay reservas con saldo pendiente.', 'success');
+        return;
+      }
+      document.getElementById('pay-err').classList.add('hidden');
+      const sel = document.getElementById('pay-booking-select');
+      sel.innerHTML = bookings.map((b) => `<option value="${b.id}" ${b.id === preselectedId ? 'selected' : ''}>${b.paciente} — Saldo ${fmtCLP(Math.max(0, b.total - (b.credito || 0) - (b.abonado || 0)))}</option>`).join('');
+      prefillPaymentAmount();
+      openModal('payment-modal');
+    }
+
+    function prefillPaymentAmount() {
+      const id = document.getElementById('pay-booking-select').value;
+      const b = getBookings().find((x) => x.id === id);
+      if (!b) return;
+      const saldo = Math.max(0, b.total - (b.credito || 0) - (b.abonado || 0));
+      const input = document.getElementById('pay-amount');
+      input.value = saldo;
+      input.max = saldo;
+    }
+
+    async function submitManualPayment() {
+      if (appState.submitting) return;
+      const err = document.getElementById('pay-err');
+      const btn = document.getElementById('pay-submit-btn');
+      const id = document.getElementById('pay-booking-select').value;
+      const rawAmount = Number(document.getElementById('pay-amount').value);
+      const method = document.getElementById('pay-method').value;
+      const note = document.getElementById('pay-note').value.trim() || 'Pago manual';
+
+      const target = getBookings().find((x) => x.id === id);
+      if (!target) return;
+      const saldo = Math.max(0, target.total - (target.credito || 0) - (target.abonado || 0));
+
+      if (!Number.isInteger(rawAmount) || rawAmount <= 0) {
+        err.textContent = 'Ingresa un monto entero positivo en pesos chilenos.';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (rawAmount > saldo) {
+        err.textContent = `El monto (${fmtCLP(rawAmount)}) no puede superar el saldo pendiente (${fmtCLP(saldo)}).`;
+        err.classList.remove('hidden');
+        return;
+      }
+      err.classList.add('hidden');
+
+      appState.submitting = true;
+      btn.disabled = true;
+      btn.textContent = 'Registrando...';
+
+      try {
+        if (isAuthenticated()) {
+          const manualRef = `manual-${target.id}-${Date.now()}`;
+          await sbFetch('/rest/v1/pagos_tuu', {
+            method: 'POST',
+            body: JSON.stringify({
+              reserva_id: target.id,
+              paciente_id: target.pacienteId || null,
+              concepto: `${note} (${method})`,
+              monto_clp: rawAmount,
+              tuu_transaction_id: manualRef,
+              tuu_status: 'paid'
+            })
+          });
+          const nuevoAbono = (target.abonado || 0) + rawAmount;
+          const nuevoEstado = (target.credito + nuevoAbono) >= target.total ? 'pagada' : 'abonada';
+          await sbFetch(`/rest/v1/reservas?id=eq.${target.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ monto_abonado_clp: nuevoAbono, estado: nuevoEstado })
+          });
+          await loadOperationalData();
+        } else {
+          const list = getBookings();
+          const item = list.find((x) => x.id === id);
+          item.abonado = (item.abonado || 0) + rawAmount;
+          item.pagos = item.pagos || [];
+          item.pagos.push({ fechaIso: santiagoTodayStr(), concepto: note, monto: rawAmount, medio: method, esTuu: false });
+          localStorage.setItem(DEMO_BOOKINGS_KEY, JSON.stringify(list));
+          renderAll();
+        }
+        closeModal('payment-modal');
+        showToast(`Pago de ${fmtCLP(rawAmount)} registrado.`);
+      } catch (e) {
+        err.textContent = `${e.message}. El pago no fue registrado.`;
+        err.classList.remove('hidden');
+        showToast('Error al registrar pago.', 'error');
+      } finally {
+        appState.submitting = false;
+        btn.disabled = false;
+        btn.textContent = 'Guardar pago';
+      }
+    }
+
+    // =========================================================================
+    // AUTENTICACIÓN SUPABASE (INTACTA)
+    // =========================================================================
+    async function signInNicole() {
+      const email = document.getElementById('cfg-email').value.trim();
+      const password = document.getElementById('cfg-pass').value;
+      const btn = document.getElementById('cfg-login-btn');
+      if (!email || !password) return;
+      btn.disabled = true;
+      btn.textContent = 'Conectando...';
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.access_token) throw new Error(data.error_description || 'Credenciales inválidas');
+        localStorage.setItem(AUTH_TOKEN_KEY, data.access_token);
+        updateAuthUI();
+        await loadOperationalData();
+        showToast('Sesión conectada con Supabase.');
+      } catch (err) {
+        showToast(err.message || 'No se pudo iniciar sesión', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Conectar cuenta';
+      }
+    }
+
+    function signOutNicole() {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      appState.prodBlocks = [];
+      appState.prodBookings = [];
+      updateAuthUI();
+      renderAll();
+      showToast('Sesión cerrada. Volviste al modo DEMO.');
+    }
+
+    function updateAuthUI() {
+      const ok = isAuthenticated();
+      ['sidebar-auth-dot', 'mobile-auth-dot'].forEach((id) => {
+        document.getElementById(id).className = ok ? 'w-2 h-2 rounded-full bg-sage' : 'w-2 h-2 rounded-full bg-coral';
+      });
+      document.getElementById('sidebar-auth-text').textContent = ok ? 'Producción (Supabase)' : 'Modo DEMO';
+      document.getElementById('mobile-auth-text').textContent = ok ? 'En vivo' : 'DEMO';
+      document.getElementById('env-banner').classList.toggle('hidden', ok);
+      document.getElementById('cfg-login-form').classList.toggle('hidden', ok);
+      document.getElementById('cfg-logout-btn').classList.toggle('hidden', !ok);
+      document.getElementById('cfg-auth-status').textContent = ok
+        ? 'Sesión activa en Producción. Todos los cambios operan directamente en Supabase.'
+        : 'Modo demostración activo. Inicia sesión para trabajar exclusivamente con datos reales en Supabase.';
+    }
+
+    function renderAll() {
+      renderResumen();
+      renderAgendaCalendar();
+      renderPatientsView();
+      renderFinanceView();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      updateGreeting();
+      updateAuthUI();
+      await loadOperationalData();
+    });
+  </script>
+</body>
+
+</html>
