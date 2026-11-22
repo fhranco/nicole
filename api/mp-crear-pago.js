@@ -148,6 +148,8 @@ export default async function handler(req, res) {
     // 4. Crear Orden Checkout Pro en Mercado Pago (Orders API v1)
     const rawHost = String(req.headers.host || '').toLowerCase();
     const allowedHosts = new Set([
+      'nicoleborguenson.cl',
+      'www.nicoleborguenson.cl',
       'nicole-virid.vercel.app',
       '127.0.0.1:8080',
       'localhost:8080',
