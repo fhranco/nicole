@@ -10,6 +10,15 @@
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="apple-touch-icon" href="favicon-192.png" />
 
+  <!-- Microsoft Clarity (Heatmaps & Navegación - inputs personales enmascarados) -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zhpj3f2gd7");
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -70,7 +79,7 @@
   </header>
 
   <!-- FULL-VIEW MOBILE-FIRST BOOKING FLOW -->
-  <main class="flex-1 w-full max-w-2xl mx-auto px-4 pt-5 pb-28 space-y-5">
+  <main class="flex-1 w-full max-w-2xl mx-auto px-4 pt-3 pb-24 space-y-3">
 
     <!-- PASO 1: SERVICIO -->
     <section id="step-panel-1" class="space-y-4">
@@ -117,59 +126,81 @@
       </div>
     </section>
 
-    <!-- PASO 2: CALENDARIO ÚNICO FULL-VIEW -->
-    <section id="step-panel-2" class="hidden space-y-4">
-      <div class="bg-white rounded-3xl p-4 sm:p-6 border border-sage-deep/10 shadow-sm space-y-4">
+    <!-- PASO 2: CALENDARIO PASO A PASO EN UNA SOLA PANTALLA (2A DÍA -> 2B HORA) -->
+    <section id="step-panel-2" class="hidden space-y-3">
+      <!-- Indicador guiado con pulso para adultos mayores -->
+      <div id="step2-guide-banner" class="rounded-2xl p-3.5 bg-white border-2 border-coral/40 shadow-sm flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="relative flex h-3.5 w-3.5 shrink-0" id="step2-guide-pulse">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-coral opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-coral"></span>
+          </span>
+          <div>
+            <p id="step2-guide-kicker" class="text-[11px] font-bold uppercase tracking-wider text-coral">Paso 1 de tu horario</p>
+            <p id="step2-guide-text" class="text-sm sm:text-base font-bold text-sage-deep">Toca un día con color en el calendario</p>
+          </div>
+        </div>
+        <button type="button" id="step2-change-day-btn" onclick="resetSelectedDate()" class="hidden shrink-0 px-3 py-2 rounded-xl border border-sage-deep/20 bg-[#F4F8F6] text-xs font-bold text-sage-deep">Cambiar día</button>
+      </div>
+
+      <!-- 2A: CALENDARIO DE DÍAS -->
+      <div id="step2-calendar-card" class="bg-white rounded-3xl p-4 sm:p-5 border border-sage-deep/10 shadow-sm space-y-3">
         <div class="flex items-center justify-between">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-coral">Paso 2 de 3</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-coral">Elige el día</span>
             <h2 id="cal-month-title" class="text-lg sm:text-xl font-semibold text-sage-deep capitalize">Noviembre 2026</h2>
           </div>
           <div class="flex items-center gap-2">
-            <button type="button" onclick="changeMonth(-1)" class="w-10 h-10 rounded-full border border-sage-deep/15 flex items-center justify-center text-sage-deep active:bg-[#EAF3EE]" aria-label="Mes anterior">
+            <button type="button" onclick="changeMonth(-1)" class="w-11 h-11 rounded-full border border-sage-deep/20 flex items-center justify-center text-sage-deep active:bg-[#EAF3EE]" aria-label="Mes anterior">
               <i data-lucide="chevron-left" class="w-5 h-5"></i>
             </button>
-            <button type="button" onclick="changeMonth(1)" class="w-10 h-10 rounded-full border border-sage-deep/15 flex items-center justify-center text-sage-deep active:bg-[#EAF3EE]" aria-label="Mes siguiente">
+            <button type="button" onclick="changeMonth(1)" class="w-11 h-11 rounded-full border border-sage-deep/20 flex items-center justify-center text-sage-deep active:bg-[#EAF3EE]" aria-label="Mes siguiente">
               <i data-lucide="chevron-right" class="w-5 h-5"></i>
             </button>
           </div>
         </div>
 
-        <div class="flex items-center gap-4 text-[11px] font-semibold">
+        <div class="flex flex-wrap items-center gap-4 text-xs font-semibold">
           <span class="inline-flex items-center gap-1.5 text-sage-deep">
-            <span class="w-2.5 h-2.5 rounded-full bg-coral"></span> Presencial
+            <span class="w-3 h-3 rounded-full bg-coral"></span> Presencial
           </span>
           <span class="inline-flex items-center gap-1.5 text-sage-deep">
-            <span class="w-2.5 h-2.5 rounded-full bg-sage-deep"></span> Online
+            <span class="w-3 h-3 rounded-full bg-sage-deep"></span> Online
           </span>
           <span class="inline-flex items-center gap-1.5 text-sage-deep">
-            <span class="inline-flex gap-0.5"><span class="w-2 h-2 rounded-full bg-coral"></span><span class="w-2 h-2 rounded-full bg-sage-deep"></span></span> Ambas
+            <span class="inline-flex gap-0.5"><span class="w-2.5 h-2.5 rounded-full bg-coral"></span><span class="w-2.5 h-2.5 rounded-full bg-sage-deep"></span></span> Ambas
           </span>
         </div>
 
-        <div class="grid grid-cols-7 text-center text-[11px] font-bold uppercase tracking-wider text-charcoal-muted">
+        <div class="grid grid-cols-7 text-center text-xs font-bold uppercase tracking-wider text-charcoal-muted">
           <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
         </div>
 
         <div id="cal-grid" class="grid grid-cols-7 gap-1.5 sm:gap-2"></div>
+      </div>
 
-        <!-- Horas del día elegido -->
-        <div class="pt-4 border-t border-sage-deep/10 space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <p id="day-title" class="text-sm font-semibold text-sage-deep">Elige un día destacado en el calendario</p>
-            <span id="day-place-badge" class="hidden text-[11px] font-semibold px-3 py-1 rounded-full bg-[#EAF3EE] text-sage-deep"></span>
+      <!-- 2B: HORAS DEL DÍA ELEGIDO (Reemplaza el calendario en la misma pantalla) -->
+      <div id="step2-hours-card" class="hidden bg-white rounded-3xl p-4 sm:p-5 border-2 border-sage-deep/20 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5">
+            <span id="step2-hours-pulse" class="relative flex h-3 w-3 shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-coral opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-coral"></span>
+            </span>
+            <p id="day-title" class="text-base sm:text-lg font-bold text-sage-deep">Elige la hora</p>
           </div>
-          <div id="slots-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
-          <div id="slot-hover-info" class="hidden rounded-xl px-3 py-2 text-xs font-semibold border"></div>
-          <div id="ambas-modality-picker" class="hidden pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#F9FBFA] p-3 rounded-2xl border border-sage-deep/15">
-            <span class="text-xs font-semibold text-sage-deep">Este bloque admite ambas modalidades:</span>
-            <div class="grid grid-cols-2 gap-2">
-              <button type="button" onclick="chooseSlotModality('presencial')" id="slot-mod-presencial" class="px-3 py-1.5 rounded-xl text-xs font-semibold border bg-coral text-white border-coral">Presencial</button>
-              <button type="button" onclick="chooseSlotModality('online')" id="slot-mod-online" class="px-3 py-1.5 rounded-xl text-xs font-semibold border bg-white text-sage-deep border-sage-deep/20">Online</button>
-            </div>
-          </div>
-          <p id="slots-hint" class="text-xs text-charcoal-muted"></p>
+          <span id="day-place-badge" class="hidden text-xs font-semibold px-3 py-1 rounded-full bg-[#EAF3EE] text-sage-deep"></span>
         </div>
+        <div id="slots-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+        <div id="slot-hover-info" class="hidden rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold border"></div>
+        <div id="ambas-modality-picker" class="hidden pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#F9FBFA] p-3.5 rounded-2xl border-2 border-coral/30">
+          <span class="text-xs sm:text-sm font-bold text-sage-deep">Elige cómo prefieres atenderte en este horario:</span>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="chooseSlotModality('presencial')" id="slot-mod-presencial" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border bg-coral text-white border-coral">Presencial</button>
+            <button type="button" onclick="chooseSlotModality('online')" id="slot-mod-online" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border bg-white text-sage-deep border-sage-deep/20">Online</button>
+          </div>
+        </div>
+        <p id="slots-hint" class="text-xs sm:text-sm font-medium text-charcoal-muted"></p>
       </div>
     </section>
 
@@ -193,25 +224,29 @@
           <button type="button" onclick="setPayMode('total')" id="btn-mode-total" class="py-2.5 rounded-2xl text-xs font-semibold border bg-[#F9FBFA] text-charcoal-muted border-sage-deep/15">Pagar Total</button>
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-3" data-clarity-mask="true">
           <div>
             <label for="p-name" class="block text-xs font-semibold text-sage-deep mb-1">Nombre completo <span class="text-coral">*</span></label>
-            <input id="p-name" type="text" autocomplete="name" placeholder="Tu nombre y apellidos" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+            <input id="p-name" data-clarity-mask="true" type="text" autocomplete="name" placeholder="Tu nombre y apellidos" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="p-phone" class="block text-xs font-semibold text-sage-deep mb-1">Teléfono (WhatsApp) <span class="text-coral">*</span></label>
-              <input id="p-phone" type="tel" autocomplete="tel" placeholder="+56 9 1234 5678" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+              <input id="p-phone" data-clarity-mask="true" type="tel" autocomplete="tel" placeholder="+56 9 1234 5678" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
             </div>
             <div>
-              <label for="p-rut" class="block text-xs font-semibold text-sage-deep mb-1">RUT</label>
-              <input id="p-rut" type="text" onblur="verifySystemCredit()" placeholder="12.345.678-9" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+              <label for="p-rut" class="block text-xs font-semibold text-sage-deep mb-1">RUT <span class="text-coral">*</span></label>
+              <input id="p-rut" data-clarity-mask="true" type="text" required onblur="formatRutInput(this); verifySystemCredit()" placeholder="12.345.678-9" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
             </div>
           </div>
           <div>
             <label for="p-email" class="block text-xs font-semibold text-sage-deep mb-1">Correo electrónico <span class="text-coral">*</span></label>
             <input id="p-email" type="email" autocomplete="email" onblur="verifySystemCredit()" placeholder="nombre@correo.cl" class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
           </div>
+          <label class="flex items-start gap-2.5 pt-1 text-[11px] text-charcoal-muted leading-snug cursor-pointer">
+            <input id="p-privacy" type="checkbox" class="mt-0.5 rounded border-sage-deep/30 text-coral focus:ring-coral" />
+            <span>Autorizo el tratamiento confidencial de mis datos personales y antecedentes de salud para mi atención nutricional clínica, conforme a la Ley 21.719.</span>
+          </label>
         </div>
 
         <div id="verified-credit-banner" class="hidden rounded-2xl bg-[#EAF3EE] border border-sage-deep/20 px-4 py-2.5 text-xs font-semibold text-sage-deep flex items-center gap-2">
@@ -221,7 +256,7 @@
 
         <p id="p-err" class="hidden text-xs font-semibold text-coral"></p>
         <p class="text-[11px] text-charcoal-muted text-center">
-          Al confirmar tu abono con TUU se desbloqueará automáticamente tu Ficha de Ingreso Clínico.
+          Al confirmar tu reserva se activará el formulario de ingreso para facilitar tu primera consulta (si ya te atendiste antes, solo te pediremos el motivo de tu consulta).
         </p>
       </div>
     </section>
@@ -301,11 +336,7 @@
     }
 
     function getActiveBlocks() {
-      try {
-        const local = JSON.parse(localStorage.getItem('nicole_agenda_blocks_v1') || 'null');
-        if (Array.isArray(local) && local.length) return local.filter((b) => b.active);
-      } catch (_) {}
-      return state.blocks.filter((b) => b.active);
+      return (state.blocks || []).filter((b) => b.active);
     }
 
     function getBlocksForDate(dateStr) {
@@ -367,19 +398,20 @@
         const selected = state.selectedDate === dateStr;
 
         if (!open) {
-          html += `<div class="h-12 sm:h-14 rounded-2xl flex items-center justify-center text-xs text-charcoal-muted/35">${day}</div>`;
+          html += `<div class="h-11 sm:h-12 rounded-2xl flex items-center justify-center text-sm text-charcoal-muted/35">${day}</div>`;
         } else {
           const hasOnline = dayBlocks.some((b) => getBlockMod(b) !== 'presencial');
           const hasPresencial = dayBlocks.some((b) => getBlockMod(b) !== 'online');
-          const dots = `${hasPresencial ? '<span class="w-1.5 h-1.5 rounded-full bg-coral"></span>' : ''}${hasOnline ? '<span class="w-1.5 h-1.5 rounded-full bg-sage-deep"></span>' : ''}`;
+          const dots = `${hasPresencial ? '<span class="w-2 h-2 rounded-full bg-coral"></span>' : ''}${hasOnline ? '<span class="w-2 h-2 rounded-full bg-sage-deep"></span>' : ''}`;
+          const attentionRing = !state.selectedDate ? 'ring-2 ring-coral/35 ring-offset-1' : '';
           const baseColor = selected
-            ? 'bg-sage-deep text-white border-sage-deep shadow-sm'
+            ? 'bg-sage-deep text-white border-sage-deep shadow-md scale-[1.03]'
             : (hasPresencial && !hasOnline
-              ? 'bg-[#F9ECE8]/75 text-sage-deep border-coral/30'
-              : 'bg-[#EAF3EE]/75 text-sage-deep border-sage-deep/20');
+              ? `bg-[#F9ECE8] text-sage-deep border-coral/40 hover:border-coral ${attentionRing}`
+              : `bg-[#EAF3EE] text-sage-deep border-sage-deep/30 hover:border-sage-deep ${attentionRing}`);
           html += `
-            <button type="button" onclick="pickDate('${dateStr}')" class="h-12 sm:h-14 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${baseColor}">
-              <span class="text-sm font-bold leading-none">${day}</span>
+            <button type="button" onclick="pickDate('${dateStr}')" class="h-11 sm:h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 transition-all ${baseColor}">
+              <span class="text-sm sm:text-base font-bold leading-none">${day}</span>
               <span class="flex items-center gap-1">${selected ? '<span class="w-1.5 h-1.5 rounded-full bg-white"></span>' : dots}</span>
             </button>
           `;
@@ -388,13 +420,77 @@
       grid.innerHTML = html;
     }
 
+    function resetSelectedDate() {
+      state.selectedDate = '';
+      state.slot = '';
+      document.getElementById('step2-hours-card')?.classList.add('hidden');
+      document.getElementById('step2-calendar-card')?.classList.remove('hidden');
+      renderCalendar();
+      updateStep2Guidance();
+      document.getElementById('step2-calendar-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function updateStep2Guidance() {
+      const kicker = document.getElementById('step2-guide-kicker');
+      const text = document.getElementById('step2-guide-text');
+      const pulse = document.getElementById('step2-guide-pulse');
+      const hoursPulse = document.getElementById('step2-hours-pulse');
+      const changeBtn = document.getElementById('step2-change-day-btn');
+      const forwardBtn = document.getElementById('btn-forward');
+      const forwardText = document.getElementById('btn-forward-text');
+      if (!kicker || !text) return;
+
+      if (!state.selectedDate) {
+        kicker.textContent = 'Paso 1 de tu horario';
+        kicker.className = 'text-[11px] font-bold uppercase tracking-wider text-coral';
+        text.textContent = 'Toca un día con color en el calendario';
+        pulse?.classList.remove('hidden');
+        changeBtn?.classList.add('hidden');
+        if (state.step === 2 && forwardBtn && forwardText) {
+          forwardText.textContent = 'Primero elige un día';
+          forwardBtn.className = 'flex-1 py-3.5 px-5 rounded-2xl bg-sage-deep/50 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm';
+        }
+        return;
+      }
+
+      const niceDate = state.selectedDate.split('-').reverse().join('/');
+      changeBtn?.classList.remove('hidden');
+
+      if (!state.slot) {
+        kicker.textContent = `Día elegido: ${niceDate}`;
+        kicker.className = 'text-[11px] font-bold uppercase tracking-wider text-sage-deep';
+        text.textContent = 'Ahora toca la hora que prefieras abajo';
+        pulse?.classList.remove('hidden');
+        hoursPulse?.classList.remove('hidden');
+        if (state.step === 2 && forwardBtn && forwardText) {
+          forwardText.textContent = 'Ahora elige una hora';
+          forwardBtn.className = 'flex-1 py-3.5 px-5 rounded-2xl bg-sage-deep/70 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm';
+        }
+        return;
+      }
+
+      kicker.textContent = '¡Horario seleccionado!';
+      kicker.className = 'text-[11px] font-bold uppercase tracking-wider text-sage-deep';
+      text.textContent = `${niceDate} a las ${state.slot} hrs · Toca "Continuar al Abono"`;
+      pulse?.classList.add('hidden');
+      hoursPulse?.classList.add('hidden');
+      if (state.step === 2 && forwardBtn && forwardText) {
+        forwardText.textContent = 'Continuar a confirmación';
+        forwardBtn.className = 'flex-1 py-3.5 px-5 rounded-2xl bg-coral text-white text-sm font-bold inline-flex items-center justify-center gap-2 shadow-md animate-pulse';
+      }
+    }
+
     async function pickDate(dateStr, preserveSlot = false) {
       state.selectedDate = dateStr;
       if (!preserveSlot) state.slot = '';
       renderCalendar();
 
+      document.getElementById('step2-calendar-card')?.classList.add('hidden');
+      const hoursCard = document.getElementById('step2-hours-card');
+      hoursCard?.classList.remove('hidden');
+
       const dayBlocks = getBlocksForDate(dateStr);
-      document.getElementById('day-title').textContent = `Horas para el ${dateStr.split('-').reverse().join('/')}`;
+      document.getElementById('day-title').textContent = `Paso 2: Elige la hora (${dateStr.split('-').reverse().join('/')})`;
       const badge = document.getElementById('day-place-badge');
       const hasOnline = dayBlocks.some((b) => getBlockMod(b) !== 'presencial');
       const hasPresencial = dayBlocks.some((b) => getBlockMod(b) !== 'online');
@@ -460,16 +556,18 @@
             ? 'bg-[#EAF3EE] text-sage-deep border-sage-deep/25 hover:border-sage-deep'
             : (isAmbas ? 'bg-white text-sage-deep border-coral/40 hover:border-sage-deep' : 'bg-[#F9ECE8] text-coral border-coral/30 hover:border-coral'));
         return `
-          <button type="button" title="${modTitle}" onmouseenter="showSlotModInfo('${s.time}', '${s.mod}', '${s.sede}')" onfocus="showSlotModInfo('${s.time}', '${s.mod}', '${s.sede}')" onclick="pickSlot('${s.time}', '${s.sede}', '${s.mod}')" class="py-2.5 px-2 rounded-2xl border transition-all flex flex-col items-center justify-center gap-0.5 ${pillClass}">
-            <span class="text-xs font-bold leading-none">${s.time}</span>
-            <span class="inline-flex items-center gap-1 text-[10px] font-medium leading-none opacity-90">${active ? '' : dotHtml}<span>${subLabel}</span></span>
+          <button type="button" title="${modTitle}" onmouseenter="showSlotModInfo('${s.time}', '${s.mod}', '${s.sede}')" onfocus="showSlotModInfo('${s.time}', '${s.mod}', '${s.sede}')" onclick="pickSlot('${s.time}', '${s.sede}', '${s.mod}')" class="py-2.5 px-2 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${pillClass}">
+            <span class="text-sm font-bold leading-none">${s.time}</span>
+            <span class="inline-flex items-center gap-1 text-[10px] font-semibold leading-none opacity-90">${active ? '' : dotHtml}<span>${subLabel}</span></span>
           </button>
         `;
       }).join('');
       if (!preserveSlot) {
         document.getElementById('ambas-modality-picker')?.classList.add('hidden');
         document.getElementById('slot-hover-info')?.classList.add('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
+      updateStep2Guidance();
     }
 
     function showSlotModInfo(time, mod, sede) {
@@ -586,9 +684,9 @@
       state.step = step;
       [1, 2, 3].forEach((n) => document.getElementById(`step-panel-${n}`).classList.toggle('hidden', n !== step));
 
-      const labels = { 1: 'Paso 1 de 3 · Servicio', 2: 'Paso 2 de 3 · Día y hora', 3: 'Paso 3 de 3 · Abono TUU' };
+      const labels = { 1: 'Paso 1 de 3 · Servicio', 2: 'Paso 2 de 3 · Día y hora', 3: 'Paso 3 de 3 · Confirmación' };
       const pcts = { 1: 33, 2: 66, 3: 100 };
-      const nextTexts = { 1: 'Elegir Fecha y Hora', 2: 'Continuar al Abono', 3: 'Reservar y Pagar con TUU' };
+      const nextTexts = { 1: 'Elegir Fecha y Hora', 2: 'Continuar a confirmación', 3: 'Confirmar y pagar' };
 
       document.getElementById('res-step-label').textContent = labels[step];
       document.getElementById('res-step-pct').textContent = `${pcts[step]}%`;
@@ -601,7 +699,17 @@
         ? 'flex-1 py-3.5 px-5 rounded-2xl bg-coral text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm'
         : 'flex-1 py-3.5 px-5 rounded-2xl bg-sage-deep text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm';
 
+      if (step === 2) updateStep2Guidance();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function formatRutInput(el) {
+      if (!el) return;
+      const clean = (el.value || '').replace(/[^0-9kK]/g, '').toUpperCase();
+      if (clean.length < 2) { el.value = clean; return; }
+      const body = clean.slice(0, -1);
+      const dv = clean.slice(-1);
+      el.value = `${body.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${dv}`;
     }
 
     function prevBookingStep() {
@@ -625,15 +733,29 @@
       if (state.step === 3) {
         const name = (document.getElementById('p-name').value || '').trim();
         const phone = (document.getElementById('p-phone').value || '').trim();
+        const rutEl = document.getElementById('p-rut');
+        formatRutInput(rutEl);
+        const rut = (rutEl.value || '').trim();
         const email = (document.getElementById('p-email').value || '').trim();
+        const privacyOk = !!document.getElementById('p-privacy')?.checked;
         const err = document.getElementById('p-err');
-        if (!name || !phone || !email) {
-          err.textContent = 'Completa tu nombre, teléfono y correo electrónico para continuar.';
+        if (!name || !phone || !rut || !email) {
+          err.textContent = 'Completa tu nombre, teléfono, RUT y correo electrónico para continuar.';
+          err.classList.remove('hidden');
+          return;
+        }
+        if (rut.replace(/[^0-9kK]/g, '').length < 7) {
+          err.textContent = 'Ingresa un RUT válido (ej. 12.345.678-9).';
+          err.classList.remove('hidden');
+          return;
+        }
+        if (!privacyOk) {
+          err.textContent = 'Debes autorizar el tratamiento confidencial de tus datos para continuar.';
           err.classList.remove('hidden');
           return;
         }
         err.classList.add('hidden');
-        await startTuuBookingPayment({ name, phone, rut: (document.getElementById('p-rut').value || '').trim(), email });
+        await startTuuBookingPayment({ name, phone, rut, email });
       }
     }
 
@@ -650,10 +772,10 @@
 
       state.isSubmitting = true;
       btn.disabled = true;
-      btnText.textContent = 'Conectando con TUU...';
+      btnText.textContent = 'Preparando pago...';
 
       try {
-        const res = await fetch('/api/tuu-crear-pago', {
+        const res = await fetch('/api/mp-crear-pago', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -677,13 +799,13 @@
           return;
         }
         if (!res.ok || !data.paymentUrl) {
-          throw new Error(data.error || 'No se pudo iniciar el pago en TUU');
+          throw new Error(data.error || 'No se pudo iniciar el pago');
         }
         state.attemptKey = null;
         window.location.href = data.paymentUrl;
       } catch (e) {
         btnText.textContent = prevText;
-        err.textContent = e.message || 'No se pudo iniciar el pago en TUU.';
+        err.textContent = e.message || 'No se pudo iniciar el pago.';
         err.classList.remove('hidden');
       } finally {
         state.isSubmitting = false;
@@ -719,8 +841,6 @@
       } catch (_) {}
 
       renderCalendar();
-      const firstOpen = document.querySelector('#cal-grid button[onclick^="pickDate"]');
-      if (firstOpen) firstOpen.click();
       goBookingStep(preSrv ? 2 : 1);
       if (window.lucide) lucide.createIcons();
     });

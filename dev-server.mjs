@@ -2,8 +2,8 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import tuuCrearPago from './api/tuu-crear-pago.js';
-import tuuWebhook from './api/tuu-webhook.js';
+import mpCrearPago from './api/mp-crear-pago.js';
+import mpWebhook from './api/mp-webhook.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 8080;
@@ -49,7 +49,12 @@ function wrapRes(nodeRes) {
 const server = http.createServer(async (req, res) => {
   const urlPath = (req.url || '/').split('?')[0];
 
-  if (urlPath === '/api/tuu-crear-pago' || urlPath === '/api/tuu-webhook') {
+  const apiHandlers = {
+    '/api/mp-crear-pago': mpCrearPago,
+    '/api/mp-webhook': mpWebhook
+  };
+
+  if (apiHandlers[urlPath]) {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     const raw = Buffer.concat(chunks).toString('utf8');
@@ -59,13 +64,14 @@ const server = http.createServer(async (req, res) => {
     } else {
       try { req.body = raw ? JSON.parse(raw) : {}; } catch (_) { req.body = {}; }
     }
-    const handler = urlPath === '/api/tuu-crear-pago' ? tuuCrearPago : tuuWebhook;
-    return handler(req, wrapRes(res));
+    return apiHandlers[urlPath](req, wrapRes(res));
   }
 
   let filePath = path.join(__dirname, urlPath === '/' ? 'index.html' : decodeURIComponent(urlPath));
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, 'index.html');
+  } else if (!fs.existsSync(filePath) && fs.existsSync(`${filePath}.html`)) {
+    filePath = `${filePath}.html`;
   }
   if (!fs.existsSync(filePath)) {
     res.statusCode = 404;

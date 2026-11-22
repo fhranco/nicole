@@ -1,6 +1,7 @@
 {
   "name": "nicole-nutricion-integrativa",
   "version": "1.0.0",
+  "type": "module",
   "description": "Sitio web de Nicole Borguenson - Nutrición Integrativa & Clínica",
   "scripts": {
     "dev": "python3 -m http.server 8080",

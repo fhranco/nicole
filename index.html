@@ -11,6 +11,15 @@
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="apple-touch-icon" href="favicon-192.png" />
 
+  <!-- Microsoft Clarity (Heatmaps & Navegación - sin datos clínicos) -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "zhpj3f2gd7");
+  </script>
+
   <!-- Google Fonts: Inter, Poppins, Newsreader & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -706,6 +715,54 @@
       transform: translateY(0) scale(1);
       filter: blur(0);
       border-radius: 0rem;
+    }
+
+    main section:not(#inicio)>.max-w-container-max {
+      position: relative;
+      z-index: 2;
+    }
+
+    @keyframes auraFloat {
+      0%, 100% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: var(--op-min, 0.28);
+      }
+      50% {
+        transform: translate3d(var(--dx, 14px), var(--dy, -22px), 0) scale(1.22);
+        opacity: var(--op-max, 0.65);
+      }
+    }
+
+    .aura-particles-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .aura-dot {
+      position: absolute;
+      border-radius: 9999px;
+      will-change: transform, opacity;
+      animation: auraFloat var(--dur, 9s) ease-in-out var(--delay, 0s) infinite;
+    }
+
+    .photo-entrance {
+      opacity: 0;
+      transform: translate3d(0, 28px, 0) scale(0.955);
+      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .photo-entrance.revealed {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .aura-dot { animation: none !important; }
+      .photo-entrance { opacity: 1 !important; transform: none !important; transition: none !important; }
     }
 
     main section:not(#inicio).section-stage-ready>.max-w-container-max {
@@ -1494,7 +1551,7 @@
           <div class="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center reveal-on-scroll stagger-2">
             <div class="lg:col-span-5">
               <div class="relative rounded-3xl overflow-hidden shadow-lg border border-sage-deep/15 bg-white group aspect-[4/3]">
-                <img src="new-enfoque-desk.jpg" alt="Espacio clínico de nutrición biorreguladora" class="w-full h-full object-cover group-hover:scale-103 transition-transform duration-700" loading="lazy" />
+                <img src="assets/nicole-consulta-bata.webp" alt="Nicole Borguenson en consulta de nutrición biorreguladora" class="w-full h-full object-cover object-top group-hover:scale-103 transition-transform duration-700" loading="lazy" />
                 <div class="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-sage-deep/10 flex items-center justify-between text-xs">
                   <span class="font-semibold text-sage-deep">Atención Clínica Integral</span>
                   <span class="text-coral font-bold">Punta Arenas &amp; Online</span>
@@ -2006,7 +2063,7 @@
             <!-- COLUMNA IZQUIERDA: Fotografía de Estudio TEA y Selectividad -->
             <div class="lg:col-span-5 reveal-on-scroll">
               <div class="relative rounded-3xl overflow-hidden shadow-lg border border-coral/20 bg-white group">
-                <img src="new-tea-bowls.jpg" alt="Alimentación respetuosa en TEA y selectividad alimentaria" class="w-full h-[380px] sm:h-[460px] object-cover group-hover:scale-103 transition-transform duration-700" loading="lazy" />
+                <img src="assets/nicole-nutricion-tea.webp" alt="Nicole Borguenson en consulta de nutrición infantil y TEA" class="w-full h-[380px] sm:h-[460px] object-cover object-top group-hover:scale-103 transition-transform duration-700" loading="lazy" />
                 <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#2C5240]/90 via-[#2C5240]/40 to-transparent p-6 text-white">
                   <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-coral text-white text-[11px] font-sans font-bold uppercase tracking-wider mb-2">
                     <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
@@ -2249,15 +2306,9 @@
             <div class="lg:col-span-5">
               <div class="relative">
                 <!-- Imagen Principal de Estudio Epixlife -->
-                <div class="relative rounded-[2rem] overflow-hidden shadow-2xl border-2 border-white/20 bg-[#162C22] aspect-[5/4] group">
-                  <img src="hero-studio-5-epixlife.jpg" alt="Evaluación Epixlife S-Drive - Biotecnología y Nutrición"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
-                  <div class="absolute inset-0 bg-gradient-to-t from-[#162C22]/85 via-transparent to-transparent"></div>
-
-                  <div class="absolute top-4 left-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1E3B2E]/90 backdrop-blur-md border border-white/20 text-white text-xs font-semibold">
-                    <i data-lucide="cpu" class="w-3.5 h-3.5 text-coral"></i>
-                    <span>Tecnología S-Drive · Bulbo Capilar</span>
-                  </div>
+                <div class="relative flex justify-center">
+                  <img src="assets/nicole-epixlife-kit.webp" alt="Toma de muestra de bulbo capilar para Evaluación Epixlife S-Drive"
+                    class="w-full max-w-sm aspect-square object-contain drop-shadow-2xl" loading="lazy" />
                 </div>
 
                 <!-- Tarjeta Flotante Interactiva: Previsualización del Informe Real -->
@@ -3048,7 +3099,7 @@
 
               <!-- Fotografía de Estudio Consultorio / Acompañamiento -->
               <div class="w-full relative rounded-2xl overflow-hidden shadow-md border border-sage-deep/15 bg-white group aspect-[16/9]">
-                <img src="new-acompanamiento-desk.jpg" alt="Espacio de acompañamiento nutricional clínico" class="w-full h-full object-cover group-hover:scale-103 transition-transform duration-700" loading="lazy" />
+                <img src="assets/nicole-pauta-consulta.webp" alt="Nicole Borguenson explicando pauta alimenticia personalizada" class="w-full h-full object-cover object-top group-hover:scale-103 transition-transform duration-700" loading="lazy" />
                 <div class="absolute bottom-3 left-3 right-3 bg-[#2C5240]/85 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20 text-white flex items-center justify-between text-xs">
                   <span class="font-semibold">Consultorio en Punta Arenas &amp; Online</span>
                   <span class="text-[#DCECE3]">Espacio clínico libre de juicios</span>
@@ -3383,7 +3434,7 @@
             <!-- Columna Izquierda: Estudio Clínico & Credenciales UV 2012 -->
             <div class="lg:col-span-5 reveal-on-scroll">
               <div class="relative w-full rounded-[2rem] overflow-hidden shadow-xl border border-sage-deep/15 bg-white group">
-                <img src="new-sobremi-studio.jpg" alt="Consultorio y estudio nutricional Nicole Borguenson" class="w-full h-[380px] sm:h-[460px] object-cover group-hover:scale-103 transition-transform duration-700" loading="lazy" />
+                <img src="assets/nicole-retrato-bata.webp" alt="Nicole Borguenson Fraga - Nutricionista Integrativa" class="w-full h-[380px] sm:h-[460px] object-contain object-bottom pt-4 bg-gradient-to-b from-[#EAF3EE] to-[#DCECE3] group-hover:scale-103 transition-transform duration-700" loading="lazy" />
                 <div class="absolute bottom-4 left-4 right-4 backdrop-blur-xl bg-[#2C5240]/90 border border-white/25 rounded-2xl py-3.5 px-5 text-white shadow-xl flex items-center justify-around">
                   <div class="flex flex-col items-center text-center">
                     <span class="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-white leading-none">2012</span>
@@ -4291,24 +4342,16 @@
         <div class="max-w-container-max mx-auto px-gutter-mobile lg:px-gutter-desktop">
           <div
             class="relative bg-sage-deep rounded-3xl p-space-xl sm:p-space-2xl lg:p-space-3xl overflow-hidden shadow-2xl reveal-on-scroll">
-            <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none">
+            <div class="absolute z-0 -right-16 -bottom-16 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none">
             </div>
-            <div class="absolute -left-16 -top-16 w-80 h-80 rounded-full bg-coral/20 blur-3xl pointer-events-none">
+            <div class="absolute z-0 -left-16 -top-16 w-80 h-80 rounded-full bg-coral/20 blur-3xl pointer-events-none">
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
 
               <!-- Columna Izquierda: Estudio Clínico Moderno -->
-              <div class="lg:col-span-5 flex justify-center">
-                <div class="relative w-full max-w-sm sm:max-w-md rounded-2xl overflow-hidden shadow-2xl border border-white/25 aspect-[4/3] group">
-                  <img src="new-contacto-desk.jpg" alt="Consultorio Punta Arenas & Online Chile" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
-                  <div class="absolute bottom-3 left-3 right-3 bg-[#2C5240]/85 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 text-white flex items-center justify-between text-xs">
-                    <div class="flex items-center gap-1.5 font-medium">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                      <span>Consultorio Punta Arenas &amp; Online Chile</span>
-                    </div>
-                  </div>
-                </div>
+              <div class="lg:col-span-5 flex justify-center relative z-20">
+                <img src="assets/nicole-hidratacion-frutas.webp" alt="Nicole Borguenson - Consultorio Punta Arenas y Online Chile" class="relative z-20 w-full max-w-md lg:max-w-lg h-auto object-contain drop-shadow-2xl" loading="lazy" />
               </div>
 
               <!-- Mensaje Oficial y Acciones -->
@@ -8065,6 +8108,62 @@
       }
     });
 
+    // Partículas orgánicas detrás de las secciones + animaciones de entrada para fotografías
+    (function initAuraAndPhotoEntrance() {
+      const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const photoImgs = document.querySelectorAll('img[src^="assets/nicole-"]');
+      photoImgs.forEach((img) => {
+        const target = img.closest('.relative') || img;
+        target.classList.add('photo-entrance');
+        if (!reducedMotion && 'IntersectionObserver' in window) {
+          const io = new IntersectionObserver((entries, obs) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                obs.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.14 });
+          io.observe(target);
+        } else {
+          target.classList.add('revealed');
+        }
+      });
+
+      if (reducedMotion) return;
+
+      const stageIds = ['enfoque', 'tea', 'epixlife', 'acompanamiento', 'sobre-mi', 'contacto'];
+      stageIds.forEach((id) => {
+        const sec = document.getElementById(id);
+        if (!sec || sec.querySelector('.aura-particles-layer')) return;
+        const isDark = id === 'epixlife' || id === 'contacto';
+        const layer = document.createElement('div');
+        layer.className = 'aura-particles-layer';
+        layer.setAttribute('aria-hidden', 'true');
+
+        const colors = isDark
+          ? ['rgba(255,255,255,0.42)', 'rgba(224,122,95,0.45)', 'rgba(184,212,199,0.45)']
+          : ['rgba(129,178,154,0.38)', 'rgba(224,122,95,0.28)', 'rgba(44,82,64,0.18)'];
+
+        for (let i = 0; i < 14; i++) {
+          const dot = document.createElement('span');
+          dot.className = 'aura-dot';
+          const size = 4 + ((i * 7) % 10);
+          dot.style.width = `${size}px`;
+          dot.style.height = `${size}px`;
+          dot.style.left = `${(i * 19 + 7) % 94}%`;
+          dot.style.top = `${(i * 29 + 11) % 88}%`;
+          dot.style.background = colors[i % colors.length];
+          dot.style.filter = size > 10 ? 'blur(1.5px)' : 'none';
+          dot.style.setProperty('--dx', `${(i % 2 === 0 ? 1 : -1) * (10 + (i % 12))}px`);
+          dot.style.setProperty('--dy', `${-14 - (i % 16)}px`);
+          dot.style.setProperty('--dur', `${7 + (i % 5)}s`);
+          dot.style.setProperty('--delay', `${-(i * 0.7).toFixed(1)}s`);
+          layer.appendChild(dot);
+        }
+        sec.insertBefore(layer, sec.firstChild);
+      });
+    })();
   </script>
 </body>
 

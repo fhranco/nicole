@@ -115,7 +115,7 @@
 
   <!-- CONTENIDO PRINCIPAL -->
   <main class="flex-1 lg:pl-64 pb-24 lg:pb-12">
-    <div class="max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
 
       <!-- BANNER SEPARACIÓN ESTRICTA DEMO VS PRODUCCIÓN -->
       <div id="env-banner" class="rounded-2xl px-4 py-3 border bg-cream-soft border-cream text-xs text-sage-deep flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -452,29 +452,62 @@
             <button type="button" onclick="wizSetFreq('date')" id="wfreq-date" class="min-h-[44px] rounded-2xl text-xs font-semibold border bg-white text-sage-deep border-sage/25">Fecha específica / Gira</button>
           </div>
 
-          <div id="wiz-days-wrap" class="grid grid-cols-7 gap-1.5">
-            <button type="button" onclick="wizToggleDay(1)" data-wday="1" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Lu</button>
-            <button type="button" onclick="wizToggleDay(2)" data-wday="2" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-sage-soft border-sage text-sage-deep">Ma</button>
-            <button type="button" onclick="wizToggleDay(3)" data-wday="3" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Mi</button>
-            <button type="button" onclick="wizToggleDay(4)" data-wday="4" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Ju</button>
-            <button type="button" onclick="wizToggleDay(5)" data-wday="5" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Vi</button>
-            <button type="button" onclick="wizToggleDay(6)" data-wday="6" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Sá</button>
-            <button type="button" onclick="wizToggleDay(0)" data-wday="0" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Do</button>
+          <div id="wiz-days-wrap" class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-sage-deep/70">Elige los días de atención</span>
+              <button type="button" onclick="wizToggleAllDays()" id="wiz-all-days-btn" class="text-[11px] font-semibold text-sage-deep underline underline-offset-2">Seleccionar todos los días</button>
+            </div>
+            <div class="grid grid-cols-7 gap-1.5">
+              <button type="button" onclick="wizToggleDay(1)" data-wday="1" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Lu</button>
+              <button type="button" onclick="wizToggleDay(2)" data-wday="2" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-sage-soft border-sage text-sage-deep">Ma</button>
+              <button type="button" onclick="wizToggleDay(3)" data-wday="3" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Mi</button>
+              <button type="button" onclick="wizToggleDay(4)" data-wday="4" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Ju</button>
+              <button type="button" onclick="wizToggleDay(5)" data-wday="5" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Vi</button>
+              <button type="button" onclick="wizToggleDay(6)" data-wday="6" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Sá</button>
+              <button type="button" onclick="wizToggleDay(0)" data-wday="0" class="wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep">Do</button>
+            </div>
           </div>
 
           <div id="wiz-date-wrap" class="hidden">
-            <input id="wiz-date" type="date" onchange="updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+            <input id="wiz-date" type="date" onchange="pruneBlockedWizardSlots(); renderWizardSlots(); updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label for="wiz-start" class="block text-xs font-semibold text-sage-deep mb-1">Hora de inicio</label>
-            <input id="wiz-start" type="time" value="09:00" onchange="updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-xs font-semibold text-sage-deep">4. ¿En qué bloques horarios?</p>
+            <div class="inline-flex rounded-xl border border-sage/20 p-0.5 bg-sage-soft/40">
+              <button type="button" onclick="wizSetTimeMode('slots')" id="wtime-slots" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-sage-deep text-white">Por bloques</button>
+              <button type="button" onclick="wizSetTimeMode('custom')" id="wtime-custom" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-sage-deep">Personalizado</button>
+            </div>
           </div>
-          <div>
-            <label for="wiz-end" class="block text-xs font-semibold text-sage-deep mb-1">Hora de término</label>
-            <input id="wiz-end" type="time" value="14:00" onchange="updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+
+          <div id="wiz-slots-wrap" class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-sage-deep/70">Bloques de 1 hora (09:00 a 21:00)</span>
+              <div class="flex items-center gap-3">
+                <button type="button" onclick="wizSelectAllSlots(true)" class="text-[11px] font-semibold text-sage-deep underline underline-offset-2">Todos (09–21)</button>
+                <button type="button" onclick="wizSelectAllSlots(false)" class="text-[11px] font-semibold text-sage-deep/70 underline underline-offset-2">Limpiar</button>
+              </div>
+            </div>
+            <div id="wiz-slots-grid" class="grid grid-cols-3 gap-1.5"></div>
+          </div>
+
+          <div id="wiz-custom-wrap" class="hidden space-y-2.5">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="wiz-start" class="block text-xs font-semibold text-sage-deep mb-1">Hora de inicio</label>
+                <input id="wiz-start" type="time" value="09:00" onchange="updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+              </div>
+              <div>
+                <label for="wiz-end" class="block text-xs font-semibold text-sage-deep mb-1">Hora de término</label>
+                <input id="wiz-end" type="time" value="21:00" onchange="updateWizardPreview()" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+              </div>
+            </div>
+            <label class="flex items-center gap-2 text-xs text-sage-deep/85 cursor-pointer">
+              <input id="wiz-split-hourly" type="checkbox" checked onchange="updateWizardPreview()" class="rounded border-sage/30" />
+              Dividir automáticamente en bloques de 1 hora
+            </label>
           </div>
         </div>
 
@@ -649,7 +682,7 @@
       submitting: false,
       prodBlocks: [],
       prodBookings: [],
-      wizard: { editId: null, mod: 'presencial', freq: 'weekly', days: [2] },
+      wizard: { editId: null, mod: 'presencial', freq: 'weekly', days: [2], timeMode: 'slots', slots: ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00'] },
       confirmAction: null,
       activeModalId: null,
       lastFocusedEl: null
@@ -661,6 +694,12 @@
     // =========================================================================
     // F7.6: TOASTS, SKELETONS Y GESTIÓN DE FOCO / TECLADO EN MODALES
     // =========================================================================
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[ch]);
+    }
+
     function showToast(message, type = 'success') {
       const wrap = document.getElementById('toast-container');
       if (!wrap) return;
@@ -669,7 +708,9 @@
         ? 'bg-coral-soft border-coral/40 text-sage-deep'
         : 'bg-white border-sage/35 text-sage-deep';
       el.className = `pointer-events-auto rounded-2xl border px-4 py-3 shadow-lg text-xs font-semibold flex items-center justify-between gap-2 ${style}`;
-      el.innerHTML = `<span>${message}</span>`;
+      const span = document.createElement('span');
+      span.textContent = String(message ?? '');
+      el.appendChild(span);
       wrap.appendChild(el);
       setTimeout(() => el.remove(), 3800);
     }
@@ -1093,11 +1134,11 @@
             <p class="font-bold">${b.start} – ${b.end}</p>
             <p class="text-[11px] opacity-85">${modText}${!b.active ? ' (Pausado)' : ''}</p>
           </div>
-          <div class="flex flex-wrap gap-1.5 pt-1">
-            <button type="button" onclick="openAvailabilityWizard('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold">Editar</button>
-            <button type="button" onclick="duplicateBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold">Duplicar</button>
-            <button type="button" onclick="confirmToggleBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold">${b.active ? 'Pausar' : 'Activar'}</button>
-            <button type="button" onclick="confirmDeleteBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-coral/30 text-coral text-[11px] font-semibold">Eliminar</button>
+          <div class="grid grid-cols-2 gap-1.5 pt-1">
+            <button type="button" onclick="openAvailabilityWizard('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">Editar</button>
+            <button type="button" onclick="duplicateBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">Duplicar</button>
+            <button type="button" onclick="confirmToggleBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">${b.active ? 'Pausar' : 'Activar'}</button>
+            <button type="button" onclick="confirmDeleteBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-coral/30 text-coral text-[11px] font-semibold text-center">Eliminar</button>
           </div>
         </div>
       `;
@@ -1144,11 +1185,11 @@
         const monday = new Date(c);
         monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
         const endWeek = new Date(monday);
-        endWeek.setDate(endWeek.getDate() + 6);
+        endWeek.setDate(endWeek.getDate() + 5);
         titleEl.textContent = `${monday.getDate()} ${MONTHS_ES[monday.getMonth()].slice(0, 3)} – ${endWeek.getDate()} ${MONTHS_ES[endWeek.getMonth()].slice(0, 3)} ${endWeek.getFullYear()}`;
 
         let cols = '';
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 6; i++) {
           const d = new Date(monday); d.setDate(monday.getDate() + i);
           const ds = formatDateLocal(d);
           const dayBlocks = blocksForDay(ds);
@@ -1171,7 +1212,7 @@
             </div>
           `;
         }
-        container.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">${cols}</div>`;
+        container.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">${cols}</div>`;
         return;
       }
 
@@ -1202,6 +1243,44 @@
       `;
     }
 
+    const WIZARD_HOURLY_SLOTS = Array.from({ length: 12 }, (_, idx) => {
+      const h1 = String(9 + idx).padStart(2, '0');
+      const h2 = String(10 + idx).padStart(2, '0');
+      return `${h1}:00-${h2}:00`;
+    });
+
+    function toMin(hhmm) {
+      const [h, m] = String(hhmm || '').split(':').map(Number);
+      return Number.isFinite(h) && Number.isFinite(m) ? (h * 60 + m) : NaN;
+    }
+
+    function fromMin(mins) {
+      return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+    }
+
+    function getWizardTimeBlocks() {
+      if (appState.wizard.timeMode === 'slots') {
+        return [...appState.wizard.slots]
+          .sort()
+          .map((s) => {
+            const [start, end] = s.split('-');
+            return { start, end };
+          });
+      }
+      const start = document.getElementById('wiz-start').value;
+      const end = document.getElementById('wiz-end').value;
+      const ini = toMin(start);
+      const fin = toMin(end);
+      if (!Number.isFinite(ini) || !Number.isFinite(fin) || fin <= ini) return [];
+      const splitHourly = !!document.getElementById('wiz-split-hourly')?.checked;
+      if (!splitHourly) return [{ start, end }];
+      const out = [];
+      for (let t = ini; t < fin; t += 60) {
+        out.push({ start: fromMin(t), end: fromMin(Math.min(t + 60, fin)) });
+      }
+      return out;
+    }
+
     function openAvailabilityWizard(editId = null) {
       appState.wizard.editId = editId;
       document.getElementById('wiz-err').classList.add('hidden');
@@ -1211,20 +1290,61 @@
           appState.wizard.mod = b.modalidad || 'presencial';
           appState.wizard.freq = b.type;
           appState.wizard.days = b.type === 'weekly' ? [Number(b.day)] : [];
+          appState.wizard.timeMode = 'custom';
+          appState.wizard.slots = [];
           document.getElementById('wiz-start').value = b.start;
           document.getElementById('wiz-end').value = b.end;
+          document.getElementById('wiz-split-hourly').checked = false;
           if (b.date) document.getElementById('wiz-date').value = b.date;
           const radio = document.querySelector(`input[name="wiz-sede"][value="${b.sede}"]`);
           if (radio) radio.checked = true;
         }
       } else {
-        appState.wizard = { editId: null, mod: 'presencial', freq: 'weekly', days: [2] };
+        appState.wizard = {
+          editId: null,
+          mod: 'presencial',
+          freq: 'weekly',
+          days: [2],
+          timeMode: 'slots',
+          slots: ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00']
+        };
+        document.getElementById('wiz-split-hourly').checked = true;
       }
       wizSetMod(appState.wizard.mod);
       wizSetFreq(appState.wizard.freq);
+      wizSetTimeMode(appState.wizard.timeMode);
       renderWizardDays();
+      pruneBlockedWizardSlots();
+      renderWizardSlots();
       updateWizardPreview();
       openModal('wizard-modal');
+    }
+
+    function getWizardSlotStatus(slot) {
+      const [start, end] = slot.split('-');
+      const dateVal = document.getElementById('wiz-date')?.value || '';
+      if (appState.wizard.freq === 'weekly') {
+        for (const day of appState.wizard.days) {
+          const conflict = findOverlappingBlock({ type: 'weekly', day, date: '', start, end }, appState.wizard.editId);
+          if (conflict) return { blocked: true, reason: 'Ocupado' };
+        }
+        return { blocked: false };
+      }
+      if (!dateVal) return { blocked: false };
+      const blockConflict = findOverlappingBlock({ type: 'date', day: null, date: dateVal, start, end }, appState.wizard.editId);
+      if (blockConflict) return { blocked: true, reason: 'Ocupado' };
+      const bookingConflict = getBookings().some((r) => (
+        r.fechaIso === dateVal &&
+        r.estado !== 'cancelada' &&
+        r.hora >= start &&
+        r.hora < end
+      ));
+      if (bookingConflict) return { blocked: true, reason: 'Reservado' };
+      return { blocked: false };
+    }
+
+    function pruneBlockedWizardSlots() {
+      appState.wizard.slots = appState.wizard.slots.filter((s) => !getWizardSlotStatus(s).blocked);
     }
 
     function wizSetMod(mod) {
@@ -1249,6 +1369,8 @@
         : 'min-h-[44px] rounded-2xl text-xs font-semibold border bg-white text-sage-deep border-sage/25';
       document.getElementById('wiz-days-wrap').classList.toggle('hidden', freq !== 'weekly');
       document.getElementById('wiz-date-wrap').classList.toggle('hidden', freq !== 'date');
+      pruneBlockedWizardSlots();
+      renderWizardSlots();
       updateWizardPreview();
     }
 
@@ -1257,6 +1379,17 @@
       if (idx >= 0) appState.wizard.days.splice(idx, 1);
       else appState.wizard.days.push(d);
       renderWizardDays();
+      pruneBlockedWizardSlots();
+      renderWizardSlots();
+      updateWizardPreview();
+    }
+
+    function wizToggleAllDays() {
+      const allDays = [1, 2, 3, 4, 5, 6, 0];
+      appState.wizard.days = appState.wizard.days.length === 7 ? [] : [...allDays];
+      renderWizardDays();
+      pruneBlockedWizardSlots();
+      renderWizardSlots();
       updateWizardPreview();
     }
 
@@ -1267,6 +1400,54 @@
           ? 'wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-sage-soft border-sage text-sage-deep'
           : 'wday-btn min-h-[44px] rounded-xl text-xs font-semibold border bg-white border-sage/25 text-sage-deep';
       });
+      const allBtn = document.getElementById('wiz-all-days-btn');
+      if (allBtn) {
+        allBtn.textContent = appState.wizard.days.length === 7 ? 'Quitar todos' : 'Seleccionar todos los días';
+      }
+    }
+
+    function wizSetTimeMode(mode) {
+      appState.wizard.timeMode = mode;
+      document.getElementById('wtime-slots').className = mode === 'slots'
+        ? 'px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-sage-deep text-white'
+        : 'px-2.5 py-1 rounded-lg text-[11px] font-semibold text-sage-deep';
+      document.getElementById('wtime-custom').className = mode === 'custom'
+        ? 'px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-sage-deep text-white'
+        : 'px-2.5 py-1 rounded-lg text-[11px] font-semibold text-sage-deep';
+      document.getElementById('wiz-slots-wrap').classList.toggle('hidden', mode !== 'slots');
+      document.getElementById('wiz-custom-wrap').classList.toggle('hidden', mode !== 'custom');
+      updateWizardPreview();
+    }
+
+    function wizToggleSlot(slot) {
+      if (getWizardSlotStatus(slot).blocked) return;
+      const idx = appState.wizard.slots.indexOf(slot);
+      if (idx >= 0) appState.wizard.slots.splice(idx, 1);
+      else appState.wizard.slots.push(slot);
+      renderWizardSlots();
+      updateWizardPreview();
+    }
+
+    function wizSelectAllSlots(all) {
+      appState.wizard.slots = all
+        ? WIZARD_HOURLY_SLOTS.filter((s) => !getWizardSlotStatus(s).blocked)
+        : [];
+      renderWizardSlots();
+      updateWizardPreview();
+    }
+
+    function renderWizardSlots() {
+      const grid = document.getElementById('wiz-slots-grid');
+      if (!grid) return;
+      grid.innerHTML = WIZARD_HOURLY_SLOTS.map((slot) => {
+        const status = getWizardSlotStatus(slot);
+        const active = !status.blocked && appState.wizard.slots.includes(slot);
+        const [s, e] = slot.split('-');
+        if (status.blocked) {
+          return `<button type="button" disabled title="Horario ya ocupado" class="min-h-[44px] rounded-xl text-[11px] font-semibold border bg-stone-100 border-stone-200 text-sage-deep/40 cursor-not-allowed leading-tight px-1"><span class="line-through">${s} – ${e}</span><span class="block text-[9px] font-medium text-coral/80">${status.reason}</span></button>`;
+        }
+        return `<button type="button" onclick="wizToggleSlot('${slot}')" class="min-h-[44px] rounded-xl text-[11px] font-semibold border transition ${active ? 'bg-sage-soft border-sage text-sage-deep' : 'bg-white border-sage/25 text-sage-deep/75 hover:border-sage/50'}">${s} – ${e}</button>`;
+      }).join('');
     }
 
     function updateWizardPreview() {
@@ -1274,35 +1455,47 @@
         ? 'Online · Meet'
         : SEDES[document.querySelector('input[name="wiz-sede"]:checked')?.value || 'punta_arenas'];
       const modTxt = appState.wizard.mod === 'ambas' ? 'Presencial u Online' : (appState.wizard.mod === 'online' ? 'Solo Online' : 'Solo Presencial');
-      const start = document.getElementById('wiz-start').value;
-      const end = document.getElementById('wiz-end').value;
+      const timeBlocks = getWizardTimeBlocks();
+      const timeTxt = timeBlocks.length
+        ? (timeBlocks.length <= 3
+          ? timeBlocks.map((t) => `${t.start}–${t.end}`).join(', ')
+          : `${timeBlocks.length} bloques (${timeBlocks[0].start} a ${timeBlocks[timeBlocks.length - 1].end} hrs)`)
+        : 'Sin bloques seleccionados';
       const when = appState.wizard.freq === 'weekly'
-        ? (appState.wizard.days.length ? appState.wizard.days.map((d) => DAYS_FULL[d]).join(', ') : 'Sin días seleccionados')
+        ? (appState.wizard.days.length === 7
+          ? 'Todos los días (Lu–Do)'
+          : (appState.wizard.days.length ? appState.wizard.days.map((d) => DAYS_FULL[d]).join(', ') : 'Sin días seleccionados'))
         : (document.getElementById('wiz-date').value || 'Sin fecha seleccionada');
-      document.getElementById('wiz-preview-text').textContent = `${modTxt} · ${sede} · ${when} · ${start} a ${end} hrs`;
+      document.getElementById('wiz-preview-text').textContent = `${modTxt} · ${sede} · ${when} · ${timeTxt}`;
     }
 
     async function saveWizardAvailability() {
       if (appState.submitting) return;
       const err = document.getElementById('wiz-err');
       const btn = document.getElementById('wiz-save-btn');
-      const start = document.getElementById('wiz-start').value;
-      const end = document.getElementById('wiz-end').value;
       const dateVal = document.getElementById('wiz-date').value;
+      const timeBlocks = getWizardTimeBlocks();
 
-      if (!start || !end || start >= end) { err.textContent = 'La hora de término debe ser mayor a la de inicio.'; err.classList.remove('hidden'); return; }
+      if (!timeBlocks.length) {
+        err.textContent = appState.wizard.timeMode === 'slots'
+          ? 'Selecciona al menos un bloque horario.'
+          : 'La hora de término debe ser mayor a la de inicio.';
+        err.classList.remove('hidden');
+        return;
+      }
       if (appState.wizard.freq === 'weekly' && !appState.wizard.days.length) { err.textContent = 'Selecciona al menos un día.'; err.classList.remove('hidden'); return; }
       if (appState.wizard.freq === 'date' && !dateVal) { err.textContent = 'Selecciona una fecha específica.'; err.classList.remove('hidden'); return; }
 
       const sede = appState.wizard.mod === 'online' ? 'online' : (document.querySelector('input[name="wiz-sede"]:checked')?.value || 'punta_arenas');
       const candidates = appState.wizard.freq === 'weekly'
-        ? appState.wizard.days.map((day) => ({ sede, modalidad: appState.wizard.mod, type: 'weekly', day, date: '', start, end, dur: 60, active: true }))
-        : [{ sede, modalidad: appState.wizard.mod, type: 'date', day: null, date: dateVal, start, end, dur: 60, active: true }];
+        ? appState.wizard.days.flatMap((day) => timeBlocks.map((t) => ({ sede, modalidad: appState.wizard.mod, type: 'weekly', day, date: '', start: t.start, end: t.end, dur: 60, active: true })))
+        : timeBlocks.map((t) => ({ sede, modalidad: appState.wizard.mod, type: 'date', day: null, date: dateVal, start: t.start, end: t.end, dur: 60, active: true }));
 
       for (const cand of candidates) {
         const conflict = findOverlappingBlock(cand, appState.wizard.editId);
         if (conflict) {
-          err.textContent = `Superposición detectada con bloque existente (${conflict.start}–${conflict.end}). Nicole atiende un bloque a la vez.`;
+          const dayLabel = cand.type === 'weekly' ? DAYS_FULL[cand.day] : cand.date;
+          err.textContent = `Superposición en ${dayLabel} (${conflict.start}–${conflict.end}). Nicole atiende un bloque a la vez.`;
           err.classList.remove('hidden');
           return;
         }
@@ -1444,14 +1637,14 @@
         <div class="bg-white rounded-3xl p-5 border border-sage/20 flex items-center justify-between gap-4">
           <div class="min-w-0 space-y-1">
             <div class="flex flex-wrap items-center gap-2">
-              <h3 class="text-sm font-bold text-sage-deep truncate">${r.paciente}</h3>
+              <h3 class="text-sm font-bold text-sage-deep truncate">${escapeHtml(r.paciente)}</h3>
               <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${r.ficha ? 'bg-sage-soft text-sage-deep' : 'bg-coral-soft text-coral'}">
                 ${r.ficha ? 'Ficha lista' : 'Ficha pendiente'}
               </span>
             </div>
-            <p class="text-xs text-sage-deep/75 truncate">${r.servicio} · ${SEDES[r.sede] || r.sede}</p>
+            <p class="text-xs text-sage-deep/75 truncate">${escapeHtml(r.servicio)} · ${escapeHtml(SEDES[r.sede] || r.sede)}</p>
           </div>
-          <button type="button" onclick="openPatientDrawer('${r.id}')" class="min-h-[44px] px-4 rounded-2xl bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep shrink-0">
+          <button type="button" onclick="openPatientDrawer('${escapeHtml(r.id)}')" class="min-h-[44px] px-4 rounded-2xl bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep shrink-0">
             Ver detalle
           </button>
         </div>
@@ -1468,8 +1661,8 @@
       const bodyEl = document.getElementById('drawer-patient-body');
       bodyEl.innerHTML = `
         <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5 text-xs">
-          <p><strong>Contacto:</strong> ${r.telefono || '-'} · ${r.email || '-'}</p>
-          <p><strong>Cita:</strong> ${r.fechaIso.split('-').reverse().join('/')} · ${r.hora} hrs (${SEDES[r.sede] || r.sede})</p>
+          <p><strong>Contacto:</strong> ${escapeHtml(r.telefono || '-')} · ${escapeHtml(r.email || '-')}</p>
+          <p><strong>Cita:</strong> ${escapeHtml(r.fechaIso.split('-').reverse().join('/'))} · ${escapeHtml(r.hora)} hrs (${escapeHtml(SEDES[r.sede] || r.sede)})</p>
         </div>
         <div class="p-4 rounded-2xl bg-sage-soft/50 border border-sage/20 space-y-1.5 text-xs">
           <p><strong>Valor servicio:</strong> ${fmtCLP(r.total)}</p>
@@ -1480,10 +1673,10 @@
           <div class="skeleton-box h-12"></div>
         </div>
         <div class="flex flex-col gap-2.5 pt-1">
-          <a href="ingreso-paciente.html?token=${r.token}" target="_blank" class="min-h-[46px] rounded-2xl bg-sage-deep text-white text-xs font-semibold flex items-center justify-center gap-2">
+          <a href="ingreso-paciente.html?token=${encodeURIComponent(r.token || '')}" target="_blank" class="min-h-[46px] rounded-2xl bg-sage-deep text-white text-xs font-semibold flex items-center justify-center gap-2">
             <i data-lucide="clipboard-list" class="w-4 h-4"></i> Abrir enlace de ficha
           </a>
-          ${saldo > 0 ? `<button type="button" onclick="closeModal('patient-drawer'); openQuickPaymentModal('${r.id}')" class="min-h-[46px] rounded-2xl bg-coral text-white text-xs font-semibold">Registrar pago de saldo</button>` : ''}
+          ${saldo > 0 ? `<button type="button" onclick="closeModal('patient-drawer'); openQuickPaymentModal('${escapeHtml(r.id)}')" class="min-h-[46px] rounded-2xl bg-coral text-white text-xs font-semibold">Registrar pago de saldo</button>` : ''}
         </div>
       `;
       openModal('patient-drawer');
@@ -1498,13 +1691,13 @@
       }
 
       try {
-        const rows = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?reserva_id=eq.${r.id}&select=motivo_consulta,enfermedades_actuales,tratamiento_actual,fecha_hoy&limit=1`);
+        const rows = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?reserva_id=eq.${encodeURIComponent(r.id)}&select=motivo_consulta,enfermedades_actuales,tratamiento_actual,fecha_hoy&limit=1`);
         const f = rows?.[0];
         fichaBox.innerHTML = f
-          ? `<p><strong>Fecha ficha:</strong> ${f.fecha_hoy || '-'}</p><p><strong>Motivo:</strong> ${f.motivo_consulta || '-'}</p><p><strong>Antecedentes:</strong> ${f.enfermedades_actuales || '-'}</p>`
+          ? `<p><strong>Fecha ficha:</strong> ${escapeHtml(f.fecha_hoy || '-')}</p><p><strong>Motivo:</strong> ${escapeHtml(f.motivo_consulta || '-')}</p><p><strong>Antecedentes:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>`
           : '<p class="text-sage-deep/70">Ficha clínica aún no ingresada para esta reserva.</p>';
       } catch (e) {
-        fichaBox.innerHTML = `<p class="text-coral">No pudimos cargar los antecedentes (${e.message}).</p>`;
+        fichaBox.innerHTML = `<p class="text-coral">No pudimos cargar los antecedentes (${escapeHtml(e.message)}).</p>`;
       }
     }
 
@@ -1551,13 +1744,13 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div class="flex flex-wrap items-center gap-2">
-                  <h3 class="text-base font-bold text-sage-deep">${r.paciente}</h3>
+                  <h3 class="text-base font-bold text-sage-deep">${escapeHtml(r.paciente)}</h3>
                   <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${saldo === 0 ? 'bg-sage-soft text-sage-deep' : 'bg-coral-soft text-coral'}">
                     ${saldo === 0 ? 'Pagado 100%' : 'Abono parcial'}
                   </span>
                   ${hasReconcile ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-coral text-white">Conciliar pago tardío</span>' : ''}
                 </div>
-                <p class="text-xs text-sage-deep/75 mt-0.5">${r.servicio}</p>
+                <p class="text-xs text-sage-deep/75 mt-0.5">${escapeHtml(r.servicio)}</p>
               </div>
               ${saldo > 0 ? `<button type="button" onclick="openQuickPaymentModal('${r.id}')" class="min-h-[44px] px-4 rounded-2xl bg-coral text-white text-xs font-semibold shrink-0">+ Registrar pago</button>` : ''}
             </div>
@@ -1596,7 +1789,7 @@
       resetPaymentKey();
       document.getElementById('pay-err').classList.add('hidden');
       const sel = document.getElementById('pay-booking-select');
-      sel.innerHTML = bookings.map((b) => `<option value="${b.id}" ${b.id === preselectedId ? 'selected' : ''}>${b.paciente} — Saldo ${fmtCLP(Math.max(0, b.total - (b.credito || 0) - (b.abonado || 0)))}</option>`).join('');
+      sel.innerHTML = bookings.map((b) => `<option value="${escapeHtml(b.id)}" ${b.id === preselectedId ? 'selected' : ''}>${escapeHtml(b.paciente)} — Saldo ${fmtCLP(Math.max(0, b.total - (b.credito || 0) - (b.abonado || 0)))}</option>`).join('');
       prefillPaymentAmount();
       openModal('payment-modal');
     }

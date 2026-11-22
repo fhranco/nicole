@@ -88,15 +88,82 @@
       <div class="space-y-2">
         <h1 class="text-xl sm:text-2xl font-semibold text-sage-deep">Acceso exclusivo para pacientes con reserva</h1>
         <p id="gate-message" class="text-sm text-charcoal-muted leading-relaxed font-body">
-          Esta ficha clínica se habilita automáticamente después de agendar tu hora y confirmar tu abono de reserva.
+          Este formulario de ingreso se activa automáticamente después de confirmar tu reserva para facilitar tu primera consulta.
         </p>
       </div>
       <div class="pt-2 flex flex-col gap-3">
-        <a href="index.html#reservas" class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-coral text-white text-sm font-semibold shadow-sm">
+        <a href="reservar.html" class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-coral text-white text-sm font-semibold shadow-sm">
           <i data-lucide="calendar" class="w-4 h-4"></i>
-          <span>Ir a Reservar y Abonar</span>
+          <span>Ir a Reservar</span>
         </a>
         <a href="index.html" class="text-xs font-semibold text-sage-deep underline underline-offset-4">Volver al sitio principal</a>
+      </div>
+    </section>
+
+    <!-- BIENVENIDA: AGRADECIMIENTO POR EL PAGO + EXPLICACIÓN PREVIA -->
+    <section id="intake-welcome-screen" class="hidden step-enter bg-white rounded-3xl p-6 sm:p-8 border border-sage-deep/15 shadow-sm space-y-5">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-[#EAF3EE] text-sage-deep flex items-center justify-center shrink-0">
+          <i data-lucide="check-circle-2" class="w-6 h-6 text-coral"></i>
+        </div>
+        <div>
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Tu espacio clínico</span>
+          <h1 class="text-xl sm:text-2xl font-semibold text-sage-deep mt-0.5">¡Gracias por confiar en mí para cuidar tu salud<span id="welcome-patient-name"></span>!</h1>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-[#F9FBFA] border border-sage-deep/10 p-4 space-y-2.5 text-sm text-charcoal-muted leading-relaxed font-body">
+        <p class="font-semibold text-sage-deep">¿Por qué te pido completar este formulario antes de vernos?</p>
+        <p>
+          Quiero que nuestra consulta sea un espacio cercano, tranquilo y realmente útil para ti. Con tus respuestas podré conocer tu historia, tus síntomas y tus objetivos con anticipación, para dedicarte toda mi atención desde el primer minuto.
+        </p>
+        <p class="text-xs text-sage-deep/85 pt-0.5">
+          Todo lo que compartas conmigo es estrictamente confidencial y exclusivo para tu atención clínica (Ley 21.719).
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-[#EAF3EE]/60 border border-sage-deep/15 p-4 space-y-2 text-xs sm:text-sm text-sage-deep leading-relaxed">
+        <p class="font-semibold">Cómo responder (es muy fácil):</p>
+        <ul class="space-y-1.5 text-charcoal-muted">
+          <li>• Verás <strong>una pregunta a la vez</strong>, para que avances con calma y sin enredos.</li>
+          <li>• En la parte de síntomas, solo debes <strong>tocar las opciones</strong> que apliquen a tu caso (no tienes que escribir párrafos largos).</li>
+          <li>• Puedes volver atrás con <strong>Anterior</strong> cuando quieras, y tus respuestas se van guardando en este dispositivo.</li>
+        </ul>
+      </div>
+
+      <button type="button" onclick="startIntakeFromWelcome()" class="w-full py-3.5 px-5 rounded-2xl bg-coral text-white text-sm sm:text-base font-semibold shadow-sm inline-flex items-center justify-center gap-2">
+        <span>Comenzar formulario</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </section>
+
+    <!-- FORMULARIO SIMPLE PARA PACIENTE CON CONSULTA PREVIA -->
+    <section id="recurrent-simple-panel" class="hidden step-enter bg-white rounded-3xl p-6 sm:p-7 border border-sage-deep/15 shadow-sm space-y-5">
+      <div class="space-y-1.5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Paciente registrada</span>
+        <h1 class="text-xl sm:text-2xl font-semibold text-sage-deep">¡Hola <span id="simple-patient-name"></span>!</h1>
+        <p class="text-sm text-charcoal-muted leading-relaxed font-body">
+          Ya tengo tus antecedentes registrados de tu atención anterior, así que no necesitas llenar todo el formulario otra vez.
+        </p>
+      </div>
+
+      <div class="space-y-2">
+        <label for="simple-motivo" class="block text-base sm:text-lg font-semibold text-sage-deep leading-snug">
+          ¿Cuál es el motivo de tu consulta hoy? <span class="text-coral">*</span>
+        </label>
+        <textarea id="simple-motivo" rows="4" placeholder="Cuéntame brevemente cómo te has sentido, tus dudas o qué te gustaría que revisemos en esta sesión..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
+        <p id="simple-motivo-err" class="hidden text-xs font-semibold text-coral">Por favor escribe brevemente el motivo de tu consulta.</p>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <button id="simple-submit-btn" type="button" onclick="submitSimpleMotivoToDB()" class="w-full py-3.5 px-5 rounded-2xl bg-coral text-white text-sm sm:text-base font-semibold shadow-sm inline-flex items-center justify-center gap-2">
+          <span>Enviar motivo de consulta</span>
+          <i data-lucide="send" class="w-4 h-4"></i>
+        </button>
+        <p class="text-[11px] text-charcoal-muted text-center">Tus datos clínicos se resguardan de forma confidencial y exclusiva para tu atención (Ley 21.719).</p>
+        <button type="button" onclick="openFullIntakeInstead()" class="w-full py-2 text-xs font-semibold text-sage-deep underline underline-offset-4">
+          ¿Cambiaron tus antecedentes y prefieres llenar el formulario completo?
+        </button>
       </div>
     </section>
 
@@ -187,7 +254,7 @@
 
       <!-- PASO 12: HISTORIA CLÍNICA CRONOLÓGICA (id: 13) -->
       <section data-step="12" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-4">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 12 de 16</span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Etapa 2 · Tu historia clínica · 12 de 31</span>
         <label for="q-13" class="block text-base sm:text-lg font-semibold text-sage-deep leading-snug">
           Importante esta pregunta: a lo largo de su vida si ha tenido algún diagnóstico de enfermedad, síntoma, hospitalización, accidente relevante cronológicamente responder (si puede con edad):
         </label>
@@ -205,47 +272,36 @@
           <button type="button" onclick="addHistoryChip('Depresión / Ansiedad')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Ansiedad</button>
           <button type="button" onclick="addHistoryChip('Operaciones / Fracturas')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-medium text-sage-deep">+ Operaciones</button>
         </div>
-        <textarea id="q-13" rows="5" placeholder="Ej: Niñez: rinitis alérgica. 15 años: fractura. 2023: colon irritable..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
+        <textarea id="q-13" rows="4" placeholder="Ej: Niñez: rinitis alérgica. 15 años: fractura. 2023: colon irritable..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
       </section>
 
-      <!-- PASO 13: ACTIVIDAD FÍSICA + RASTREO METABÓLICO ÚLTIMOS 6 MESES (id: 16, 70..84) -->
-      <section data-step="13" class="hidden step-enter space-y-4">
-        <div class="bg-white rounded-3xl p-5 border border-sage-deep/10 shadow-sm space-y-3">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Bloque 13 de 16</span>
-          <label for="q-16" class="block text-base font-semibold text-sage-deep leading-snug">¿Realiza alguna actividad física? En caso afirmativo, ¿qué tipo de actividad y con qué frecuencia?</label>
-          <input id="q-16" type="text" placeholder="Ej: Gimnasia 3 veces/semana, caminata diaria, no realizo..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
-        </div>
-
-        <div class="bg-[#EAF3EE] rounded-3xl p-5 border border-sage-deep/15 space-y-3">
-          <h2 class="text-sm font-semibold text-sage-deep leading-snug">
-            Este es un cuestionario para poder hacer un rastreo metabólico, de acuerdo a los últimos 6 meses.
-          </h2>
-          <p class="text-xs text-charcoal-muted leading-relaxed">
-            Por favor valore la aparición de los siguientes síntomas basándose en su perfil de salud más típico: describa si es <strong>nunca</strong>, <strong>a menudo</strong>, si la frecuencia es un problema o algo <strong>grave</strong>.
-          </p>
-          <input id="q-70" type="text" placeholder="Comentario general inicial (opcional)" class="w-full rounded-2xl border border-sage-deep/20 bg-white px-4 py-2.5 text-sage-deep focus:border-coral focus:outline-none" />
-        </div>
-
-        <div id="metabolic-cards" class="space-y-3"></div>
+      <!-- PASO 13: ACTIVIDAD FÍSICA (id: 16) -->
+      <section data-step="13" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Etapa 2 · Tu historia clínica · 13 de 31</span>
+        <label for="q-16" class="block text-xl font-semibold text-sage-deep leading-snug">¿Realiza alguna actividad física? En caso afirmativo, ¿qué tipo de actividad y con qué frecuencia?</label>
+        <input id="q-16" type="text" placeholder="Ej: Gimnasia 3 veces/semana, caminata diaria, no realizo..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
       </section>
 
-      <!-- PASO 14: MOTIVO DE CONSULTA (id: 31) -->
-      <section data-step="14" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 14 de 16</span>
+      <!-- PASOS 14 AL 28: CÓMO SE COMPORTA TU CUERPO (1 A 1) -->
+      <div id="metabolic-cards"></div>
+
+      <!-- PASO 29: MOTIVO DE CONSULTA (id: 31) -->
+      <section data-step="29" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Etapa 4 · Objetivos y exámenes · 29 de 31</span>
         <label for="q-31" class="block text-xl font-semibold text-sage-deep leading-snug">¿Cuál es el motivo principal de su consulta? ¿Qué objetivos desea alcanzar con este tratamiento?</label>
         <textarea id="q-31" rows="4" placeholder="Ej: Ordenar mi alimentación, bajar inflamación, controlar mi composición corporal, mejorar energía..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
       </section>
 
-      <!-- PASO 15: DÍA TÍPICO CON HORARIOS (id: 32) -->
-      <section data-step="15" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Pregunta 15 de 16</span>
+      <!-- PASO 30: DÍA TÍPICO CON HORARIOS (id: 32) -->
+      <section data-step="30" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Etapa 4 · Objetivos y exámenes · 30 de 31</span>
         <label for="q-32" class="block text-xl font-semibold text-sage-deep leading-snug">Por favor, indique lo que generalmente consume en un día típico, incluyendo los horarios de cada comida.</label>
         <textarea id="q-32" rows="5" placeholder="Ej: 08:30 Desayuno pan con palta y café. 13:30 Almuerzo pollo con arroz y ensalada. 19:30 Once..." class="w-full rounded-2xl border border-sage-deep/20 bg-[#F9FBFA] px-4 py-3.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none"></textarea>
       </section>
 
-      <!-- PASO 16: EXÁMENES Y SUBIDA DE ARCHIVOS (id: 85, 88, 87) -->
-      <section data-step="16" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Último paso · 16 de 16</span>
+      <!-- PASO 31: EXÁMENES Y SUBIDA DE ARCHIVOS (id: 85, 88, 87) -->
+      <section data-step="31" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Etapa 4 · Último paso · 31 de 31</span>
         <div class="space-y-2">
           <h2 class="text-lg font-semibold text-sage-deep leading-snug">
             Suba los últimos exámenes bioquímicos, ecografías, imágenes que tenga desde los últimos 6 meses.
@@ -273,7 +329,7 @@
             <i data-lucide="check-circle-2" class="w-6 h-6 text-coral"></i>
           </div>
           <div>
-            <h2 class="text-xl font-semibold text-sage-deep">¡Ficha enviada!</h2>
+            <h2 class="text-xl font-semibold text-sage-deep">¡Formulario enviado!</h2>
             <p id="conf-patient-meta" class="text-xs text-charcoal-muted"></p>
           </div>
         </div>
@@ -285,21 +341,6 @@
 
         <div class="bg-[#F9FBFA] rounded-2xl p-4 border border-sage-deep/10 text-xs sm:text-sm text-charcoal-muted leading-relaxed font-body">
           ¡Gracias por tomarte el tiempo de completar el formulario! Toda esta información me permitirá conocerte mejor y personalizar tu plan desde un enfoque integrativo y biorregulador. Mi objetivo es ayudarte a alcanzar un equilibrio en tu salud, respetando las necesidades únicas de tu cuerpo. Si tienes alguna duda o hay algo que quieras agregar, no dudes en escribirme. ¡Nos vemos en consulta! 😊 – <strong class="text-sage-deep">Nicole Borguenson Fraga.</strong>
-        </div>
-
-        <div class="space-y-2.5">
-          <a id="conf-wa-btn" href="https://wa.me/56976232766" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-[#25D366] text-white text-sm font-semibold shadow-sm">
-            <i data-lucide="message-circle" class="w-4 h-4"></i>
-            <span>Enviar copia por WhatsApp</span>
-          </a>
-          <a href="index.html#reservas" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-sage-deep text-white text-sm font-semibold shadow-sm">
-            <i data-lucide="calendar" class="w-4 h-4"></i>
-            <span>Ir a Agendar Hora</span>
-          </a>
-          <button type="button" onclick="downloadRealCSV()" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white border border-sage-deep/20 text-sage-deep text-sm font-semibold">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            <span>Descargar respaldo CSV</span>
-          </button>
         </div>
       </section>
 
@@ -331,26 +372,26 @@
       storageBucket: 'examenes-pacientes'
     };
 
-    const TOTAL_STEPS = 16;
+    const TOTAL_STEPS = 31;
     const DRAFT_KEY = 'nicole_real_intake_draft_v2';
     const LOCAL_KEY = 'nicole_real_intake_records_v2';
 
     const METABOLIC_ITEMS = [
-      { id: 'q-71', title: 'Sueño', prompt: 'Su sueño, es reparador?, por ejemplo, le cuesta conciliar sueño o se despierta muchas veces en la noche o duerme sus horas, pero se levanta cansado de forma habitual?. Describa.' },
-      { id: 'q-72', title: 'Cabeza', prompt: 'Cabeza: presenta usted dolores de cabeza , sensación de desmayo, mareos, insomnio de manera habitual?. Describa.' },
-      { id: 'q-73', title: 'Nariz', prompt: 'Nariz: le cuesta a usted respirar a menudo?, presenta habitualmente: sinusitis, rinitis o ataque de estornudos con excesiva mucosidad? Porfavor describa.' },
-      { id: 'q-74', title: 'Ojos', prompt: 'Ojos: presenta usted ojos llorosos con picor, hinchazón o enrojecimiento, ojeras o bolsas bajo sus ojos, visión borrosa que no sea el causal de una miopia o astigmatismo?. Describa' },
-      { id: 'q-75', title: 'Pulmón', prompt: 'Pulmón: presenta usted congestión torácica, asma o bronquitis, falta de aliento o dificultad para respirar? Describa' },
-      { id: 'q-76', title: 'Corazón', prompt: 'Corazón: presenta usted de manera regular, latidos rápidos, latidos irregulares o dolor en el pecho. Describa' },
-      { id: 'q-18', title: 'Piel', prompt: 'Piel: presenta usted : acné , llagas que pican o piel seca, caída de cabello y/o enrojecimiento excesivo. Describa' },
-      { id: 'q-77', title: 'Boca / garganta', prompt: 'Boca/garganta: necesidad frecuente de carraspear, dolor de garganta, ronquera o pérdida de voz, lengua, encías o labios hinchados, y/o úlceras bucales. Describa siempre si es de manera frecuente, ocacional, si son graves o no.' },
-      { id: 'q-78', title: 'Articulaciones y músculo', prompt: 'Articulaciones y músculo: presenta usted dolor articular o artritis, rigidez, limitación de movimiento, dolor articular, sensación de debilidad o fatiga muscular.Describa' },
-      { id: 'q-79', title: 'Peso', prompt: 'Peso: presenta usted deseo excesivo de alimentos específicos, compulsión por la comida, exceso de peso, retención de liquidos.Describa.' },
-      { id: 'q-80', title: 'Energía', prompt: 'Energía: presenta a menudo fatiga o letargo, o hiperactividad o dificultad para descansar y relajarse. Describa' },
-      { id: 'q-81', title: 'Sistema digestivo', prompt: 'Sistema digestivo: presenta usted a menudo hinchazon abdominal , eructos recurrentes o gases recurrentes , acidez de estomago, congestión en el abdomen, dolor estomacal o intestinal' },
-      { id: 'q-82', title: 'Emociones', prompt: 'Emociones: presenta usted cambios de humor, ansiedad o miedo o nerviosismo, ira irritabilidad agresividad, depresión. describa.' },
-      { id: 'q-83', title: 'Mente', prompt: 'Mente: mala memoria, confusión mental, falta de concentración, falta de coordinación motora, dificultad para aprender. Describa.' },
-      { id: 'q-84', title: 'Otros', prompt: 'Otros: intolerancias alimentarias, nauseas recurrentes, necesidad urgente de orinar, picor o secreción genital' }
+      { id: 'q-71', title: 'Sueño', prompt: '¿Tu sueño es reparador? Selecciona lo que corresponda:', options: ['Sí, es reparador', 'Me cuesta conciliar el sueño', 'Despierto varias veces en la noche', 'Me levanto cansado/a'] },
+      { id: 'q-72', title: 'Cabeza', prompt: 'Cabeza: ¿presentas alguno de estos síntomas de manera habitual?', options: ['Ninguno', 'Dolores de cabeza', 'Sensación de desmayo', 'Mareos', 'Insomnio'] },
+      { id: 'q-73', title: 'Nariz', prompt: 'Nariz: ¿presentas alguno de estos síntomas de manera habitual?', options: ['Ninguno', 'Me cuesta respirar', 'Sinusitis', 'Rinitis', 'Ataques de estornudos', 'Excesiva mucosidad'] },
+      { id: 'q-74', title: 'Ojos', prompt: 'Ojos: ¿presentas alguno de estos síntomas (sin contar miopía o astigmatismo)?', options: ['Ninguno', 'Ojos llorosos con picor', 'Hinchazón o enrojecimiento', 'Ojeras o bolsas', 'Visión borrosa'] },
+      { id: 'q-75', title: 'Pulmón', prompt: 'Pulmón: ¿presentas alguno de estos síntomas?', options: ['Ninguno', 'Congestión torácica', 'Asma o bronquitis', 'Falta de aliento', 'Dificultad para respirar'] },
+      { id: 'q-76', title: 'Corazón', prompt: 'Corazón: ¿presentas alguno de estos síntomas de manera regular?', options: ['Ninguno', 'Latidos rápidos', 'Latidos irregulares', 'Dolor en el pecho'] },
+      { id: 'q-18', title: 'Piel', prompt: 'Piel: ¿presentas alguno de estos síntomas?', options: ['Ninguno', 'Acné', 'Llagas que pican', 'Piel seca', 'Caída de cabello', 'Enrojecimiento excesivo'] },
+      { id: 'q-77', title: 'Boca / garganta', prompt: 'Boca y garganta: ¿presentas alguno de estos síntomas?', options: ['Ninguno', 'Necesidad de carraspear', 'Dolor de garganta', 'Ronquera o pérdida de voz', 'Lengua, encías o labios hinchados', 'Úlceras bucales'] },
+      { id: 'q-78', title: 'Articulaciones y músculo', prompt: 'Articulaciones y músculo: ¿presentas alguno de estos síntomas?', options: ['Ninguno', 'Dolor articular o artritis', 'Rigidez', 'Limitación de movimiento', 'Debilidad o fatiga muscular'] },
+      { id: 'q-79', title: 'Peso', prompt: 'Peso y apetito: ¿presentas alguno de estos síntomas?', options: ['Ninguno', 'Deseo excesivo de alimentos específicos', 'Compulsión por la comida', 'Exceso de peso', 'Retención de líquidos'] },
+      { id: 'q-80', title: 'Energía', prompt: 'Energía: ¿presentas alguno de estos síntomas a menudo?', options: ['Ninguno', 'Fatiga o letargo', 'Hiperactividad', 'Dificultad para descansar y relajarse'] },
+      { id: 'q-81', title: 'Sistema digestivo', prompt: 'Sistema digestivo: ¿presentas alguno de estos síntomas a menudo?', options: ['Ninguno', 'Hinchazón abdominal', 'Eructos o gases recurrentes', 'Acidez de estómago', 'Congestión abdominal', 'Dolor estomacal o intestinal'] },
+      { id: 'q-82', title: 'Emociones', prompt: 'Emociones: ¿presentas alguno de estos síntomas?', options: ['Ninguno', 'Cambios de humor', 'Ansiedad, miedo o nerviosismo', 'Ira o irritabilidad', 'Depresión'] },
+      { id: 'q-83', title: 'Mente', prompt: 'Mente y concentración: ¿presentas alguno de estos síntomas?', options: ['Ninguno', 'Mala memoria', 'Confusión mental', 'Falta de concentración', 'Falta de coordinación motora', 'Dificultad para aprender'] },
+      { id: 'q-84', title: 'Otros', prompt: 'Otros síntomas: ¿presentas alguno de los siguientes?', options: ['Ninguno', 'Intolerancias alimentarias', 'Náuseas recurrentes', 'Necesidad urgente de orinar', 'Picor o secreción genital'] }
     ];
 
     const CSV_HEADERS = [
@@ -391,34 +432,113 @@
     let currentStep = 1;
     let selectedFiles = [];
 
+    function getStageInfo(step) {
+      if (step <= 9) return { num: 1, name: 'Tus datos personales' };
+      if (step <= 13) return { num: 2, name: 'Tu historia clínica' };
+      if (step <= 28) return { num: 3, name: 'Cómo se comporta tu cuerpo' };
+      return { num: 4, name: 'Objetivos y exámenes' };
+    }
+
+    const metabolicSelections = {};
+
     function renderMetabolicQuestions() {
       const container = document.getElementById('metabolic-cards');
       if (!container) return;
-      const quickOptions = ['Nunca', 'A veces', 'Frecuente', 'Grave'];
 
-      container.innerHTML = METABOLIC_ITEMS.map((item) => {
-        const chips = quickOptions.map((opt) =>
-          `<button type="button" onclick="setMetabolicQuick('${item.id}', '${opt}')" class="px-2.5 py-1 rounded-full bg-[#F4F8F6] border border-sage-deep/15 text-[11px] font-semibold text-sage-deep hover:border-coral">${opt}</button>`
+      container.innerHTML = METABOLIC_ITEMS.map((item, idx) => {
+        const stepNum = 14 + idx;
+        if (!metabolicSelections[item.id]) {
+          metabolicSelections[item.id] = { opts: [], freq: '' };
+        }
+        const introHint = idx === 0
+          ? `<div class="rounded-2xl bg-[#EAF3EE]/80 border border-sage-deep/15 p-3.5 text-xs text-sage-deep leading-relaxed">
+               <strong>Rastreo de los últimos 6 meses:</strong> puedes marcar <strong>una o varias opciones</strong> en cada pregunta.
+             </div>`
+          : '';
+        const optionBtns = item.options.map((opt, optIdx) =>
+          `<button type="button" data-met-opt="${item.id}" data-opt-val="${opt}" onclick="toggleMetabolicOption('${item.id}', ${optIdx})" class="w-full text-left px-4 py-3 rounded-2xl border border-sage-deep/15 bg-[#F9FBFA] text-sm font-medium text-sage-deep transition-all flex items-center justify-between gap-3">
+            <span>${opt}</span>
+            <span class="met-check w-5 h-5 rounded-full border border-sage-deep/25 flex items-center justify-center text-[11px] shrink-0"></span>
+          </button>`
+        ).join('');
+        const freqBtns = ['Ocasional', 'Frecuente', 'Grave'].map((f) =>
+          `<button type="button" data-met-freq="${item.id}" data-freq-val="${f}" onclick="setMetabolicFreq('${item.id}', '${f}')" class="px-3.5 py-2 rounded-full border border-sage-deep/15 bg-[#F4F8F6] text-xs font-semibold text-sage-deep transition-all">${f}</button>`
         ).join('');
         return `
-          <div class="bg-white rounded-3xl p-4 border border-sage-deep/10 shadow-sm space-y-2.5">
-            <label for="${item.id}" class="block text-xs sm:text-sm font-semibold text-sage-deep leading-snug">${item.prompt}</label>
-            <div class="flex flex-wrap gap-1.5">${chips}</div>
-            <input id="${item.id}" type="text" placeholder="Describe frecuencia o síntomas..." oninput="saveDraft()" class="w-full rounded-xl border border-sage-deep/15 bg-[#F9FBFA] px-3.5 py-2.5 text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
-          </div>
+          <section data-step="${stepNum}" class="hidden step-enter bg-white rounded-3xl p-6 border border-sage-deep/10 shadow-sm space-y-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF3EE] text-[10px] font-bold uppercase tracking-wider text-sage-deep">Etapa 3 · Cómo se comporta tu cuerpo · ${stepNum} de ${TOTAL_STEPS}</span>
+            ${introHint}
+            <p class="text-lg sm:text-xl font-semibold text-sage-deep leading-snug">${item.prompt}</p>
+            <p class="text-xs text-charcoal-muted">Toca una o varias opciones y luego presiona <strong>Siguiente</strong>.</p>
+            <div class="space-y-2">${optionBtns}</div>
+            <div id="met-freq-wrap-${item.id}" class="hidden pt-2 border-t border-sage-deep/10 space-y-2">
+              <p class="text-xs font-semibold text-charcoal-muted">¿Con qué intensidad o frecuencia? (opcional)</p>
+              <div class="flex flex-wrap gap-2">${freqBtns}</div>
+            </div>
+            <input id="${item.id}" type="hidden" value="" />
+          </section>
         `;
       }).join('');
     }
 
-    function setMetabolicQuick(id, label) {
+    function syncMetabolicInput(id) {
+      const stateItem = metabolicSelections[id] || { opts: [], freq: '' };
       const el = document.getElementById(id);
-      if (!el) return;
-      const cur = el.value.trim();
-      if (!cur || ['Nunca', 'A veces', 'Frecuente', 'Grave'].includes(cur)) {
-        el.value = label;
-      } else if (!cur.toLowerCase().startsWith(label.toLowerCase())) {
-        el.value = `${label}: ${cur}`;
+      const isNone = stateItem.opts.length === 1 && (stateItem.opts[0] === 'Ninguno' || stateItem.opts[0] === 'Sí, es reparador');
+      const freqText = (!isNone && stateItem.opts.length && stateItem.freq) ? ` (${stateItem.freq})` : '';
+      if (el) el.value = stateItem.opts.length ? `${stateItem.opts.join(', ')}${freqText}` : '';
+
+      document.querySelectorAll(`[data-met-opt="${id}"]`).forEach((btn) => {
+        const selected = stateItem.opts.includes(btn.dataset.optVal);
+        btn.className = selected
+          ? 'w-full text-left px-4 py-3 rounded-2xl border-2 border-sage-deep bg-[#EAF3EE] text-sm font-semibold text-sage-deep transition-all flex items-center justify-between gap-3'
+          : 'w-full text-left px-4 py-3 rounded-2xl border border-sage-deep/15 bg-[#F9FBFA] text-sm font-medium text-sage-deep transition-all flex items-center justify-between gap-3';
+        const chk = btn.querySelector('.met-check');
+        if (chk) {
+          chk.className = selected
+            ? 'met-check w-5 h-5 rounded-full bg-sage-deep text-white flex items-center justify-center text-[11px] shrink-0'
+            : 'met-check w-5 h-5 rounded-full border border-sage-deep/25 flex items-center justify-center text-[11px] shrink-0';
+          chk.textContent = selected ? '✓' : '';
+        }
+      });
+
+      const freqWrap = document.getElementById(`met-freq-wrap-${id}`);
+      if (freqWrap) freqWrap.classList.toggle('hidden', isNone || !stateItem.opts.length);
+
+      document.querySelectorAll(`[data-met-freq="${id}"]`).forEach((btn) => {
+        const active = stateItem.freq === btn.dataset.freqVal;
+        btn.className = active
+          ? 'px-3.5 py-2 rounded-full border border-coral bg-coral text-white text-xs font-semibold transition-all'
+          : 'px-3.5 py-2 rounded-full border border-sage-deep/15 bg-[#F4F8F6] text-xs font-semibold text-sage-deep transition-all';
+      });
+    }
+
+    function toggleMetabolicOption(id, optIdx) {
+      const item = METABOLIC_ITEMS.find((m) => m.id === id);
+      if (!item) return;
+      const label = item.options[optIdx];
+      const cur = metabolicSelections[id] || { opts: [], freq: '' };
+      const isExclusive = label === 'Ninguno' || label === 'Sí, es reparador';
+
+      if (isExclusive) {
+        cur.opts = cur.opts.includes(label) ? [] : [label];
+        cur.freq = '';
+      } else {
+        cur.opts = cur.opts.filter((o) => o !== 'Ninguno' && o !== 'Sí, es reparador');
+        const idx = cur.opts.indexOf(label);
+        if (idx >= 0) cur.opts.splice(idx, 1);
+        else cur.opts.push(label);
       }
+      metabolicSelections[id] = cur;
+      syncMetabolicInput(id);
+      saveDraft();
+    }
+
+    function setMetabolicFreq(id, freq) {
+      const cur = metabolicSelections[id] || { opts: [], freq: '' };
+      cur.freq = cur.freq === freq ? '' : freq;
+      metabolicSelections[id] = cur;
+      syncMetabolicInput(id);
       saveDraft();
     }
 
@@ -470,12 +590,18 @@
       renderFileList();
     }
 
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[ch]);
+    }
+
     function renderFileList() {
       const list = document.getElementById('file-list');
       if (!list) return;
       list.innerHTML = selectedFiles.map((f, idx) => `
         <div class="flex items-center justify-between gap-2 bg-[#F9FBFA] border border-sage-deep/15 rounded-xl px-3.5 py-2 text-xs">
-          <span class="truncate text-sage-deep font-medium">${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+          <span class="truncate text-sage-deep font-medium">${escapeHtml(f.name)} (${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
           <button type="button" onclick="removeFileAt(${idx})" class="text-coral font-bold shrink-0">Quitar</button>
         </div>
       `).join('');
@@ -487,16 +613,24 @@
       document.getElementById('mobile-bottom-bar')?.classList.remove('hidden');
 
       document.querySelectorAll('[data-step]').forEach((sec) => {
-        sec.classList.toggle('hidden', Number(sec.dataset.step) !== step);
+        const secStep = Number(sec.dataset.step);
+        const active = secStep === step;
+        sec.classList.toggle('hidden', !active);
+        if (active && secStep <= 13) {
+          const badge = sec.querySelector('span');
+          const st = getStageInfo(secStep);
+          if (badge) badge.textContent = `Etapa ${st.num} · ${st.name} · ${secStep} de ${TOTAL_STEPS}`;
+        }
       });
 
+      const stage = getStageInfo(step);
       const pct = Math.round((step / TOTAL_STEPS) * 100);
-      document.getElementById('header-step-label').textContent = `Paso ${step} de ${TOTAL_STEPS}`;
+      document.getElementById('header-step-label').textContent = `Etapa ${stage.num}/4 · ${stage.name} (${step} de ${TOTAL_STEPS})`;
       document.getElementById('header-step-pct').textContent = `${pct}%`;
       document.getElementById('header-progress-bar').style.width = `${pct}%`;
 
       document.getElementById('btn-prev').disabled = step === 1;
-      document.getElementById('btn-next-text').textContent = step === TOTAL_STEPS ? 'Enviar Ficha' : 'Siguiente';
+      document.getElementById('btn-next-text').textContent = step === TOTAL_STEPS ? 'Enviar Formulario' : 'Siguiente';
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
       saveDraft();
@@ -642,7 +776,8 @@
         `Motivo: ${data.motivo || '-'}`,
         `Día típico: ${data.diaTipico || '-'}`
       ].join('\n');
-      document.getElementById('conf-wa-btn').href = `https://wa.me/56976232766?text=${encodeURIComponent(waText)}`;
+      const confWaBtn = document.getElementById('conf-wa-btn');
+      if (confWaBtn) confWaBtn.href = `https://wa.me/56976232766?text=${encodeURIComponent(waText)}`;
 
       const statusBanner = document.getElementById('db-status-banner');
       const statusText = document.getElementById('db-status-text');
@@ -749,23 +884,49 @@
         document.getElementById('header-progress-bar').style.width = '0%';
       };
 
+      const showWelcomeScreen = (bookingCtx) => {
+        const firstName = (bookingCtx?.nombre_completo || '').trim().split(' ')[0];
+        const nameSpan = document.getElementById('welcome-patient-name');
+        if (nameSpan) nameSpan.textContent = firstName ? `, ${firstName}` : '';
+        document.getElementById('intake-welcome-screen')?.classList.remove('hidden');
+        document.getElementById('recurrent-simple-panel')?.classList.add('hidden');
+        form?.classList.add('hidden');
+        bar?.classList.add('hidden');
+        document.getElementById('header-step-label').textContent = 'Bienvenida';
+        document.getElementById('header-step-pct').textContent = '0%';
+        document.getElementById('header-progress-bar').style.width = '0%';
+      };
+
+      const preview = (params.get('preview') || '').trim();
+      const isLocalHost = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+      if (isLocalHost && (preview === '1' || preview === 'recurrente')) {
+        activeBookingContext = {
+          token: 'local-preview',
+          nombre_completo: 'Paciente Prueba',
+          tiene_ficha_previa: preview === 'recurrente'
+        };
+        showWelcomeScreen(activeBookingContext);
+        return true;
+      }
+
       // Modo prueba local mientras aún no se configura supabaseAnonKey
       if (!DB_CONFIG.supabaseAnonKey) {
         if (token === 'demo') {
           activeBookingContext = { token: 'demo' };
+          showWelcomeScreen(activeBookingContext);
           return true;
         }
-        lockScreen('Esta ficha clínica se habilita automáticamente después de agendar tu hora y confirmar tu abono de reserva.');
+        lockScreen('Este formulario de ingreso se activa automáticamente después de confirmar tu reserva para facilitar tu primera consulta.');
         return false;
       }
 
       if (!token) {
-        lockScreen('Esta ficha clínica se habilita automáticamente después de agendar tu hora y confirmar tu abono de reserva.');
+        lockScreen('Este formulario de ingreso se activa automáticamente después de confirmar tu reserva para facilitar tu primera consulta.');
         return false;
       }
 
       try {
-        const res = await fetch(`${DB_CONFIG.supabaseUrl.replace(/\/$/, '')}/rest/v1/rpc/validar_token_ingreso`, {
+        const res = await fetch(`${DB_CONFIG.supabaseUrl.replace(/\/$/, '')}/rest/v1/rpc/validar_token_ingreso_v2`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -777,7 +938,7 @@
         const rows = await res.json();
         const booking = Array.isArray(rows) ? rows[0] : rows;
         if (!booking || !booking.valido) {
-          lockScreen('Tu enlace de reserva aún no registra un abono confirmado o ya expiró.');
+          lockScreen('Tu enlace de reserva aún no registra confirmación o ya expiró.');
           return false;
         }
         activeBookingContext = { ...booking, token };
@@ -785,10 +946,99 @@
         if (booking.telefono && !document.getElementById('q-3').value) document.getElementById('q-3').value = booking.telefono;
         if (booking.rut && !document.getElementById('q-4').value) document.getElementById('q-4').value = booking.rut;
         if (booking.email && !document.getElementById('q-6').value) document.getElementById('q-6').value = booking.email;
+
+        showWelcomeScreen(activeBookingContext);
         return true;
       } catch (_) {
         lockScreen('No pudimos verificar tu reserva en este momento. Intenta nuevamente desde el enlace de tu confirmación.');
         return false;
+      }
+    }
+
+    function startIntakeFromWelcome() {
+      document.getElementById('intake-welcome-screen')?.classList.add('hidden');
+      const form = document.getElementById('real-intake-form');
+      const bar = document.getElementById('mobile-bottom-bar');
+      if (activeBookingContext?.tiene_ficha_previa) {
+        const firstName = (activeBookingContext.nombre_completo || '').trim().split(' ')[0];
+        document.getElementById('simple-patient-name').textContent = firstName || '';
+        document.getElementById('recurrent-simple-panel')?.classList.remove('hidden');
+        form?.classList.add('hidden');
+        bar?.classList.add('hidden');
+        document.getElementById('header-step-label').textContent = 'Control · Motivo de consulta';
+        document.getElementById('header-step-pct').textContent = '100%';
+        document.getElementById('header-progress-bar').style.width = '100%';
+      } else {
+        form?.classList.remove('hidden');
+        bar?.classList.remove('hidden');
+        goStep(1);
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openFullIntakeInstead() {
+      document.getElementById('recurrent-simple-panel')?.classList.add('hidden');
+      document.getElementById('real-intake-form')?.classList.remove('hidden');
+      document.getElementById('mobile-bottom-bar')?.classList.remove('hidden');
+      goStep(1);
+    }
+
+    async function submitSimpleMotivoToDB() {
+      const motivoEl = document.getElementById('simple-motivo');
+      const errEl = document.getElementById('simple-motivo-err');
+      const btn = document.getElementById('simple-submit-btn');
+      const motivo = (motivoEl?.value || '').trim();
+      if (!motivo) {
+        errEl?.classList.remove('hidden');
+        motivoEl?.focus();
+        return;
+      }
+      errEl?.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = '<span>Enviando...</span>';
+
+      const ctx = activeBookingContext || {};
+      const payload = {
+        reserva_id: ctx.reserva_id || null,
+        paciente_id: ctx.paciente_id || null,
+        intake_token: ctx.token || null,
+        fecha_hoy: new Date().toISOString().slice(0, 10),
+        nombre_completo: ctx.nombre_completo || 'Paciente recurrente',
+        telefono: ctx.telefono || '',
+        rut: ctx.rut || '',
+        email: ctx.email || '',
+        motivo_consulta: motivo,
+        origen: window.location.href
+      };
+
+      try {
+        if (DB_CONFIG.supabaseAnonKey) {
+          const endpoint = `${DB_CONFIG.supabaseUrl.replace(/\/$/, '')}/rest/v1/${DB_CONFIG.supabaseTable}`;
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': DB_CONFIG.supabaseAnonKey,
+              'Authorization': `Bearer ${DB_CONFIG.supabaseAnonKey}`,
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error('Error al guardar motivo');
+        }
+        document.getElementById('recurrent-simple-panel')?.classList.add('hidden');
+        document.querySelectorAll('#real-intake-form [data-step]').forEach((s) => s.classList.add('hidden'));
+        document.getElementById('real-intake-form')?.classList.remove('hidden');
+        document.getElementById('confirmation-screen')?.classList.remove('hidden');
+        document.getElementById('conf-patient-meta').textContent = `${payload.nombre_completo} · Control`;
+        document.getElementById('db-status-text').textContent = 'Motivo de consulta guardado correctamente.';
+        if (window.lucide) lucide.createIcons();
+      } catch (_) {
+        errEl.textContent = 'No pudimos guardar tu motivo en este momento. Intenta nuevamente.';
+        errEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<span>Enviar motivo de consulta</span><i data-lucide="send" class="w-4 h-4"></i>';
+        if (window.lucide) lucide.createIcons();
       }
     }
 
