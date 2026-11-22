@@ -315,7 +315,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 class="font-editorial text-3xl font-semibold text-sage-deep">Finanzas y seguimiento de pagos</h1>
-            <p class="text-sm text-sage-deep/75 mt-0.5">Pagos TUU electrónicos y registros manuales diferenciados, con abonos acumulativos en CLP enteros.</p>
+            <p class="text-sm text-sage-deep/75 mt-0.5">Pagos electrónicos (Mercado Pago) y registros manuales diferenciados, con abonos acumulativos en CLP enteros.</p>
           </div>
           <div class="flex flex-wrap gap-1.5" role="group" aria-label="Filtros financieros">
             <button type="button" onclick="setFinanceFilter('todas')" data-ff="todas" class="ff-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-sage-deep text-white">Todas</button>
@@ -564,7 +564,7 @@
           <div>
             <label for="pay-method" class="block text-xs font-semibold text-sage-deep mb-1">Medio de pago</label>
             <select id="pay-method" class="w-full min-h-[44px] rounded-2xl border border-sage/25 px-3 text-sm text-sage-deep">
-              <option value="POS TUU">POS TUU</option>
+              <option value="POS / Tarjeta">POS / Tarjeta</option>
               <option value="Transferencia">Transferencia</option>
             </select>
           </div>
@@ -841,7 +841,7 @@
             fechaIso: parts.dateIso,
             concepto: p.concepto || 'Pago registrado',
             monto: Number(p.monto_clp || 0),
-            medio: p.origen_pago === 'manual' || String(p.tuu_transaction_id || '').startsWith('manual-') ? 'Manual' : 'TUU',
+            medio: p.origen_pago === 'manual' || String(p.tuu_transaction_id || '').startsWith('manual-') ? 'Manual' : 'Mercado Pago',
             esTuu: p.origen_pago !== 'manual' && !String(p.tuu_transaction_id || '').startsWith('manual-'),
             requiereConciliacion: !!p.requiere_conciliacion,
             detalleConciliacion: p.detalle_conciliacion || ''
@@ -1731,7 +1731,7 @@
           <div class="flex justify-between items-center gap-2 py-1.5 border-t border-sage/10 text-xs">
             <span class="text-sage-deep/80">
               ${p.fechaIso.split('-').reverse().join('/')} · ${p.concepto}
-              <span class="px-1.5 py-0.5 rounded bg-sage-soft text-[10px] font-semibold">${p.esTuu ? 'TUU' : p.medio}</span>
+              <span class="px-1.5 py-0.5 rounded bg-sage-soft text-[10px] font-semibold">${p.esTuu ? 'Mercado Pago' : escapeHtml(p.medio)}</span>
               ${p.requiereConciliacion ? `<span class="px-1.5 py-0.5 rounded bg-coral-soft text-coral text-[10px] font-bold">Requiere conciliación</span>` : ''}
             </span>
             <strong class="text-sage-deep shrink-0">${fmtCLP(p.monto)}</strong>
