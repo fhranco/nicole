@@ -765,6 +765,42 @@
       .photo-entrance { opacity: 1 !important; transform: none !important; transition: none !important; }
     }
 
+    /* Rendimiento móvil: sin animaciones, partículas, blur ni parallax en <= 767px */
+    @media (max-width: 767px) {
+      .aura-particles-layer,
+      .aura-dot {
+        display: none !important;
+        animation: none !important;
+      }
+      .photo-entrance,
+      .reveal-on-scroll,
+      main section:not(#inicio).section-stage-ready,
+      main section:not(#inicio).section-stage-ready > .max-w-container-max {
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+        transition: none !important;
+        animation: none !important;
+        will-change: auto !important;
+      }
+      main section:not(#inicio)::after {
+        display: none !important;
+        animation: none !important;
+      }
+      .btn-shimmer::after,
+      .animate-pulse,
+      .animate-bounce,
+      .animate-ping {
+        animation: none !important;
+      }
+      .backdrop-blur-sm,
+      .backdrop-blur-md,
+      .backdrop-blur-xl {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+      }
+    }
+
     main section:not(#inicio).section-stage-ready>.max-w-container-max {
       transform: translateY(calc(var(--sec-parallax, 0px)));
       transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
@@ -7937,7 +7973,8 @@
 
     // Partículas orgánicas detrás de las secciones + animaciones de entrada para fotografías
     (function initAuraAndPhotoEntrance() {
-      const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isMobile = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+      const reducedMotion = isMobile || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
       const photoImgs = document.querySelectorAll('img[src^="assets/nicole-"]');
       photoImgs.forEach((img) => {
         const target = img.closest('.relative') || img;
