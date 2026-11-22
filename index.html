@@ -4189,7 +4189,7 @@
         </div>
       </section>
 
-      <!-- SECCIÓN CONTENEDOR WEB DE RESERVAS (AGENDA EN VIVO RESERVO.CL) -->
+      <!-- SECCIÓN CONTENEDOR WEB DE RESERVAS -->
       <section class="w-full bg-[#DCECE3] py-space-4xl border-t border-sage-deep/15 relative overflow-hidden" id="reservas">
         <img src="new-bg-reservas.webp" alt="" aria-hidden="true" class="bg-living-photo absolute inset-0 w-full h-full object-cover opacity-[0.12] mix-blend-multiply pointer-events-none select-none" loading="lazy" />
         <div aria-hidden="true" class="hero-watermark-text absolute inset-0 flex flex-col justify-center items-center overflow-hidden text-[14vw] lg:text-[9vw] uppercase whitespace-nowrap text-coral/[0.035]">
@@ -4239,7 +4239,7 @@
             </button>
           </div>
 
-          <!-- CONTENEDOR WEB (CARD CON FRAME DE RESERVO INTEGRADO) -->
+          <!-- CONTENEDOR WEB DE RESERVA -->
           <div
             class="max-w-5xl mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-secondary/20 overflow-hidden reveal-on-scroll">
 
@@ -5181,107 +5181,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE AGENDAMIENTO OFICIAL RESERVO.CL (EN VIVO SIN SALIR DEL SITIO) -->
-  <div id="booking-modal"
-    class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-charcoal-ink/80 backdrop-blur-md hidden"
-    onclick="handleBookingBackdrop(event)">
-    <div
-      class="relative w-full max-w-5xl h-[92vh] sm:h-[88vh] bg-cream-surface rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-secondary/20 flex flex-col transform transition-all duration-300 scale-95 opacity-0"
-      id="booking-modal-content">
-
-      <!-- Modal Header -->
-      <div
-        class="px-4 sm:px-6 py-3.5 bg-surface-container flex items-center justify-between border-b border-secondary/15 shrink-0">
-        <div class="flex items-center gap-3">
-          <div
-            class="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-2xs border border-secondary/15">
-            <img src="logo-icon.png" alt="Nicole Borguenson Logo" class="w-full h-full object-contain" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="font-headline-sm text-sm sm:text-base text-charcoal-ink font-semibold">Reserva tu Consulta en
-                Línea</h3>
-              <span
-                class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Agenda Oficial
-              </span>
-            </div>
-            <p class="font-label-sm text-[11px] sm:text-xs text-charcoal-muted">Disponibilidad en tiempo real vía
-              Google Calendar • Nicole Borguenson</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <!-- Abrir en pestaña nueva (opcional) -->
-          <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ3ooI55LDOVGuHgNNwLR3PFN7ikvV_HGtf0Hb-yEp4ube8DHuHXIe564I28IYGFftfyPbZEShbV?gv=true" target="_blank"
-            rel="noopener noreferrer"
-            class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-secondary/20 text-xs text-charcoal-muted hover:text-charcoal-ink hover:bg-white transition-colors"
-            title="Abrir agenda en pantalla completa">
-            <i data-lucide="external-link" class="w-4 h-4  inline-block shrink-0"></i>
-            <span>Nueva pestaña</span>
-          </a>
-
-          <!-- Botón recargar -->
-          <button type="button" onclick="reloadReservoIframe()"
-            class="w-8 h-8 rounded-full flex items-center justify-center text-charcoal-muted hover:bg-secondary-container/50 hover:text-charcoal-ink transition-colors cursor-pointer"
-            title="Recargar agenda">
-            <i data-lucide="rotate-cw" class="w-4.5 h-4.5  inline-block shrink-0"></i>
-          </button>
-
-          <!-- Botón cerrar -->
-          <button type="button" onclick="closeBookingModal()"
-            class="w-8 h-8 rounded-full flex items-center justify-center text-charcoal-muted hover:bg-secondary-container/50 hover:text-charcoal-ink transition-colors cursor-pointer"
-            aria-label="Cerrar ventana de agendamiento">
-            <i data-lucide="x" class="w-5 h-5  inline-block shrink-0"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Modal Body (Iframe Google Calendar con Loader de espera) -->
-      <div class="relative flex-1 w-full bg-white overflow-hidden flex flex-col">
-
-        <!-- Loading Spinner State -->
-        <div id="reservo-loading"
-          class="absolute inset-0 bg-[#FAF8F5] flex flex-col items-center justify-center z-10 transition-opacity duration-500">
-          <div class="w-12 h-12 rounded-full border-3 border-[#81B29A]/20 border-t-[#436850] animate-spin mb-4"></div>
-          <p class="font-headline-sm text-sm font-medium text-charcoal-ink">Conectando con Google Calendar...
-          </p>
-          <p class="font-body-sm text-xs text-charcoal-muted mt-1">Cargando disponibilidad de horas en tiempo real</p>
-        </div>
-
-        <!-- Google Calendar Live Iframe -->
-        <iframe id="reservo-iframe" class="w-full h-full border-0 bg-white" src=""
-          title="Agenda Online Google Calendar - Nicole Borguenson" onload="onReservoIframeLoaded()"
-          style="border: 0" width="100%" height="600" frameborder="0" loading="lazy">
-        </iframe>
-      </div>
-
-      <!-- Modal Footer -->
-      <div
-        class="px-4 sm:px-6 py-2.5 bg-surface-container-low border-t border-secondary/15 flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0 text-xs">
-        <div class="flex items-center gap-2 text-charcoal-muted">
-          <i data-lucide="lock" class="w-4 h-4 text-emerald-600 inline-block shrink-0"></i>
-          <span>Conexión segura directa con <strong>Reservo.cl</strong> • Confirmación instantánea a tu correo</span>
-        </div>
-        <div class="flex items-center gap-3">
-          <a href="https://wa.me/56976232766?text=Hola%20Nicole%2C%20tengo%20una%20duda%20para%20agendar%20mi%20consulta"
-            target="_blank" rel="noopener noreferrer"
-            class="text-charcoal-muted hover:text-[#2C5240] font-medium transition-colors inline-flex items-center gap-1">
-            <i data-lucide="message-circle" class="w-4 h-4 text-emerald-600 inline-block shrink-0"></i>
-            <span>¿Dudas previas? WhatsApp</span>
-          </a>
-          <span class="text-secondary/30">•</span>
-          <button type="button" onclick="closeBookingModal()"
-            class="font-semibold text-charcoal-muted hover:text-charcoal-ink transition-colors cursor-pointer">
-            Cerrar
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
   <!-- MODAL / POPUP: GUÍA DE EXPERIENCIA Y POLÍTICA DE ABONOS ACUMULATIVOS -->
   <div id="abonos-modal"
     class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-charcoal-ink/80 backdrop-blur-md hidden"
@@ -6177,11 +6076,10 @@
           </div>
           <h4 id="quiz-result-title" class="font-headline-md text-charcoal-ink">Tu recomendación personalizada</h4>
           <p id="quiz-result-desc" class="text-sm text-on-surface-variant leading-relaxed"></p>
-          <a href="#reservas"
-            onclick="event.preventDefault(); closeQuizModal(); scrollToBooking('Resultado Test de Salud');"
+          <a href="/reservar"
             class="w-full py-2.5 bg-primary text-on-primary rounded-lg font-label-lg shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-2 btn-shimmer cursor-pointer">
             <i data-lucide="calendar" class="w-4.5 h-4.5  inline-block shrink-0"></i>
-            Agendar en Agenda Oficial Reservo.cl
+            Agendar mi Consulta
           </a>
         </div>
       </div>
@@ -6945,61 +6843,12 @@
       }
     }
 
-    // 5. BOOKING MODAL & SCROLL HANDLER (ROUTING ALL BOOKINGS TO GOOGLE CALENDAR)
-    const RESERVO_AGENDA_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3ooI55LDOVGuHgNNwLR3PFN7ikvV_HGtf0Hb-yEp4ube8DHuHXIe564I28IYGFftfyPbZEShbV?gv=true";
-
+    // 5. BOOKING SCROLL HANDLER
     function openBookingModal(serviceName) {
-      // Redirige universalmente al contenedor web integrado en la página
       scrollToBooking(serviceName);
     }
 
-    function closeBookingModal() {
-      const modal = document.getElementById('booking-modal');
-      if (!modal) return;
-      modal.classList.add('hidden');
-      document.body.style.overflow = '';
-    }
-
-    function handleBookingBackdrop(e) {
-      if (e.target.id === 'booking-modal') {
-        closeBookingModal();
-      }
-    }
-
-    function onReservoIframeLoaded() {
-      const loader = document.getElementById('reservo-loading');
-      if (loader) {
-        loader.classList.add('opacity-0', 'pointer-events-none');
-      }
-    }
-
-    function reloadReservoIframe() {
-      const iframe = document.getElementById('reservo-iframe');
-      const loader = document.getElementById('reservo-loading');
-      if (!iframe) return;
-      if (loader) {
-        loader.classList.remove('opacity-0', 'pointer-events-none');
-      }
-      iframe.src = RESERVO_AGENDA_URL + '&t=' + Date.now();
-    }
-
-    // 6. IN-PAGE WEB CONTAINER GOOGLE CALENDAR (Direct On-Page Booking)
-    function onInpageReservoLoaded() {
-      const loader = document.getElementById('inpage-reservo-loading');
-      if (loader) {
-        loader.classList.add('opacity-0', 'pointer-events-none');
-      }
-    }
-
-    function reloadInpageReservo() {
-      const iframe = document.getElementById('inpage-reservo-iframe');
-      const loader = document.getElementById('inpage-reservo-loading');
-      if (!iframe) return;
-      if (loader) {
-        loader.classList.remove('opacity-0', 'pointer-events-none');
-      }
-      iframe.src = RESERVO_AGENDA_URL + '&t=' + Date.now();
-    }
+    function closeBookingModal() {}
 
     function clearBookingServiceBadge() {
       const badge = document.getElementById('booking-selected-service-badge');
@@ -7203,11 +7052,6 @@
           }
         }
 
-        // Asegurar que el iframe de la agenda esté activo
-        const inpageIframe = document.getElementById('inpage-reservo-iframe');
-        if (inpageIframe && (!inpageIframe.src || inpageIframe.src === '' || inpageIframe.src.endsWith('/'))) {
-          inpageIframe.src = RESERVO_AGENDA_URL;
-        }
       }
     }
 
