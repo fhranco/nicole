@@ -1681,6 +1681,15 @@
       `; }).join('') : '<p class="text-sm text-sage-deep/70 col-span-2">No se encontraron pacientes con ese criterio.</p>';
     }
 
+    function copyIntakeLink(token) {
+      const url = `${window.location.origin}/ingreso-paciente?token=${encodeURIComponent(token || '')}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => showToast('Enlace de ficha copiado al portapapeles.')).catch(() => showToast(url));
+      } else {
+        showToast(url);
+      }
+    }
+
     async function openPatientDrawer(id) {
       const r = getBookings().find((x) => x.id === id);
       if (!r) return;
@@ -1703,9 +1712,19 @@
           <div class="skeleton-box h-12"></div>
         </div>
         <div class="flex flex-col gap-2.5 pt-1">
-          <a href="ingreso-paciente.html?token=${encodeURIComponent(r.token || '')}" target="_blank" class="min-h-[46px] rounded-2xl bg-sage-deep text-white text-xs font-semibold flex items-center justify-center gap-2">
+          <a href="/ingreso-paciente?token=${encodeURIComponent(r.token || '')}" target="_blank" class="min-h-[46px] rounded-2xl bg-sage-deep text-white text-xs font-semibold flex items-center justify-center gap-2">
             <i data-lucide="clipboard-list" class="w-4 h-4"></i> Abrir enlace de ficha
           </a>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button type="button" onclick="copyIntakeLink('${escapeHtml(r.token || '')}')" class="min-h-[44px] rounded-2xl bg-white border border-sage/25 text-sage-deep text-xs font-semibold flex items-center justify-center gap-1.5">
+              <i data-lucide="copy" class="w-4 h-4"></i> Copiar enlace
+            </button>
+            ${String(r.telefono || '').replace(/\D/g, '') ? `
+              <a href="https://wa.me/${encodeURIComponent(String(r.telefono || '').replace(/\D/g, ''))}?text=${encodeURIComponent(`Hola ${r.paciente}, soy Nicole Borguenson. Te comparto el enlace de tu ficha de ingreso clínico para nuestra consulta del ${r.fechaIso.split('-').reverse().join('/')} a las ${r.hora} hrs: ${window.location.origin}/ingreso-paciente?token=${r.token || ''}`)}" target="_blank" rel="noopener noreferrer" class="min-h-[44px] rounded-2xl bg-[#25D366] text-white text-xs font-semibold flex items-center justify-center gap-1.5">
+                <i data-lucide="message-circle" class="w-4 h-4"></i> Enviar por WhatsApp
+              </a>
+            ` : ''}
+          </div>
           ${saldo > 0 ? `<button type="button" onclick="closeModal('patient-drawer'); openQuickPaymentModal('${escapeHtml(r.id)}')" class="min-h-[46px] rounded-2xl bg-coral text-white text-xs font-semibold">Registrar pago de saldo</button>` : ''}
         </div>
       `;

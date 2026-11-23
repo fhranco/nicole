@@ -867,7 +867,7 @@
 
     let activeBookingContext = null;
 
-    async function verifyBookingTokenAccess() {
+    async function verifyBookingTokenAccess(attempt = 0) {
       const params = new URLSearchParams(window.location.search);
       const token = (params.get('token') || '').trim();
       const gate = document.getElementById('access-gate-screen');
@@ -937,6 +937,14 @@
         });
         const rows = await res.json();
         const booking = Array.isArray(rows) ? rows[0] : rows;
+        if (booking && booking.reserva_id && !booking.valido && !booking.intake_completado && attempt < 10) {
+          const chk = document.getElementById('token-checking-screen');
+          const chkText = chk?.querySelector('p');
+          if (chkText) chkText.textContent = 'Confirmando tu abono con Mercado Pago... un momento por favor.';
+          return await new Promise((resolve) => {
+            setTimeout(() => resolve(verifyBookingTokenAccess(attempt + 1)), 2000);
+          });
+        }
         if (!booking || !booking.valido) {
           lockScreen('Tu enlace de reserva aún no registra confirmación o ya expiró.');
           return false;
