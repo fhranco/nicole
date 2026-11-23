@@ -302,6 +302,7 @@
             <button type="button" onclick="setPatientFilter('control')" data-pf="control" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Controles</button>
             <button type="button" onclick="setPatientFilter('programa')" data-pf="programa" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Programas activos</button>
             <button type="button" onclick="setPatientFilter('ficha_pendiente')" data-pf="ficha_pendiente" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Ficha pendiente</button>
+            <button type="button" onclick="setPatientFilter('intento_sin_pago')" data-pf="intento_sin_pago" class="pf-btn px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-sage/25 text-sage-deep">Intentos sin pago</button>
           </div>
         </div>
 
@@ -1192,7 +1193,7 @@
         for (let i = 0; i < 6; i++) {
           const d = new Date(monday); d.setDate(monday.getDate() + i);
           const ds = formatDateLocal(d);
-          const dayBlocks = blocksForDay(ds).slice().sort((a, b) => String(a.inicio || '').localeCompare(String(b.inicio || '')));
+          const dayBlocks = blocksForDay(ds).slice().sort((a, b) => String(a.start || '').localeCompare(String(b.start || '')));
           const dayBookings = bookings.filter((r) => r.fechaIso === ds && ['abonada', 'pagada', 'completada', 'confirmada'].includes(r.estado));
           cols += `
             <div class="rounded-2xl border border-sage/20 bg-[#FAF9F6] p-3 space-y-2.5 min-h-[180px]">
@@ -1623,9 +1624,13 @@
 
     function renderPatientsView() {
       const q = (document.getElementById('patient-search')?.value || '').trim().toLowerCase();
+      const isAttemptFilter = appState.patientFilter === 'intento_sin_pago';
       const rows = getBookings().filter((r) => {
         const matchQ = !q || r.paciente.toLowerCase().includes(q) || r.servicio.toLowerCase().includes(q);
         if (!matchQ) return false;
+        const isAttempt = ['pendiente_pago', 'cancelada'].includes(r.estado);
+        if (isAttemptFilter) return isAttempt;
+        if (isAttempt) return false;
         if (appState.patientFilter === 'nuevo') return r.categoria === 'nuevo';
         if (appState.patientFilter === 'control') return r.categoria === 'control';
         if (appState.patientFilter === 'programa') return r.slug === 'evaluacion_epixlife' || r.slug === 'programa_90_dias';
@@ -1633,22 +1638,32 @@
         return true;
       });
 
-      document.getElementById('patients-list').innerHTML = rows.length ? rows.map((r) => `
+      document.getElementById('patients-list').innerHTML = rows.length ? rows.map((r) => {
+        const waDigits = String(r.telefono || '').replace(/\D/g, '');
+        const waMsg = `Hola ${r.paciente}, soy Nicole Borguenson. Vi que intentaste reservar hora para ${r.servicio} (${r.fechaIso.split('-').reverse().join('/')} a las ${r.hora} hrs) y quería saber si necesitas ayuda para completar tu reserva.`;
+        const badgeHtml = isAttemptFilter
+          ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">${r.estado === 'pendiente_pago' ? 'Pago en proceso' : 'No completó pago'}</span>`
+          : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${r.ficha ? 'bg-sage-soft text-sage-deep' : 'bg-coral-soft text-coral'}">${r.ficha ? 'Ficha lista' : 'Ficha pendiente'}</span>`;
+        const subText = isAttemptFilter
+          ? `${escapeHtml(r.servicio)} · Intentó ${escapeHtml(r.fechaIso.split('-').reverse().join('/'))} ${escapeHtml(r.hora)} hrs`
+          : `${escapeHtml(r.servicio)} · ${escapeHtml(SEDES[r.sede] || r.sede)}`;
+        return `
         <div class="bg-white rounded-3xl p-5 border border-sage/20 flex items-center justify-between gap-4">
           <div class="min-w-0 space-y-1">
             <div class="flex flex-wrap items-center gap-2">
               <h3 class="text-sm font-bold text-sage-deep truncate">${escapeHtml(r.paciente)}</h3>
-              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${r.ficha ? 'bg-sage-soft text-sage-deep' : 'bg-coral-soft text-coral'}">
-                ${r.ficha ? 'Ficha lista' : 'Ficha pendiente'}
-              </span>
+              ${badgeHtml}
             </div>
-            <p class="text-xs text-sage-deep/75 truncate">${escapeHtml(r.servicio)} · ${escapeHtml(SEDES[r.sede] || r.sede)}</p>
+            <p class="text-xs text-sage-deep/75 truncate">${subText}</p>
           </div>
-          <button type="button" onclick="openPatientDrawer('${escapeHtml(r.id)}')" class="min-h-[44px] px-4 rounded-2xl bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep shrink-0">
-            Ver detalle
-          </button>
+          <div class="flex items-center gap-2 shrink-0">
+            ${(isAttemptFilter && waDigits) ? `<a href="https://wa.me/${encodeURIComponent(waDigits)}?text=${encodeURIComponent(waMsg)}" target="_blank" rel="noopener noreferrer" class="min-h-[44px] px-3.5 rounded-2xl bg-[#25D366] text-white text-xs font-semibold inline-flex items-center gap-1.5">WhatsApp</a>` : ''}
+            <button type="button" onclick="openPatientDrawer('${escapeHtml(r.id)}')" class="min-h-[44px] px-4 rounded-2xl bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep shrink-0">
+              Ver detalle
+            </button>
+          </div>
         </div>
-      `).join('') : '<p class="text-sm text-sage-deep/70 col-span-2">No se encontraron pacientes con ese criterio.</p>';
+      `; }).join('') : '<p class="text-sm text-sage-deep/70 col-span-2">No se encontraron pacientes con ese criterio.</p>';
     }
 
     async function openPatientDrawer(id) {
