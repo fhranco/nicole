@@ -1192,8 +1192,8 @@
         for (let i = 0; i < 6; i++) {
           const d = new Date(monday); d.setDate(monday.getDate() + i);
           const ds = formatDateLocal(d);
-          const dayBlocks = blocksForDay(ds);
-          const dayBookings = bookings.filter((r) => r.fechaIso === ds);
+          const dayBlocks = blocksForDay(ds).slice().sort((a, b) => String(a.inicio || '').localeCompare(String(b.inicio || '')));
+          const dayBookings = bookings.filter((r) => r.fechaIso === ds && ['abonada', 'pagada', 'completada', 'confirmada'].includes(r.estado));
           cols += `
             <div class="rounded-2xl border border-sage/20 bg-[#FAF9F6] p-3 space-y-2.5 min-h-[180px]">
               <div class="flex items-center justify-between border-b border-sage/15 pb-1.5">
@@ -1204,8 +1204,8 @@
                 ${dayBlocks.map(renderBlockPill).join('')}
                 ${dayBookings.map((r) => `
                   <div class="p-2.5 rounded-xl bg-white border border-coral/35 text-[11px]">
-                    <p class="font-bold text-coral">${r.hora} · Reservado</p>
-                    <p class="text-sage-deep font-semibold truncate">${r.paciente}</p>
+                    <p class="font-bold text-coral">${escapeHtml(r.hora)} · Reservado</p>
+                    <p class="text-sage-deep font-semibold truncate">${escapeHtml(r.paciente)}</p>
                   </div>
                 `).join('')}
               </div>
