@@ -186,12 +186,12 @@
         <div class="space-y-3">
           <h2 class="text-sm font-semibold text-sage-deep">Acciones rápidas</h2>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <a href="reservar.html" target="_blank" class="min-h-[52px] bg-white hover:bg-sage-soft/40 border border-sage/25 rounded-2xl px-4 py-3 flex items-center gap-3 transition-colors">
+            <button type="button" onclick="openManualBookingModal()" class="min-h-[52px] bg-white hover:bg-sage-soft/40 border border-sage/25 rounded-2xl px-4 py-3 flex items-center gap-3 transition-colors text-left">
               <span class="w-9 h-9 rounded-xl bg-coral-soft text-coral flex items-center justify-center shrink-0">
                 <i data-lucide="calendar-plus" class="w-4 h-4"></i>
               </span>
-              <span class="text-xs sm:text-sm font-semibold text-sage-deep">Agendar consulta</span>
-            </a>
+              <span class="text-xs sm:text-sm font-semibold text-sage-deep">Agendar sin pago</span>
+            </button>
             <button type="button" onclick="openAvailabilityWizard()" class="min-h-[52px] bg-white hover:bg-sage-soft/40 border border-sage/25 rounded-2xl px-4 py-3 flex items-center gap-3 transition-colors text-left">
               <span class="w-9 h-9 rounded-xl bg-sage-soft text-sage-deep flex items-center justify-center shrink-0">
                 <i data-lucide="clock" class="w-4 h-4"></i>
@@ -250,6 +250,9 @@
               <button type="button" onclick="setCalendarView('semana')" data-calview="semana" class="calview-btn px-3 py-2 rounded-xl text-xs font-semibold bg-sage-deep text-white">Semana</button>
               <button type="button" onclick="setCalendarView('mes')" data-calview="mes" class="calview-btn px-3 py-2 rounded-xl text-xs font-semibold text-sage-deep/75">Mes</button>
             </div>
+            <button type="button" onclick="openManualBookingModal()" class="min-h-[44px] px-4 py-2.5 rounded-2xl bg-sage-deep text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs">
+              <i data-lucide="calendar-plus" class="w-4 h-4"></i><span>Agendar sin pago</span>
+            </button>
             <button type="button" onclick="openAvailabilityWizard()" class="min-h-[44px] px-5 py-2.5 rounded-2xl bg-coral text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs">
               <i data-lucide="plus" class="w-4 h-4"></i><span>Configurar disponibilidad</span>
             </button>
@@ -540,6 +543,84 @@
         </button>
       </div>
       <div id="drawer-patient-body" class="space-y-4 text-sm text-sage-deep"></div>
+    </div>
+  </div>
+
+  <!-- MODAL AGENDAR RESERVA SIN PAGO (EXCLUSIVO NICOLE) -->
+  <div id="manual-booking-modal" class="hidden fixed inset-0 z-50 bg-sage-deep/40 backdrop-blur-xs flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="mb-modal-title">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 border border-sage/25 shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="inline-block px-2.5 py-0.5 rounded-full bg-sage-soft text-sage-deep text-[10px] font-bold uppercase tracking-wider">Uso exclusivo clínica</span>
+          <h2 id="mb-modal-title" class="text-lg font-bold text-sage-deep mt-1">Agendar reserva sin pago previo</h2>
+        </div>
+        <button type="button" onclick="closeModal('manual-booking-modal')" class="w-10 h-10 rounded-full hover:bg-sage-soft flex items-center justify-center text-sage-deep" aria-label="Cerrar">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="event.preventDefault(); submitManualBooking();" class="space-y-3">
+        <div>
+          <label for="mb-name" class="block text-xs font-semibold text-sage-deep mb-1">Nombre completo <span class="text-coral">*</span></label>
+          <input id="mb-name" type="text" required placeholder="Nombre y apellidos del paciente" class="w-full min-h-[42px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="mb-rut" class="block text-xs font-semibold text-sage-deep mb-1">RUT <span class="text-coral">*</span></label>
+            <input id="mb-rut" type="text" required placeholder="12.345.678-9" class="w-full min-h-[42px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+          </div>
+          <div>
+            <label for="mb-phone" class="block text-xs font-semibold text-sage-deep mb-1">WhatsApp <span class="text-coral">*</span></label>
+            <input id="mb-phone" type="tel" required placeholder="+56912345678" class="w-full min-h-[42px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+          </div>
+        </div>
+        <div>
+          <label for="mb-email" class="block text-xs font-semibold text-sage-deep mb-1">Correo electrónico <span class="text-coral">*</span></label>
+          <input id="mb-email" type="email" required placeholder="paciente@correo.cl" class="w-full min-h-[42px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="mb-service" class="block text-xs font-semibold text-sage-deep mb-1">Servicio</label>
+            <select id="mb-service" class="w-full min-h-[42px] rounded-2xl border border-sage/25 px-3 text-sm text-sage-deep">
+              <option value="consulta_inicial_presencial">Consulta Inicial (Presencial)</option>
+              <option value="consulta_inicial_online">Consulta Inicial (Online)</option>
+              <option value="evaluacion_epixlife">Evaluación Integral + Epixlife</option>
+              <option value="programa_90_dias">Programa Integral 90 Días</option>
+            </select>
+          </div>
+          <div>
+            <label for="mb-sede" class="block text-xs font-semibold text-sage-deep mb-1">Sede / Modalidad</label>
+            <select id="mb-sede" class="w-full min-h-[42px] rounded-2xl border border-sage/25 px-3 text-sm text-sage-deep">
+              <option value="punta_arenas">Punta Arenas (Presencial)</option>
+              <option value="online">Online (Teleconsulta)</option>
+              <option value="puerto_natales">Puerto Natales (Gira)</option>
+              <option value="porvenir">Porvenir (Gira)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="mb-date" class="block text-xs font-semibold text-sage-deep mb-1">Fecha <span class="text-coral">*</span></label>
+            <input id="mb-date" type="date" required class="w-full min-h-[42px] rounded-2xl border border-sage/25 px-3.5 text-sm text-sage-deep" />
+          </div>
+          <div>
+            <label for="mb-time" class="block text-xs font-semibold text-sage-deep mb-1">Hora <span class="text-coral">*</span></label>
+            <select id="mb-time" class="w-full min-h-[42px] rounded-2xl border border-sage/25 px-3 text-sm text-sage-deep">
+              <option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option>
+              <option value="12:00">12:00</option><option value="13:00">13:00</option><option value="14:00">14:00</option>
+              <option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option>
+              <option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option>
+            </select>
+          </div>
+        </div>
+        <p class="text-[11px] text-sage-deep/75 bg-[#FAF9F6] rounded-xl p-2.5 border border-sage/15">
+          Se creará la cita confirmada (abono $0), quedará bloqueada en la agenda pública y se habilitará al instante el enlace de ficha clínica para enviárselo por WhatsApp.
+        </p>
+        <p id="mb-err" class="hidden text-xs font-semibold text-coral"></p>
+        <div class="flex gap-2.5 pt-1">
+          <button type="button" onclick="closeModal('manual-booking-modal')" class="flex-1 min-h-[46px] rounded-2xl border border-sage/25 text-sm font-semibold text-sage-deep">Cancelar</button>
+          <button id="mb-submit-btn" type="submit" class="flex-1 min-h-[46px] rounded-2xl bg-coral text-white text-sm font-semibold">Confirmar reserva</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1841,6 +1922,119 @@
 
     function resetPaymentKey() {
       pendingPaymentKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function getSantiagoOffsetForDate(dateStr) {
+      const probe = new Date(`${dateStr}T12:00:00Z`);
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', timeZoneName: 'shortOffset' }).formatToParts(probe);
+      const tz = parts.find((p) => p.type === 'timeZoneName')?.value || 'GMT-3';
+      const match = tz.match(/GMT([+-]\d+)/);
+      if (!match) return '-03:00';
+      const hr = Number(match[1]);
+      return `${hr < 0 ? '-' : '+'}${String(Math.abs(hr)).padStart(2, '0')}:00`;
+    }
+
+    function openManualBookingModal() {
+      if (!isAuthenticated()) {
+        showToast('Inicia sesión con tu cuenta clínica para agendar sin pago.', 'error');
+        openAuthModal();
+        return;
+      }
+      document.getElementById('mb-err').classList.add('hidden');
+      const dEl = document.getElementById('mb-date');
+      if (dEl && !dEl.value) dEl.value = santiagoTodayStr();
+      openModal('manual-booking-modal');
+    }
+
+    async function submitManualBooking() {
+      if (appState.submitting) return;
+      if (!isAuthenticated()) {
+        showToast('Solo Nicole autenticada puede crear reservas sin pago.', 'error');
+        return;
+      }
+      const err = document.getElementById('mb-err');
+      const btn = document.getElementById('mb-submit-btn');
+      const name = document.getElementById('mb-name').value.trim();
+      const rut = document.getElementById('mb-rut').value.trim();
+      const phone = document.getElementById('mb-phone').value.trim();
+      const email = document.getElementById('mb-email').value.trim().toLowerCase();
+      const slug = document.getElementById('mb-service').value;
+      const sede = document.getElementById('mb-sede').value;
+      const date = document.getElementById('mb-date').value;
+      const time = document.getElementById('mb-time').value;
+      const modalidad = sede === 'online' || slug === 'consulta_inicial_online' ? 'online' : 'presencial';
+
+      if (!name || !rut || !phone || !email || !date || !time) {
+        err.textContent = 'Completa todos los campos obligatorios.';
+        err.classList.remove('hidden');
+        return;
+      }
+      err.classList.add('hidden');
+      appState.submitting = true;
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        const rutNorm = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+        let pacienteId = null;
+        if (rutNorm) {
+          const existing = await sbFetch(`/rest/v1/pacientes?rut_normalizado=eq.${encodeURIComponent(rutNorm)}&select=id&limit=1`);
+          if (Array.isArray(existing) && existing[0]?.id) {
+            pacienteId = existing[0].id;
+            await sbFetch(`/rest/v1/pacientes?id=eq.${pacienteId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ nombre_completo: name, telefono: phone, rut, email })
+            });
+          }
+        }
+        if (!pacienteId) {
+          const pacRows = await sbFetch('/rest/v1/pacientes?on_conflict=email', {
+            method: 'POST',
+            headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+            body: JSON.stringify({ nombre_completo: name, telefono: phone, rut, email })
+          });
+          pacienteId = pacRows?.[0]?.id;
+        }
+        if (!pacienteId) throw new Error('No se pudo registrar el paciente');
+
+        const srvRows = await sbFetch(`/rest/v1/servicios?slug=eq.${encodeURIComponent(slug)}&limit=1`);
+        const srv = srvRows?.[0] || { precio_clp: 45000, duracion_min: 60 };
+        const offset = getSantiagoOffsetForDate(date);
+        const fechaHora = `${date}T${time}:00${offset}`;
+
+        const rsvRows = await sbFetch('/rest/v1/reservas', {
+          method: 'POST',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify({
+            paciente_id: pacienteId,
+            servicio_slug: slug,
+            sede_slug: sede,
+            modalidad,
+            fecha_hora: fechaHora,
+            fecha_inicio: fechaHora,
+            duracion_min: srv.duracion_min || 60,
+            precio_total_clp: srv.precio_clp || 45000,
+            credito_previo_clp: 0,
+            monto_abonado_clp: 0,
+            estado: 'abonada'
+          })
+        });
+        const created = rsvRows?.[0];
+        await loadOperationalData();
+        closeModal('manual-booking-modal');
+        showToast('Reserva agendada sin pago y bloqueada en agenda.');
+        if (created?.id) openPatientDrawer(created.id);
+      } catch (e) {
+        const msg = String(e.message || '');
+        err.textContent = (msg.includes('23P01') || msg.includes('solapamiento'))
+          ? 'Ese horario ya está ocupado por otra reserva.'
+          : (msg || 'No se pudo crear la reserva.');
+        err.classList.remove('hidden');
+      } finally {
+        appState.submitting = false;
+        btn.disabled = false;
+        btn.textContent = 'Confirmar reserva';
+      }
     }
 
     function openQuickPaymentModal(preselectedId = null) {
