@@ -1835,14 +1835,151 @@
       }
 
       try {
-        const rows = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?reserva_id=eq.${encodeURIComponent(r.id)}&select=motivo_consulta,enfermedades_actuales,tratamiento_actual,fecha_hoy&limit=1`);
+        let rows = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?reserva_id=eq.${encodeURIComponent(r.id)}&select=*&order=created_at.desc&limit=1`);
+        if ((!rows || !rows.length) && r.pacienteId) {
+          rows = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?paciente_id=eq.${encodeURIComponent(r.pacienteId)}&select=*&order=created_at.desc&limit=1`);
+        }
         const f = rows?.[0];
-        fichaBox.innerHTML = f
-          ? `<p><strong>Fecha ficha:</strong> ${escapeHtml(f.fecha_hoy || '-')}</p><p><strong>Motivo:</strong> ${escapeHtml(f.motivo_consulta || '-')}</p><p><strong>Antecedentes:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>`
-          : '<p class="text-sage-deep/70">Ficha clínica aún no ingresada para esta reserva.</p>';
+        appState.activeFicha = f ? { ficha: f, booking: r } : null;
+        if (!f) {
+          fichaBox.innerHTML = '<p class="text-sage-deep/70">Ficha clínica aún no ingresada para esta reserva.</p>';
+          return;
+        }
+        const code = f.codigo_ficha || buildFichaId(f.rut || r.rut, f.fecha_hoy || r.fechaIso, r.id);
+        const sysEntries = Object.entries(f.rastreo_sistemas || {});
+        const filesList = Array.isArray(f.archivos_urls) ? f.archivos_urls : [];
+        fichaBox.innerHTML = `
+          <div class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-sage/15">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-sage-deep/70">Ficha clínica completa</span>
+                <p class="font-mono text-xs font-bold text-sage-deep">${escapeHtml(code)}</p>
+              </div>
+              <button type="button" onclick="downloadActiveFichaPDF()" class="px-3.5 py-2 rounded-xl bg-coral text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="file-down" class="w-4 h-4"></i> Descargar Ficha PDF
+              </button>
+            </div>
+            <div class="space-y-1.5 text-xs">
+              <p><strong>Fecha ficha:</strong> ${escapeHtml(f.fecha_hoy || '-')} · <strong>Edad:</strong> ${escapeHtml(f.edad ?? '-')} años</p>
+              <p><strong>Actividad:</strong> ${escapeHtml(f.actividad_laboral || '-')}</p>
+              <p><strong>Enfermedades actuales:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>
+              <p><strong>Tratamiento / fármacos:</strong> ${escapeHtml(f.tratamiento_actual || '-')}</p>
+              <p><strong>Historia clínica:</strong> ${escapeHtml(f.historia_clinica || '-')}</p>
+              <p><strong>Actividad física:</strong> ${escapeHtml(f.actividad_fisica || '-')}</p>
+              <p><strong>Motivo de consulta:</strong> ${escapeHtml(f.motivo_consulta || '-')}</p>
+              <p><strong>Día típico:</strong> ${escapeHtml(f.dia_tipico || '-')}</p>
+              ${sysEntries.length ? `<details class="pt-1"><summary class="cursor-pointer font-semibold text-sage-deep">Ver rastreo de 6 meses (${sysEntries.length} áreas)</summary><div class="mt-1.5 space-y-1 pl-2 border-l-2 border-sage/25">${sysEntries.map(([k, v]) => `<p><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</p>`).join('')}</div></details>` : ''}
+              ${filesList.length ? `<p class="pt-1"><strong>Exámenes adjuntos (${filesList.length}):</strong> ${filesList.map((u) => escapeHtml(String(u).split('/').pop())).join(', ')}</p>` : ''}
+            </div>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
       } catch (e) {
         fichaBox.innerHTML = `<p class="text-coral">No pudimos cargar los antecedentes (${escapeHtml(e.message)}).</p>`;
       }
+    }
+
+    function downloadActiveFichaPDF() {
+      const ctx = appState.activeFicha;
+      if (!ctx || !ctx.ficha) {
+        showToast('No hay una ficha cargada para descargar.', 'error');
+        return;
+      }
+      const f = ctx.ficha;
+      const r = ctx.booking || {};
+      const code = f.codigo_ficha || buildFichaId(f.rut || r.rut, f.fecha_hoy || r.fechaIso, r.id);
+      const sysEntries = Object.entries(f.rastreo_sistemas || {});
+      const filesList = Array.isArray(f.archivos_urls) ? f.archivos_urls : [];
+      const docTitle = `${code} - ${f.nombre_completo || r.paciente || 'Ficha Clinica'}`;
+
+      const row = (label, val) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(val || '-')}</td></tr>`;
+      const html = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(docTitle)}</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1f2937; font-size: 11.5px; line-height: 1.45; margin: 0; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #2C5240; padding-bottom: 10px; margin-bottom: 14px; }
+    .brand h1 { margin: 0; font-size: 17px; color: #2C5240; }
+    .brand p { margin: 2px 0 0; font-size: 11px; color: #57534E; }
+    .meta { text-align: right; font-size: 11px; }
+    .code { display: inline-block; background: #EAF3EE; color: #2C5240; font-family: monospace; font-weight: 700; padding: 3px 8px; border-radius: 6px; border: 1px solid #81B29A; }
+    h2 { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; color: #2C5240; background: #F4F8F6; padding: 6px 10px; border-left: 3px solid #E07A5F; margin: 14px 0 8px; page-break-after: avoid; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    th, td { text-align: left; vertical-align: top; padding: 5px 8px; border-bottom: 1px solid #e5e7eb; }
+    th { width: 32%; color: #2C5240; font-weight: 600; }
+    .box { background: #FAF9F6; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 10px; white-space: pre-wrap; page-break-inside: avoid; }
+    .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #6b7280; display: flex; justify-content: space-between; }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="background:#2C5240;color:#fff;padding:10px 14px;margin-bottom:14px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+    <span>Vista lista para guardar como PDF</span>
+    <button onclick="window.print()" style="background:#E07A5F;color:#fff;border:none;padding:7px 14px;border-radius:6px;font-weight:700;cursor:pointer;">Guardar / Imprimir PDF</button>
+  </div>
+  <div class="header">
+    <div class="brand">
+      <h1>Ficha Clínica de Ingreso Nutricional</h1>
+      <p>Nicole Borguenson Fraga · Nutrición Integrativa &amp; Clínica</p>
+    </div>
+    <div class="meta">
+      <div class="code">${escapeHtml(code)}</div>
+      <div style="margin-top:4px;">Fecha ficha: ${escapeHtml(f.fecha_hoy || '-')}</div>
+    </div>
+  </div>
+
+  <h2>1. Identificación del Paciente</h2>
+  <table>
+    ${row('Nombre completo', f.nombre_completo || r.paciente)}
+    ${row('RUT', f.rut || r.rut)}
+    ${row('Fecha nacimiento / Edad', `${f.fecha_nacimiento || '-'} (${f.edad ?? '-'} años)`)}
+    ${row('Teléfono / Correo', `${f.telefono || r.telefono || '-'} · ${f.email || r.email || '-'}`)}
+    ${row('Dirección', f.direccion)}
+    ${row('Actividad laboral / diaria', f.actividad_laboral)}
+    ${row('Servicio agendado', r.servicio)}
+  </table>
+
+  <h2>2. Antecedentes Médicos y Hábitos</h2>
+  <table>
+    ${row('Enfermedades actuales', f.enfermedades_actuales)}
+    ${row('Tratamiento y fármacos', f.tratamiento_actual)}
+    ${row('Historia clínica cronológica', f.historia_clinica)}
+    ${row('Actividad física', f.actividad_fisica)}
+  </table>
+
+  <h2>3. Rastreo de Síntomas (Últimos 6 Meses)</h2>
+  <table>
+    ${row('Resumen general', f.rastreo_resumen)}
+    ${sysEntries.map(([k, v]) => row(k, v)).join('')}
+  </table>
+
+  <h2>4. Motivo de Consulta y Alimentación</h2>
+  <p style="margin:0 0 4px;font-weight:600;color:#2C5240;">Motivo principal y objetivos:</p>
+  <div class="box">${escapeHtml(f.motivo_consulta || '-')}</div>
+  <p style="margin:10px 0 4px;font-weight:600;color:#2C5240;">Día típico de alimentación:</p>
+  <div class="box">${escapeHtml(f.dia_tipico || '-')}</div>
+  ${filesList.length ? `<p style="margin-top:8px;"><strong>Exámenes adjuntos:</strong> ${filesList.map((u) => escapeHtml(String(u).split('/').pop())).join(', ')}</p>` : ''}
+
+  <div class="footer">
+    <span>Documento clínico confidencial · Ley 21.719</span>
+    <span>${escapeHtml(code)}</span>
+  </div>
+  <script>setTimeout(() => window.print(), 250);<\/script>
+</body>
+</html>`;
+
+      const win = window.open('', '_blank', 'width=900,height=750');
+      if (!win) {
+        showToast('Tu navegador bloqueó la ventana emergente para generar el PDF.', 'error');
+        return;
+      }
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
     }
 
     // =========================================================================
