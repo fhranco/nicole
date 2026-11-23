@@ -7,4 +7,5 @@ Pacientes/
 node_modules
 .vercel
 ._*
+backups/
 .env*
