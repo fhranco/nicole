@@ -1122,25 +1122,40 @@
       });
     }
 
-    function renderBlockPill(b) {
+    function renderBlockPill(b, dayBookings = []) {
       const isGira = b.sede === 'puerto_natales' || b.sede === 'porvenir';
       const mod = b.modalidad || (b.sede === 'online' ? 'online' : 'presencial');
-      const tone = !b.active
-        ? 'bg-stone-100 border-stone-200 text-sage-deep/50'
-        : (isGira ? 'bg-cream-soft border-cream text-sage-deep' : (mod === 'online' ? 'bg-sage-soft/75 border-sage/30 text-sage-deep' : 'bg-coral-soft/75 border-coral/30 text-sage-deep'));
+      const lockedBooking = (dayBookings || []).find((r) => r.hora >= b.start && r.hora < b.end);
+      const tone = lockedBooking
+        ? 'bg-coral/15 border-2 border-coral text-sage-deep shadow-xs'
+        : (!b.active
+          ? 'bg-stone-100 border-stone-200 text-sage-deep/50'
+          : (isGira ? 'bg-cream-soft border-cream text-sage-deep' : (mod === 'online' ? 'bg-sage-soft/75 border-sage/30 text-sage-deep' : 'bg-coral-soft/75 border-coral/30 text-sage-deep')));
       const modText = mod === 'ambas' ? 'Presencial / Online' : (mod === 'online' ? 'Online' : `Presencial · ${SEDES[b.sede] || b.sede}`);
+      const lockBadge = lockedBooking
+        ? `<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coral text-white text-[10px] font-bold uppercase tracking-wide">
+             <span>Bloqueado · ${escapeHtml(lockedBooking.paciente)}</span>
+           </div>`
+        : '';
       return `
         <div class="p-3 rounded-2xl border ${tone} space-y-2 text-xs">
+          ${lockBadge}
           <div>
-            <p class="font-bold">${b.start} – ${b.end}</p>
-            <p class="text-[11px] opacity-85">${modText}${!b.active ? ' (Pausado)' : ''}</p>
+            <p class="font-bold">${escapeHtml(b.start)} – ${escapeHtml(b.end)}</p>
+            <p class="text-[11px] opacity-85">${escapeHtml(modText)}${!b.active ? ' (Pausado)' : ''}</p>
           </div>
-          <div class="grid grid-cols-2 gap-1.5 pt-1">
-            <button type="button" onclick="openAvailabilityWizard('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">Editar</button>
-            <button type="button" onclick="duplicateBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">Duplicar</button>
-            <button type="button" onclick="confirmToggleBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">${b.active ? 'Pausar' : 'Activar'}</button>
-            <button type="button" onclick="confirmDeleteBlock('${b.id}')" class="px-2 py-1 rounded-lg bg-white/90 border border-coral/30 text-coral text-[11px] font-semibold text-center">Eliminar</button>
-          </div>
+          ${lockedBooking ? `
+            <button type="button" onclick="openPatientDrawer('${escapeHtml(lockedBooking.id)}')" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-coral/40 text-coral text-[11px] font-bold text-center">
+              Ver reserva (${escapeHtml(lockedBooking.hora)} hrs)
+            </button>
+          ` : `
+            <div class="grid grid-cols-2 gap-1.5 pt-1">
+              <button type="button" onclick="openAvailabilityWizard('${escapeHtml(b.id)}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">Editar</button>
+              <button type="button" onclick="duplicateBlock('${escapeHtml(b.id)}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">Duplicar</button>
+              <button type="button" onclick="confirmToggleBlock('${escapeHtml(b.id)}')" class="px-2 py-1 rounded-lg bg-white/90 border border-sage/20 text-[11px] font-semibold text-center">${b.active ? 'Pausar' : 'Activar'}</button>
+              <button type="button" onclick="confirmDeleteBlock('${escapeHtml(b.id)}')" class="px-2 py-1 rounded-lg bg-white/90 border border-coral/30 text-coral text-[11px] font-semibold text-center">Eliminar</button>
+            </div>
+          `}
         </div>
       `;
     }
@@ -1160,20 +1175,20 @@
       if (appState.calView === 'dia') {
         const ds = appState.calCursorDate;
         titleEl.textContent = `${DAYS_FULL[c.getDay()]} ${cd} de ${MONTHS_ES[cm - 1]}`;
-        const dayBlocks = blocksForDay(ds);
-        const dayBookings = bookings.filter((r) => r.fechaIso === ds);
+        const dayBlocks = blocksForDay(ds).slice().sort((a, b) => String(a.start || '').localeCompare(String(b.start || '')));
+        const dayBookings = bookings.filter((r) => r.fechaIso === ds && ['abonada', 'pagada', 'completada', 'confirmada'].includes(r.estado));
         container.innerHTML = `
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-2.5">
               <h3 class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Bloques configurados</h3>
-              ${dayBlocks.length ? dayBlocks.map(renderBlockPill).join('') : '<p class="text-xs text-sage-deep/65">Sin bloques habilitados este día.</p>'}
+              ${dayBlocks.length ? dayBlocks.map((b) => renderBlockPill(b, dayBookings)).join('') : '<p class="text-xs text-sage-deep/65">Sin bloques habilitados este día.</p>'}
             </div>
             <div class="space-y-2.5">
               <h3 class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Citas reservadas</h3>
               ${dayBookings.length ? dayBookings.map((r) => `
                 <div class="p-3.5 rounded-2xl bg-coral-soft/60 border border-coral/25 text-xs">
-                  <p class="font-bold text-sage-deep">${r.hora} hrs · ${r.paciente}</p>
-                  <p class="text-sage-deep/80 mt-0.5">${r.servicio} · ${SEDES[r.sede] || r.sede}</p>
+                  <p class="font-bold text-sage-deep">${escapeHtml(r.hora)} hrs · ${escapeHtml(r.paciente)}</p>
+                  <p class="text-sage-deep/80 mt-0.5">${escapeHtml(r.servicio)} · ${escapeHtml(SEDES[r.sede] || r.sede)}</p>
                 </div>
               `).join('') : '<p class="text-xs text-sage-deep/65">Sin citas reservadas este día.</p>'}
             </div>
@@ -1202,7 +1217,7 @@
                 ${dayBookings.length ? `<span class="px-2 py-0.5 rounded-full bg-coral text-white text-[10px] font-bold">${dayBookings.length}</span>` : ''}
               </div>
               <div class="space-y-2">
-                ${dayBlocks.map(renderBlockPill).join('')}
+                ${dayBlocks.map((b) => renderBlockPill(b, dayBookings)).join('')}
                 ${dayBookings.map((r) => `
                   <div class="p-2.5 rounded-xl bg-white border border-coral/35 text-[11px]">
                     <p class="font-bold text-coral">${escapeHtml(r.hora)} · Reservado</p>
