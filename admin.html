@@ -815,7 +815,7 @@
       try {
         const [blocksRows, reservasRows, pagosRows] = await Promise.all([
           sbFetch('/rest/v1/bloques_agenda?select=*&order=created_at.asc'),
-          sbFetch('/rest/v1/reservas?select=*,pacientes(nombre_completo,email,telefono),servicios(nombre,duracion_min)&order=fecha_hora.asc'),
+          sbFetch('/rest/v1/reservas?select=*,pacientes(nombre_completo,email,telefono,rut),servicios(nombre,duracion_min)&order=fecha_hora.asc'),
           sbFetch('/rest/v1/pagos_tuu?select=*&order=created_at.asc')
         ]);
 
@@ -857,6 +857,7 @@
             paciente: r.pacientes?.nombre_completo || 'Paciente',
             email: r.pacientes?.email || '',
             telefono: r.pacientes?.telefono || '',
+            rut: r.pacientes?.rut || '',
             categoria: r.credito_previo_clp > 0 ? 'control' : 'nuevo',
             servicio: r.servicios?.nombre || r.servicio_slug,
             slug: r.servicio_slug,
@@ -1637,11 +1638,20 @@
       renderPatientsView();
     }
 
+    function buildFichaId(rut, fechaIso, fallbackId = '') {
+      const cleanRut = String(rut || '').replace(/[^0-9kK]/g, '').toUpperCase();
+      const dateCompact = String(fechaIso || '').replace(/-/g, '');
+      if (cleanRut && dateCompact) return `NB-${cleanRut}-${dateCompact}`;
+      if (cleanRut) return `NB-${cleanRut}`;
+      return `NB-${String(fallbackId || 'DEMO').slice(0, 8).toUpperCase()}`;
+    }
+
     function renderPatientsView() {
       const q = (document.getElementById('patient-search')?.value || '').trim().toLowerCase();
       const isAttemptFilter = appState.patientFilter === 'intento_sin_pago';
       const rows = getBookings().filter((r) => {
-        const matchQ = !q || r.paciente.toLowerCase().includes(q) || r.servicio.toLowerCase().includes(q);
+        const fichaId = buildFichaId(r.rut, r.fechaIso, r.id).toLowerCase();
+        const matchQ = !q || r.paciente.toLowerCase().includes(q) || r.servicio.toLowerCase().includes(q) || String(r.rut || '').toLowerCase().includes(q) || fichaId.includes(q);
         if (!matchQ) return false;
         const isAttempt = ['pendiente_pago', 'cancelada'].includes(r.estado);
         if (isAttemptFilter) return isAttempt;
@@ -1654,6 +1664,7 @@
       });
 
       document.getElementById('patients-list').innerHTML = rows.length ? rows.map((r) => {
+        const fichaId = buildFichaId(r.rut, r.fechaIso, r.id);
         const waDigits = String(r.telefono || '').replace(/\D/g, '');
         const waMsg = `Hola ${r.paciente}, soy Nicole Borguenson. Vi que intentaste reservar hora para ${r.servicio} (${r.fechaIso.split('-').reverse().join('/')} a las ${r.hora} hrs) y quería saber si necesitas ayuda para completar tu reserva.`;
         const badgeHtml = isAttemptFilter
@@ -1661,7 +1672,7 @@
           : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${r.ficha ? 'bg-sage-soft text-sage-deep' : 'bg-coral-soft text-coral'}">${r.ficha ? 'Ficha lista' : 'Ficha pendiente'}</span>`;
         const subText = isAttemptFilter
           ? `${escapeHtml(r.servicio)} · Intentó ${escapeHtml(r.fechaIso.split('-').reverse().join('/'))} ${escapeHtml(r.hora)} hrs`
-          : `${escapeHtml(r.servicio)} · ${escapeHtml(SEDES[r.sede] || r.sede)}`;
+          : `${escapeHtml(fichaId)} · ${escapeHtml(r.servicio)}`;
         return `
         <div class="bg-white rounded-3xl p-5 border border-sage/20 flex items-center justify-between gap-4">
           <div class="min-w-0 space-y-1">
@@ -1698,8 +1709,11 @@
       document.getElementById('drawer-patient-name').textContent = r.paciente;
       document.getElementById('drawer-patient-tag').textContent = r.servicio;
       const bodyEl = document.getElementById('drawer-patient-body');
+      const fichaId = buildFichaId(r.rut, r.fechaIso, r.id);
       bodyEl.innerHTML = `
         <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5 text-xs">
+          <p><strong>ID Ficha Clínica:</strong> <span class="font-mono font-bold text-sage-deep">${escapeHtml(fichaId)}</span></p>
+          <p><strong>RUT:</strong> ${escapeHtml(r.rut || '-')}</p>
           <p><strong>Contacto:</strong> ${escapeHtml(r.telefono || '-')} · ${escapeHtml(r.email || '-')}</p>
           <p><strong>Cita:</strong> ${escapeHtml(r.fechaIso.split('-').reverse().join('/'))} · ${escapeHtml(r.hora)} hrs (${escapeHtml(SEDES[r.sede] || r.sede)})</p>
         </div>
