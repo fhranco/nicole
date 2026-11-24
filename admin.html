@@ -2090,12 +2090,12 @@
             </div>
 
             <div class="rounded-2xl bg-white border border-sage/20 p-3 flex flex-col justify-between">
-              <label for="ant-musculo" class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/75">% Músculo</label>
+              <label for="ant-musculo" class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/75">Músculo (kg)</label>
               <div class="flex items-baseline gap-1 mt-1">
-                <input id="ant-musculo" type="number" step="0.1" min="0" max="100" placeholder="32.0" value="${escapeHtml(ant.musculo_pct ?? '')}" class="w-full text-xl font-bold text-sage-deep bg-transparent border-b border-sage/25 focus:border-coral focus:outline-none py-0.5" />
-                <span class="text-xs font-semibold text-sage-deep/60">%</span>
+                <input id="ant-musculo" type="number" step="0.1" min="0" max="150" placeholder="24.5" value="${escapeHtml(ant.musculo_kg ?? ant.musculo_pct ?? '')}" class="w-full text-xl font-bold text-sage-deep bg-transparent border-b border-sage/25 focus:border-coral focus:outline-none py-0.5" />
+                <span class="text-xs font-semibold text-sage-deep/60">kg</span>
               </div>
-              ${prevAnt ? deltaBadge(ant.musculo_pct, prevAnt.musculo_pct, '%', true) : '<span class="text-[11px] text-sage-deep/50 mt-1">Masa magra</span>'}
+              ${prevAnt ? deltaBadge(ant.musculo_kg ?? ant.musculo_pct, prevAnt.musculo_kg ?? prevAnt.musculo_pct, 'kg', true) : '<span class="text-[11px] text-sage-deep/50 mt-1">Masa esquelética</span>'}
             </div>
           </div>
         </section>
@@ -2275,6 +2275,36 @@
             <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/20 space-y-1.5">
               <label for="pauta-hidratacion" class="text-xs font-bold uppercase tracking-wider text-sage-deep">💧 Hidratación y Hábitos</label>
               <textarea id="pauta-hidratacion" rows="3" placeholder="Ej. 1.8 - 2.0 L agua al día fuera de comidas · Masticación consciente · Caminata post almuerzo..." class="w-full rounded-xl border border-sage/20 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(pauta.hidratacion || '')}</textarea>
+            </div>
+          </div>
+
+          <!-- METAS CUANTITATIVAS PARA TRACKING EN APP RAÍZ -->
+          <div class="p-4 rounded-2xl bg-[#F4F8F6] border border-sage/20 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-sage-deep">🎯 Metas de Monitoreo Diario / Semanal (App Raíz)</p>
+              <span class="text-[11px] text-sage-deep/70">Se sincronizan directo con los contadores automáticos de la App</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <div class="bg-white rounded-xl border border-sage/15 p-2.5">
+                <label for="pauta-meta-agua" class="block text-[11px] font-semibold text-sage-deep/75">Agua (vasos/día)</label>
+                <input id="pauta-meta-agua" type="number" min="1" max="20" value="${escapeHtml(pauta.metas?.hydration ?? 8)}" class="w-full mt-1 text-base font-bold text-sage-deep border-b border-sage/20 focus:border-coral focus:outline-none" />
+              </div>
+              <div class="bg-white rounded-xl border border-sage/15 p-2.5">
+                <label for="pauta-meta-vegetales" class="block text-[11px] font-semibold text-sage-deep/75">Vegetales (sem)</label>
+                <input id="pauta-meta-vegetales" type="number" min="1" max="60" value="${escapeHtml(pauta.metas?.diversity ?? 25)}" class="w-full mt-1 text-base font-bold text-sage-deep border-b border-sage/20 focus:border-coral focus:outline-none" />
+              </div>
+              <div class="bg-white rounded-xl border border-sage/15 p-2.5">
+                <label for="pauta-meta-movimiento" class="block text-[11px] font-semibold text-sage-deep/75">Movimiento (días/sem)</label>
+                <input id="pauta-meta-movimiento" type="number" min="0" max="7" value="${escapeHtml(pauta.metas?.movement ?? 4)}" class="w-full mt-1 text-base font-bold text-sage-deep border-b border-sage/20 focus:border-coral focus:outline-none" />
+              </div>
+              <div class="bg-white rounded-xl border border-sage/15 p-2.5">
+                <label for="pauta-meta-sueno" class="block text-[11px] font-semibold text-sage-deep/75">Sueño ≥7h (noches)</label>
+                <input id="pauta-meta-sueno" type="number" min="1" max="7" value="${escapeHtml(pauta.metas?.sleep ?? 6)}" class="w-full mt-1 text-base font-bold text-sage-deep border-b border-sage/20 focus:border-coral focus:outline-none" />
+              </div>
+              <div class="bg-white rounded-xl border border-sage/15 p-2.5 col-span-2 sm:col-span-1">
+                <label for="pauta-meta-legumbres" class="block text-[11px] font-semibold text-sage-deep/75">Legumbres (días/sem)</label>
+                <input id="pauta-meta-legumbres" type="number" min="0" max="7" value="${escapeHtml(pauta.metas?.legumes ?? 2)}" class="w-full mt-1 text-base font-bold text-sage-deep border-b border-sage/20 focus:border-coral focus:outline-none" />
+              </div>
             </div>
           </div>
 
@@ -2473,7 +2503,7 @@
       imc: { label: 'IMC', unit: 'kg/m²', color: '#3D7058', fill: 'rgba(61, 112, 88, 0.14)', invertGood: false },
       cintura: { label: 'Cintura', unit: 'cm', color: '#E07A5F', fill: 'rgba(224, 122, 95, 0.14)', invertGood: false },
       grasa_pct: { label: '% Grasa', unit: '%', color: '#D97706', fill: 'rgba(217, 119, 6, 0.14)', invertGood: false },
-      musculo_pct: { label: '% Músculo', unit: '%', color: '#059669', fill: 'rgba(5, 150, 105, 0.14)', invertGood: true }
+      musculo_pct: { label: 'Músculo (kg)', unit: 'kg', color: '#059669', fill: 'rgba(5, 150, 105, 0.14)', invertGood: true }
     };
 
     function toggleEvolutionChart() {
@@ -2506,7 +2536,9 @@
           : {};
         const val = metricKey === 'imc'
           ? (computeImc(a.peso, a.talla) ?? parseAntNum(a.imc))
-          : parseAntNum(a[metricKey]);
+          : metricKey === 'musculo_pct'
+            ? parseAntNum(a.musculo_kg ?? a.musculo_pct)
+            : parseAntNum(a[metricKey]);
         const rawDate = item.fecha_hoy || (item.created_at ? String(item.created_at).slice(0, 10) : `#${i + 1}`);
         const shortDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
           ? `${rawDate.slice(8, 10)}/${rawDate.slice(5, 7)}`
@@ -2889,13 +2921,13 @@
       const talla = parseAntNum(document.getElementById('ant-talla')?.value);
       const cintura = parseAntNum(document.getElementById('ant-cintura')?.value);
       const grasa_pct = parseAntNum(document.getElementById('ant-grasa')?.value);
-      const musculo_pct = parseAntNum(document.getElementById('ant-musculo')?.value);
+      const musculo_kg = parseAntNum(document.getElementById('ant-musculo')?.value);
       const imc = computeImc(peso, talla);
 
       const existingSys = (appState.activeFicha?.ficha?.rastreo_sistemas && typeof appState.activeFicha.ficha.rastreo_sistemas === 'object')
         ? { ...appState.activeFicha.ficha.rastreo_sistemas }
         : {};
-      existingSys._antropometria = { peso, talla, imc, cintura, grasa_pct, musculo_pct };
+      existingSys._antropometria = { peso, talla, imc, cintura, grasa_pct, musculo_kg };
       existingSys._pauta = {
         desayuno: (document.getElementById('pauta-desayuno')?.value || '').trim(),
         colacion_am: (document.getElementById('pauta-colacion-am')?.value || '').trim(),
@@ -2905,7 +2937,14 @@
         priorizar: (document.getElementById('pauta-priorizar')?.value || '').trim(),
         limitar: (document.getElementById('pauta-limitar')?.value || '').trim(),
         suplementos: (document.getElementById('pauta-suplementos')?.value || '').trim(),
-        hidratacion: (document.getElementById('pauta-hidratacion')?.value || '').trim()
+        hidratacion: (document.getElementById('pauta-hidratacion')?.value || '').trim(),
+        metas: {
+          hydration: Number(document.getElementById('pauta-meta-agua')?.value || 8),
+          diversity: Number(document.getElementById('pauta-meta-vegetales')?.value || 25),
+          movement: Number(document.getElementById('pauta-meta-movimiento')?.value || 4),
+          sleep: Number(document.getElementById('pauta-meta-sueno')?.value || 6),
+          legumes: Number(document.getElementById('pauta-meta-legumbres')?.value || 2)
+        }
       };
       existingSys._tea = {
         activo: !!document.getElementById('tea-activo')?.checked,
@@ -2974,7 +3013,7 @@
       const rawSys = f.rastreo_sistemas && typeof f.rastreo_sistemas === 'object' ? f.rastreo_sistemas : {};
       const sysEntries = Object.entries(rawSys).filter(([k]) => !k.startsWith('_'));
       const ant = (rawSys._antropometria && typeof rawSys._antropometria === 'object') ? rawSys._antropometria : {};
-      const hasAnt = [ant.peso, ant.talla, ant.imc, ant.cintura, ant.grasa_pct, ant.musculo_pct].some((v) => v !== null && v !== undefined && v !== '');
+      const hasAnt = [ant.peso, ant.talla, ant.imc, ant.cintura, ant.grasa_pct, ant.musculo_kg ?? ant.musculo_pct].some((v) => v !== null && v !== undefined && v !== '');
       const filesList = Array.isArray(f.archivos_urls) ? f.archivos_urls : [];
       const docTitle = `${code} - ${f.nombre_completo || r.paciente || 'Ficha Clinica'}`;
 
@@ -3035,7 +3074,7 @@
       ${row('Peso / Talla', `${ant.peso ?? '-'} kg · ${ant.talla ?? '-'} cm`)}
       ${row('IMC', ant.imc != null ? `${ant.imc} kg/m² (${getImcBadgeMeta(ant.imc).label})` : '-')}
       ${row('Cintura', ant.cintura != null ? `${ant.cintura} cm` : '-')}
-      ${row('% Grasa / % Músculo', `${ant.grasa_pct ?? '-'}% grasa · ${ant.musculo_pct ?? '-'}% músculo`)}
+      ${row('% Grasa / Músculo', `${ant.grasa_pct ?? '-'}% grasa · ${ant.musculo_kg ?? ant.musculo_pct ?? '-'} kg músculo`)}
     </table>
   ` : ''}
 
@@ -3273,7 +3312,7 @@
       const imc = computeImc(peso, talla) ?? savedA.imc ?? null;
       const cintura = parseAntNum(document.getElementById('ant-cintura')?.value) ?? savedA.cintura ?? null;
       const grasa_pct = parseAntNum(document.getElementById('ant-grasa')?.value) ?? savedA.grasa_pct ?? null;
-      const musculo_pct = parseAntNum(document.getElementById('ant-musculo')?.value) ?? savedA.musculo_pct ?? null;
+      const musculo_kg = parseAntNum(document.getElementById('ant-musculo')?.value) ?? savedA.musculo_kg ?? savedA.musculo_pct ?? null;
 
       const teaCb = document.getElementById('tea-activo');
       const payload = {
@@ -3286,7 +3325,7 @@
           birth_date: f.fecha_nacimiento || null,
           main_goal: f.motivo_consulta || ''
         },
-        anthropometry: { peso, talla, imc, cintura, grasa_pct, musculo_pct },
+        anthropometry: { peso, talla, imc, cintura, grasa_pct, musculo_kg },
         pauta: {
           desayuno: valOr('pauta-desayuno', savedP.desayuno),
           colacion_am: valOr('pauta-colacion-am', savedP.colacion_am),
@@ -3296,7 +3335,14 @@
           priorizar: valOr('pauta-priorizar', savedP.priorizar),
           limitar: valOr('pauta-limitar', savedP.limitar),
           suplementos: valOr('pauta-suplementos', savedP.suplementos),
-          hidratacion: valOr('pauta-hidratacion', savedP.hidratacion)
+          hidratacion: valOr('pauta-hidratacion', savedP.hidratacion),
+          metas: {
+            hydration: Number(document.getElementById('pauta-meta-agua')?.value || savedP.metas?.hydration || 8),
+            diversity: Number(document.getElementById('pauta-meta-vegetales')?.value || savedP.metas?.diversity || 25),
+            movement: Number(document.getElementById('pauta-meta-movimiento')?.value || savedP.metas?.movement || 4),
+            sleep: Number(document.getElementById('pauta-meta-sueno')?.value || savedP.metas?.sleep || 6),
+            legumes: Number(document.getElementById('pauta-meta-legumbres')?.value || savedP.metas?.legumes || 2)
+          }
         },
         tea: {
           activo: teaCb ? teaCb.checked : !!savedT.activo,

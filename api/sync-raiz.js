@@ -136,7 +136,7 @@ export default async function handler(req, res) {
     const bmi = num(anthropometry.imc);
     const waist = num(anthropometry.cintura);
     const fat = num(anthropometry.grasa_pct);
-    const muscle = num(anthropometry.musculo_pct);
+    const muscle = num(anthropometry.musculo_kg ?? anthropometry.musculo_pct);
     const measuredAt = /^\d{4}-\d{2}-\d{2}$/.test(String(fecha || '')) ? fecha : new Date().toISOString().slice(0, 10);
 
     if (w !== null || h !== null || waist !== null || fat !== null || muscle !== null) {
@@ -157,9 +157,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // 6. Publicar Plan Vivo (plan_versions + plan_items) si hay pauta o TEA activo
+    // 6. Publicar Plan Vivo (plan_versions + plan_items) con ítems nativos de Raíz + detalle de comidas/TEA
     const itemsToCreate = [];
-    const pushItem = (key, label, instruction, category, frequency, unit = 'indicación') => {
+    const pushItem = (key, label, instruction, category, frequency, unit = 'indicación', target = 1, tracking = 'manual', description = '') => {
       const clean = String(instruction || '').trim();
       if (!clean) return;
       itemsToCreate.push({
@@ -167,26 +167,37 @@ export default async function handler(req, res) {
         patient_id: raizPatient.id,
         item_key: key,
         label,
-        description: clean.slice(0, 120),
+        description: description || clean.slice(0, 120),
         instruction: clean,
-        target: 1,
+        target,
         unit,
         category,
         frequency,
-        tracking: 'manual',
+        tracking,
         patient_visible: true
       });
     };
 
-    pushItem('desayuno', 'Desayuno', pauta.desayuno, 'nutrition', 'daily', 'comida');
-    pushItem('colacion_am', 'Colación AM', pauta.colacion_am, 'nutrition', 'daily', 'comida');
-    pushItem('almuerzo', 'Almuerzo', pauta.almuerzo, 'nutrition', 'daily', 'comida');
-    pushItem('colacion_pm', 'Once / Colación PM', pauta.colacion_pm, 'nutrition', 'daily', 'comida');
-    pushItem('cena', 'Cena', pauta.cena, 'nutrition', 'daily', 'comida');
+    // Metas cuantitativas nativas de App Raíz (tracking: 'auto')
+    const metas = pauta.metas || {};
+    pushItem('hydration', 'Hidratación', pauta.hidratacion || 'Reparte el agua durante el día.', 'hydration', 'daily', 'vasos/día', Number(metas.hydration || 8), 'auto', 'Vasos de agua al día.');
+    pushItem('diversity', 'Diversidad vegetal', 'Suma alimentos vegetales distintos en la semana.', 'nutrition', 'weekly', 'alimentos', Number(metas.diversity || 25), 'auto', 'Alimentos vegetales distintos en 7 días.');
+    pushItem('nutrition', 'Objetivos nutricionales', 'Cumplimiento de las comidas acordadas.', 'nutrition', 'daily', '%', 100, 'auto', 'Cumplimiento de las comidas acordadas.');
+    pushItem('movement', 'Movimiento', 'Movimiento que puedas sostener en la semana.', 'movement', 'weekly', 'días', Number(metas.movement || 4), 'auto', 'Días con movimiento en la semana.');
+    pushItem('sleep', 'Descanso', 'Prioriza horario regular de descanso.', 'sleep', 'weekly', 'noches', Number(metas.sleep || 6), 'auto', 'Noches con 7 horas o más.');
+    pushItem('legumes', 'Legumbres', 'Incluye legumbres en preparaciones que disfrutes.', 'nutrition', 'weekly', 'días', Number(metas.legumes || 2), 'auto', 'Días con legumbres en la semana.');
+
+    // Suplementación nativa (item_key: 'supplement')
+    pushItem('supplement', 'Suplementación', pauta.suplementos, 'supplement', 'daily', 'dosis/día', 1, 'manual', 'Indicación de suplementación.');
+
+    // Detalle de pauta por comidas y semáforo
+    pushItem('desayuno', 'Desayuno', pauta.desayuno, 'nutrition', 'per_meal', 'comida');
+    pushItem('colacion_am', 'Colación AM', pauta.colacion_am, 'nutrition', 'per_meal', 'comida');
+    pushItem('almuerzo', 'Almuerzo', pauta.almuerzo, 'nutrition', 'per_meal', 'comida');
+    pushItem('colacion_pm', 'Once / Colación PM', pauta.colacion_pm, 'nutrition', 'per_meal', 'comida');
+    pushItem('cena', 'Cena', pauta.cena, 'nutrition', 'per_meal', 'comida');
     pushItem('priorizar', 'Alimentos a priorizar', pauta.priorizar, 'nutrition', 'daily', 'guía');
     pushItem('limitar', 'Limitar o pausar temporalmente', pauta.limitar, 'nutrition', 'daily', 'guía');
-    pushItem('suplementos', 'Suplementación y horarios', pauta.suplementos, 'supplement', 'daily', 'dosis');
-    pushItem('hidratacion', 'Hidratación y hábitos', pauta.hidratacion, 'hydration', 'daily', 'hábito');
 
     if (tea?.activo) {
       pushItem('tea_seguros', 'Alimentos seguros (TEA)', tea.alimentos_seguros, 'nutrition', 'daily', 'guía');
