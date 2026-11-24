@@ -1992,6 +1992,12 @@
             <button type="button" onclick="toggleFichaEditMode()" class="min-h-[44px] px-4 rounded-2xl ${isEditing ? 'bg-sage-deep text-white' : 'bg-white border border-sage/30 text-sage-deep'} text-xs sm:text-sm font-semibold inline-flex items-center gap-2">
               <i data-lucide="pencil" class="w-4 h-4"></i> ${isEditing ? 'Modo lectura' : 'Editar datos de ficha'}
             </button>
+            <button type="button" onclick="syncPatientToRaiz('activate')" id="sync-raiz-btn" class="min-h-[44px] px-4 rounded-2xl bg-emerald-700 text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs hover:bg-emerald-800">
+              <i data-lucide="smartphone" class="w-4 h-4"></i> Activar / Sincronizar App Raíz
+            </button>
+            <button type="button" onclick="syncPatientToRaiz('pause')" id="pause-raiz-btn" title="Pausar acceso del paciente a la App Raíz" class="min-h-[44px] px-3 rounded-2xl bg-white border border-sage/30 text-sage-deep/80 hover:text-coral hover:border-coral/40 text-xs font-semibold inline-flex items-center gap-1.5">
+              <i data-lucide="pause-circle" class="w-4 h-4"></i> Pausar App
+            </button>
             <button type="button" onclick="downloadActivePautaPDF()" class="min-h-[44px] px-4 rounded-2xl bg-sage-deep text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs hover:bg-sage-deep/90">
               <i data-lucide="file-heart" class="w-4 h-4"></i> Pauta PDF (Paciente)
             </button>
@@ -3212,6 +3218,93 @@
       win.document.open();
       win.document.write(html);
       win.document.close();
+    }
+
+    async function syncPatientToRaiz(action = 'activate') {
+      if (!isAuthenticated() || !appState.session?.access_token) {
+        showToast('Debes iniciar sesión para sincronizar con App Raíz.', 'error');
+        return;
+      }
+      const ctx = appState.activeFicha;
+      if (!ctx || !ctx.ficha) {
+        showToast('Selecciona un paciente primero.', 'error');
+        return;
+      }
+      if (action === 'pause' && !window.confirm('¿Pausar el acceso de este paciente al monitoreo diario en App Raíz? (Sus fichas históricas aquí no se borran).')) {
+        return;
+      }
+      const f = ctx.ficha;
+      const r = ctx.booking || {};
+      const rawSys = f.rastreo_sistemas && typeof f.rastreo_sistemas === 'object' ? f.rastreo_sistemas : {};
+      const valOr = (id, fb) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : (fb || '');
+      };
+      const savedP = rawSys._pauta || {};
+      const savedT = rawSys._tea || {};
+      const savedA = rawSys._antropometria || {};
+
+      const peso = parseAntNum(document.getElementById('ant-peso')?.value) ?? savedA.peso ?? null;
+      const talla = parseAntNum(document.getElementById('ant-talla')?.value) ?? savedA.talla ?? null;
+      const imc = computeImc(peso, talla) ?? savedA.imc ?? null;
+      const cintura = parseAntNum(document.getElementById('ant-cintura')?.value) ?? savedA.cintura ?? null;
+      const grasa_pct = parseAntNum(document.getElementById('ant-grasa')?.value) ?? savedA.grasa_pct ?? null;
+      const musculo_pct = parseAntNum(document.getElementById('ant-musculo')?.value) ?? savedA.musculo_pct ?? null;
+
+      const teaCb = document.getElementById('tea-activo');
+      const payload = {
+        action,
+        fecha: f.fecha_hoy || new Date().toISOString().slice(0, 10),
+        patient: {
+          name: f.nombre_completo || r.paciente || 'Paciente',
+          email: f.email || r.email || '',
+          phone: f.telefono || r.telefono || '',
+          birth_date: f.fecha_nacimiento || null,
+          main_goal: f.motivo_consulta || ''
+        },
+        anthropometry: { peso, talla, imc, cintura, grasa_pct, musculo_pct },
+        pauta: {
+          desayuno: valOr('pauta-desayuno', savedP.desayuno),
+          colacion_am: valOr('pauta-colacion-am', savedP.colacion_am),
+          almuerzo: valOr('pauta-almuerzo', savedP.almuerzo),
+          colacion_pm: valOr('pauta-colacion-pm', savedP.colacion_pm),
+          cena: valOr('pauta-cena', savedP.cena),
+          priorizar: valOr('pauta-priorizar', savedP.priorizar),
+          limitar: valOr('pauta-limitar', savedP.limitar),
+          suplementos: valOr('pauta-suplementos', savedP.suplementos),
+          hidratacion: valOr('pauta-hidratacion', savedP.hidratacion)
+        },
+        tea: {
+          activo: teaCb ? teaCb.checked : !!savedT.activo,
+          alimentos_seguros: valOr('tea-seguros', savedT.alimentos_seguros),
+          puente_sensorial: valOr('tea-puente', savedT.puente_sensorial),
+          estrategia_familia: valOr('tea-estrategia', savedT.estrategia_familia)
+        }
+      };
+
+      const btn = document.getElementById(action === 'pause' ? 'pause-raiz-btn' : 'sync-raiz-btn');
+      const origHtml = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.textContent = action === 'pause' ? 'Pausando...' : 'Sincronizando...'; }
+
+      try {
+        const res = await fetch('/api/sync-raiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${appState.session.access_token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Error al conectar con App Raíz.');
+        showToast(action === 'pause'
+          ? 'Acceso a App Raíz pausado para este paciente.'
+          : `Paciente activado y sincronizado en App Raíz (${data.synced_items || 0} ítems de pauta publicados).`);
+      } catch (err) {
+        showToast(err.message || 'No se pudo sincronizar con App Raíz.', 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = origHtml; if (window.lucide) lucide.createIcons(); }
+      }
     }
 
     // =========================================================================
