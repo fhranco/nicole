@@ -1959,6 +1959,11 @@
             <p class="font-mono text-base font-bold text-sage-deep mt-0.5">${escapeHtml(code)} · Fecha: ${escapeHtml(f.fecha_hoy || '-')}</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
+            ${(f.origen === 'admin-control' || fichas.length > 1 && exp.selectedFichaIdx < fichas.length - 1) ? `
+              <button type="button" onclick="deleteClinicalControlRecord('${escapeHtml(f.id)}')" class="min-h-[44px] px-3.5 rounded-2xl bg-white border border-coral/35 text-coral text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-coral-soft/40">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar control
+              </button>
+            ` : ''}
             <button type="button" onclick="toggleFichaEditMode()" class="min-h-[44px] px-4 rounded-2xl ${isEditing ? 'bg-sage-deep text-white' : 'bg-white border border-sage/30 text-sage-deep'} text-xs sm:text-sm font-semibold inline-flex items-center gap-2">
               <i data-lucide="pencil" class="w-4 h-4"></i> ${isEditing ? 'Modo lectura' : 'Editar datos de ficha'}
             </button>
@@ -2053,6 +2058,24 @@
       appState.expediente.selectedFichaIdx = idx;
       appState.expediente.editMode = false;
       renderExpedienteTimelineAndFicha();
+    }
+
+    async function deleteClinicalControlRecord(fichaId) {
+      const exp = appState.expediente;
+      if (!exp || !isAuthenticated()) return;
+      if (!window.confirm('¿Eliminar este control del historial clínico? Esta acción no se puede deshacer.')) return;
+      try {
+        await sbFetch(`/rest/v1/fichas_ingreso_pacientes?id=eq.${encodeURIComponent(fichaId)}`, {
+          method: 'DELETE'
+        });
+        exp.fichas = (exp.fichas || []).filter((x) => x.id !== fichaId);
+        exp.selectedFichaIdx = 0;
+        exp.editMode = false;
+        renderExpedienteTimelineAndFicha();
+        showToast('Control eliminado del historial.');
+      } catch (e) {
+        showToast(e.message || 'No se pudo eliminar el control.', 'error');
+      }
     }
 
     async function createClinicalControlRecord() {
