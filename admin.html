@@ -1946,16 +1946,38 @@
       `;
 
       const f = fichas[exp.selectedFichaIdx] || fichas[0];
+      const prevF = fichas[exp.selectedFichaIdx + 1] || null;
       const r = exp.booking;
       appState.activeFicha = { ficha: f, booking: r };
       const code = f.codigo_ficha || buildFichaId(f.rut || r.rut, f.fecha_hoy || r.fechaIso, r.id);
-      const sysEntries = Object.entries(f.rastreo_sistemas || {});
+      const rawSys = f.rastreo_sistemas && typeof f.rastreo_sistemas === 'object' ? f.rastreo_sistemas : {};
+      const sysEntries = Object.entries(rawSys).filter(([k]) => !k.startsWith('_'));
+      const ant = (rawSys._antropometria && typeof rawSys._antropometria === 'object') ? rawSys._antropometria : {};
+      const prevAnt = (prevF && prevF.rastreo_sistemas && typeof prevF.rastreo_sistemas._antropometria === 'object')
+        ? prevF.rastreo_sistemas._antropometria
+        : null;
       const filesList = Array.isArray(f.archivos_urls) ? f.archivos_urls : [];
+      const activeTab = exp.activeTab || 'evolucion';
+
+      const imcVal = computeImc(ant.peso, ant.talla) ?? parseAntNum(ant.imc);
+      const imcMeta = getImcBadgeMeta(imcVal);
+      const deltaBadge = (currVal, prevVal, unit, invertGood = false) => {
+        const c = parseAntNum(currVal);
+        const p = parseAntNum(prevVal);
+        if (c === null || p === null) return '';
+        const diff = +(c - p).toFixed(1);
+        if (diff === 0) return `<span class="inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sage-soft/60 text-sage-deep">= 0 ${escapeHtml(unit)} vs anterior</span>`;
+        const sign = diff > 0 ? '+' : '−';
+        const abs = Math.abs(diff).toFixed(1);
+        const isPositiveTrend = invertGood ? diff > 0 : diff < 0;
+        const cls = isPositiveTrend ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200';
+        return `<span class="inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${cls}">${sign}${abs} ${escapeHtml(unit)} vs anterior</span>`;
+      };
 
       mainEl.innerHTML = `
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-sage/15">
           <div>
-            <span class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Ficha clínica seleccionada</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Consulta / Ficha seleccionada</span>
             <p class="font-mono text-base font-bold text-sage-deep mt-0.5">${escapeHtml(code)} · Fecha: ${escapeHtml(f.fecha_hoy || '-')}</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
@@ -1973,74 +1995,198 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm leading-relaxed">
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
-            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Identificación y hábitos</p>
-            <p><strong>Edad / F. Nac.:</strong> ${escapeHtml(f.edad ?? '-')} años (${escapeHtml(f.fecha_nacimiento || '-')})</p>
-            <p><strong>Dirección:</strong> ${escapeHtml(f.direccion || '-')}</p>
-            <p><strong>Actividad laboral:</strong> ${escapeHtml(f.actividad_laboral || '-')}</p>
-            ${isEditing
-              ? `<div><label class="block text-xs font-semibold text-sage-deep mb-1">Actividad física</label><input id="edit-ficha-actfis" type="text" value="${escapeHtml(f.actividad_fisica || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>`
-              : `<p><strong>Actividad física:</strong> ${escapeHtml(f.actividad_fisica || '-')}</p>`}
+        <!-- PROTOCOLO ANTROPOMÉTRICO INICIAL (SIEMPRE AL INICIO DE CADA CONSULTA) -->
+        <section class="rounded-3xl bg-gradient-to-br from-[#F4F8F6] via-[#FAF9F6] to-[#F7F3EE] border border-sage/25 p-4 sm:p-5 space-y-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-2xl bg-sage-deep text-white flex items-center justify-center shadow-xs">
+                <i data-lucide="ruler" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="text-sm sm:text-base font-bold text-sage-deep leading-tight">Protocolo Antropométrico Inicial</h3>
+                <p class="text-xs text-sage-deep/70">Paso 1 de consulta · Base objetiva para evaluar evolución clínica</p>
+              </div>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-white border border-sage/20 text-[11px] font-bold uppercase tracking-wider text-sage-deep">
+              ${prevAnt ? 'Comparando vs control previo' : 'Registro inicial de sesión'}
+            </span>
           </div>
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
-            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Antecedentes clínicos</p>
-            ${isEditing
-              ? `<div class="space-y-2">
-                  <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Enfermedades actuales</label><input id="edit-ficha-enf" type="text" value="${escapeHtml(f.enfermedades_actuales || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>
-                  <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Tratamiento / fármacos</label><input id="edit-ficha-trat" type="text" value="${escapeHtml(f.tratamiento_actual || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>
-                  <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Historia clínica</label><textarea id="edit-ficha-hist" rows="2" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.historia_clinica || '')}</textarea></div>
-                 </div>`
-              : `<p><strong>Enfermedades actuales:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>
-                 <p><strong>Tratamiento / fármacos:</strong> ${escapeHtml(f.tratamiento_actual || '-')}</p>
-                 <p><strong>Historia clínica:</strong> ${escapeHtml(f.historia_clinica || '-')}</p>`}
-          </div>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm leading-relaxed">
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
-            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Motivo de consulta y objetivos</p>
-            ${isEditing
-              ? `<textarea id="edit-ficha-motivo" rows="4" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.motivo_consulta || '')}</textarea>`
-              : `<p class="whitespace-pre-wrap">${escapeHtml(f.motivo_consulta || '-')}</p>`}
-          </div>
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
-            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Día típico de alimentación</p>
-            ${isEditing
-              ? `<textarea id="edit-ficha-diatipico" rows="4" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.dia_tipico || '')}</textarea>`
-              : `<p class="whitespace-pre-wrap">${escapeHtml(f.dia_tipico || '-')}</p>`}
-          </div>
-        </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="rounded-2xl bg-white border border-sage/20 p-3 flex flex-col justify-between">
+              <label for="ant-peso" class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/75">Peso (kg)</label>
+              <div class="flex items-baseline gap-1 mt-1">
+                <input id="ant-peso" type="number" step="0.1" min="0" placeholder="68.5" value="${escapeHtml(ant.peso ?? '')}" oninput="recalcAntropometriaUI()" class="w-full text-xl font-bold text-sage-deep bg-transparent border-b border-sage/25 focus:border-coral focus:outline-none py-0.5" />
+                <span class="text-xs font-semibold text-sage-deep/60">kg</span>
+              </div>
+              ${prevAnt ? deltaBadge(ant.peso, prevAnt.peso, 'kg') : '<span class="text-[11px] text-sage-deep/50 mt-1">Peso actual</span>'}
+            </div>
 
-        ${sysEntries.length ? `
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 text-sm space-y-2">
-            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Rastreo de síntomas últimos 6 meses (${sysEntries.length} áreas)</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-              ${sysEntries.map(([k, v]) => `<p><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</p>`).join('')}
+            <div class="rounded-2xl bg-white border border-sage/20 p-3 flex flex-col justify-between">
+              <label for="ant-talla" class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/75">Talla (cm)</label>
+              <div class="flex items-baseline gap-1 mt-1">
+                <input id="ant-talla" type="number" step="0.1" min="0" placeholder="165" value="${escapeHtml(ant.talla ?? prevAnt?.talla ?? '')}" oninput="recalcAntropometriaUI()" class="w-full text-xl font-bold text-sage-deep bg-transparent border-b border-sage/25 focus:border-coral focus:outline-none py-0.5" />
+                <span class="text-xs font-semibold text-sage-deep/60">cm</span>
+              </div>
+              <span class="text-[11px] text-sage-deep/50 mt-1">Estatura en cm</span>
+            </div>
+
+            <div class="rounded-2xl bg-white border border-sage/20 p-3 flex flex-col justify-between col-span-2 sm:col-span-1">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/75">IMC (auto)</span>
+              <div class="flex items-baseline justify-between gap-2 mt-1">
+                <span id="ant-imc-display" class="text-xl font-bold text-sage-deep">${imcVal !== null ? imcVal.toFixed(1) : '—'}</span>
+                <span id="ant-imc-badge" class="px-2 py-0.5 rounded-full text-[11px] font-bold ${imcMeta.badgeClass}">${escapeHtml(imcMeta.label)}</span>
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden mt-2 flex" title="Bajo peso <18.5 · Normo 18.5-24.9 · Sobrepeso 25-29.9 · Obesidad 30+">
+                <div class="w-1/4 bg-amber-300/80"></div>
+                <div class="w-1/4 bg-emerald-400/90"></div>
+                <div class="w-1/4 bg-amber-400/90"></div>
+                <div class="w-1/4 bg-rose-400/90"></div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl bg-white border border-sage/20 p-3 flex flex-col justify-between">
+              <label for="ant-cintura" class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/75">Cintura (cm)</label>
+              <div class="flex items-baseline gap-1 mt-1">
+                <input id="ant-cintura" type="number" step="0.1" min="0" placeholder="78.0" value="${escapeHtml(ant.cintura ?? '')}" class="w-full text-xl font-bold text-sage-deep bg-transparent border-b border-sage/25 focus:border-coral focus:outline-none py-0.5" />
+                <span class="text-xs font-semibold text-sage-deep/60">cm</span>
+              </div>
+              ${prevAnt ? deltaBadge(ant.cintura, prevAnt.cintura, 'cm') : '<span class="text-[11px] text-sage-deep/50 mt-1">Perímetro</span>'}
+            </div>
+
+            <div class="rounded-2xl bg-white border border-sage/20 p-3 flex flex-col justify-between">
+              <label for="ant-grasa" class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/75">% Grasa</label>
+              <div class="flex items-baseline gap-1 mt-1">
+                <input id="ant-grasa" type="number" step="0.1" min="0" max="100" placeholder="26.4" value="${escapeHtml(ant.grasa_pct ?? '')}" class="w-full text-xl font-bold text-sage-deep bg-transparent border-b border-sage/25 focus:border-coral focus:outline-none py-0.5" />
+                <span class="text-xs font-semibold text-sage-deep/60">%</span>
+              </div>
+              ${prevAnt ? deltaBadge(ant.grasa_pct, prevAnt.grasa_pct, '%') : '<span class="text-[11px] text-sage-deep/50 mt-1">Bioimpedancia</span>'}
+            </div>
+
+            <div class="rounded-2xl bg-white border border-sage/20 p-3 flex flex-col justify-between">
+              <label for="ant-musculo" class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/75">% Músculo</label>
+              <div class="flex items-baseline gap-1 mt-1">
+                <input id="ant-musculo" type="number" step="0.1" min="0" max="100" placeholder="32.0" value="${escapeHtml(ant.musculo_pct ?? '')}" class="w-full text-xl font-bold text-sage-deep bg-transparent border-b border-sage/25 focus:border-coral focus:outline-none py-0.5" />
+                <span class="text-xs font-semibold text-sage-deep/60">%</span>
+              </div>
+              ${prevAnt ? deltaBadge(ant.musculo_pct, prevAnt.musculo_pct, '%', true) : '<span class="text-[11px] text-sage-deep/50 mt-1">Masa magra</span>'}
             </div>
           </div>
-        ` : ''}
+        </section>
 
-        ${filesList.length ? `<p class="text-sm"><strong>Exámenes adjuntos (${filesList.length}):</strong> ${filesList.map((u) => escapeHtml(String(u).split('/').pop())).join(', ')}</p>` : ''}
+        <!-- NAVEGACIÓN DIDÁCTICA POR PESTAÑAS -->
+        <div class="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-[#F4F8F6] border border-sage/15" role="tablist">
+          <button id="exp-tab-btn-evolucion" type="button" onclick="setExpedienteTab('evolucion')" class="flex-1 min-w-[160px] min-h-[42px] px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'evolucion' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
+            <i data-lucide="mic" class="w-4 h-4"></i> Evolución y Transcripción
+          </button>
+          <button id="exp-tab-btn-examenes" type="button" onclick="setExpedienteTab('examenes')" class="flex-1 min-w-[160px] min-h-[42px] px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'examenes' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
+            <i data-lucide="flask-conical" class="w-4 h-4"></i> Exámenes y Laboratorio
+          </button>
+          <button id="exp-tab-btn-ficha" type="button" onclick="setExpedienteTab('ficha')" class="flex-1 min-w-[160px] min-h-[42px] px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'ficha' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ficha del Paciente
+          </button>
+        </div>
 
-        <div class="pt-4 border-t border-sage/20 space-y-3.5">
-          <p class="text-sm font-bold uppercase tracking-wider text-sage-deep">Registro clínico de Nicole (Evolución y Exámenes)</p>
-          <div>
-            <label for="ficha-examenes-texto" class="block text-sm font-semibold text-sage-deep mb-1.5">Resultado de exámenes (texto)</label>
-            <div class="flex flex-wrap gap-1.5 mb-2">
-              <button type="button" onclick="insertExamTemplate('metabolico')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Sangre / Metabólico</button>
-              <button type="button" onclick="insertExamTemplate('vitaminas')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Vitaminas y Hierro</button>
-              <button type="button" onclick="insertExamTemplate('tiroides')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Tiroides</button>
-              <button type="button" onclick="insertExamTemplate('digestivo')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ SIBO / Epixlife</button>
+        <!-- TAB 1: EVOLUCIÓN, DICTADO POR VOZ Y CARGA DE TRANSCRIPCIÓN -->
+        <div id="exp-tab-panel-evolucion" class="${activeTab === 'evolucion' ? '' : 'hidden'} space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <label for="ficha-comentarios-nicole" class="block text-sm sm:text-base font-bold text-sage-deep">Evolución clínica y transcripción de sesión</label>
+              <p class="text-xs text-sage-deep/70">Graba por voz en vivo, sube una transcripción (.txt / .md) o escribe tus indicaciones.</p>
             </div>
-            <textarea id="ficha-examenes-texto" rows="6" placeholder="Toca una plantilla arriba o escribe aquí los resultados (Vitamina D, insulina, ferritina, TSH, SIBO...)" class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-4 py-3 text-sm text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.resultados_examenes_texto || '')}</textarea>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="voice-dictation-btn" type="button" onclick="toggleVoiceDictation()" class="min-h-[40px] px-3.5 rounded-full bg-coral/10 border border-coral/35 text-coral hover:bg-coral hover:text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all">
+                <i data-lucide="mic" class="w-3.5 h-3.5"></i> <span>Dictar por voz</span>
+              </button>
+              <label class="min-h-[40px] px-3.5 rounded-full bg-white border border-sage/30 text-sage-deep hover:bg-sage-soft/50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Cargar .txt / .md
+                <input type="file" accept=".txt,.md,.csv,text/plain" class="hidden" onchange="loadTranscriptFile(this, 'ficha-comentarios-nicole')" />
+              </label>
+              <button type="button" onclick="insertClinicalSoapTemplate()" class="min-h-[40px] px-3.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">
+                + Plantilla SOAP / Plan
+              </button>
+            </div>
           </div>
-          <div>
-            <label for="ficha-comentarios-nicole" class="block text-sm font-semibold text-sage-deep mb-1.5">Comentarios y evolución clínica de Nicole</label>
-            <textarea id="ficha-comentarios-nicole" rows="5" placeholder="Observaciones de consulta, diagnóstico nutricional, pauta, suplementación e indicaciones..." class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-4 py-3 text-sm text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.comentarios_clinicos || '')}</textarea>
+          <textarea id="ficha-comentarios-nicole" rows="9" placeholder="Pega aquí la transcripción de la consulta, dicta con el micrófono o redacta tu evaluación SOAP, pauta alimentaria y suplementación..." class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-4 py-3.5 text-sm sm:text-base leading-relaxed text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.comentarios_clinicos || '')}</textarea>
+        </div>
+
+        <!-- TAB 2: EXÁMENES Y LABORATORIO -->
+        <div id="exp-tab-panel-examenes" class="${activeTab === 'examenes' ? '' : 'hidden'} space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <label for="ficha-examenes-texto" class="block text-sm sm:text-base font-bold text-sage-deep">Resultados de exámenes y biomarcadores</label>
+              <p class="text-xs text-sage-deep/70">Inserta plantillas rápidas, pega resultados o carga un informe de texto.</p>
+            </div>
+            <label class="min-h-[40px] px-3.5 rounded-full bg-white border border-sage/30 text-sage-deep hover:bg-sage-soft/50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> Cargar .txt / .md
+              <input type="file" accept=".txt,.md,.csv,text/plain" class="hidden" onchange="loadTranscriptFile(this, 'ficha-examenes-texto')" />
+            </label>
           </div>
-          <button id="save-notes-btn" type="button" onclick="saveFichaClinicalNotes('${escapeHtml(f.id)}')" class="min-h-[48px] px-7 rounded-2xl bg-sage-deep text-white text-sm font-semibold">
-            Guardar ficha, comentarios y exámenes
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="insertExamTemplate('metabolico')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Sangre / Metabólico</button>
+            <button type="button" onclick="insertExamTemplate('vitaminas')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Vitaminas y Hierro</button>
+            <button type="button" onclick="insertExamTemplate('tiroides')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Tiroides</button>
+            <button type="button" onclick="insertExamTemplate('digestivo')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ SIBO / Epixlife</button>
+          </div>
+          <textarea id="ficha-examenes-texto" rows="9" placeholder="Toca una plantilla arriba o escribe aquí los resultados (Vitamina D, insulina, ferritina, TSH, SIBO...)" class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-4 py-3.5 text-sm sm:text-base leading-relaxed text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.resultados_examenes_texto || '')}</textarea>
+          ${filesList.length ? `<p class="text-sm"><strong>Exámenes adjuntos (${filesList.length}):</strong> ${filesList.map((u) => escapeHtml(String(u).split('/').pop())).join(', ')}</p>` : ''}
+        </div>
+
+        <!-- TAB 3: FICHA DEL PACIENTE (ANTECEDENTES Y SÍNTOMAS) -->
+        <div id="exp-tab-panel-ficha" class="${activeTab === 'ficha' ? '' : 'hidden'} space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm sm:text-base leading-relaxed">
+            <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Identificación y hábitos</p>
+              <p><strong>Edad / F. Nac.:</strong> ${escapeHtml(f.edad ?? '-')} años (${escapeHtml(f.fecha_nacimiento || '-')})</p>
+              <p><strong>Dirección:</strong> ${escapeHtml(f.direccion || '-')}</p>
+              <p><strong>Actividad laboral:</strong> ${escapeHtml(f.actividad_laboral || '-')}</p>
+              ${isEditing
+                ? `<div><label class="block text-xs font-semibold text-sage-deep mb-1">Actividad física</label><input id="edit-ficha-actfis" type="text" value="${escapeHtml(f.actividad_fisica || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>`
+                : `<p><strong>Actividad física:</strong> ${escapeHtml(f.actividad_fisica || '-')}</p>`}
+            </div>
+            <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Antecedentes clínicos</p>
+              ${isEditing
+                ? `<div class="space-y-2">
+                    <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Enfermedades actuales</label><input id="edit-ficha-enf" type="text" value="${escapeHtml(f.enfermedades_actuales || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>
+                    <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Tratamiento / fármacos</label><input id="edit-ficha-trat" type="text" value="${escapeHtml(f.tratamiento_actual || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>
+                    <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Historia clínica</label><textarea id="edit-ficha-hist" rows="2" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.historia_clinica || '')}</textarea></div>
+                   </div>`
+                : `<p><strong>Enfermedades actuales:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>
+                   <p><strong>Tratamiento / fármacos:</strong> ${escapeHtml(f.tratamiento_actual || '-')}</p>
+                   <p><strong>Historia clínica:</strong> ${escapeHtml(f.historia_clinica || '-')}</p>`}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm sm:text-base leading-relaxed">
+            <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Motivo de consulta y objetivos</p>
+              ${isEditing
+                ? `<textarea id="edit-ficha-motivo" rows="4" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.motivo_consulta || '')}</textarea>`
+                : `<p class="whitespace-pre-wrap">${escapeHtml(f.motivo_consulta || '-')}</p>`}
+            </div>
+            <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Día típico de alimentación</p>
+              ${isEditing
+                ? `<textarea id="edit-ficha-diatipico" rows="4" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.dia_tipico || '')}</textarea>`
+                : `<p class="whitespace-pre-wrap">${escapeHtml(f.dia_tipico || '-')}</p>`}
+            </div>
+          </div>
+
+          ${sysEntries.length ? `
+            <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 text-sm sm:text-base space-y-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Rastreo de síntomas últimos 6 meses (${sysEntries.length} áreas)</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                ${sysEntries.map(([k, v]) => `<p><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</p>`).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="pt-4 border-t border-sage/15 flex flex-wrap items-center justify-between gap-3">
+          <p class="text-xs text-sage-deep/70">Guarda antropometría, evolución, exámenes y cambios de ficha en un solo clic.</p>
+          <button id="save-notes-btn" type="button" onclick="saveFichaClinicalNotes('${escapeHtml(f.id)}')" class="min-h-[48px] px-7 rounded-2xl bg-sage-deep hover:bg-sage-deep/90 text-white text-sm font-semibold shadow-sm inline-flex items-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i> Guardar consulta completa
           </button>
         </div>
       `;
@@ -2132,6 +2278,148 @@
       digestivo: '• Salud Digestiva / Epixlife:\n  - Test aire espirado (SIBO H2/CH4): \n  - Calprotectina fecal: \n  - Elastasa pancreática: \n  - Marcadores celíacos (tTG-IgA): \n  - Epixlife S-Drive (prioridades): '
     };
 
+    function parseAntNum(val) {
+      if (val === null || val === undefined || val === '') return null;
+      const n = Number(String(val).replace(',', '.').trim());
+      return Number.isFinite(n) && n > 0 ? n : null;
+    }
+
+    function computeImc(peso, tallaCm) {
+      const p = parseAntNum(peso);
+      const t = parseAntNum(tallaCm);
+      if (!p || !t) return null;
+      const m = t > 3 ? t / 100 : t;
+      if (m <= 0) return null;
+      return +(p / (m * m)).toFixed(1);
+    }
+
+    function getImcBadgeMeta(imc) {
+      if (imc === null) return { label: 'Pendiente', badgeClass: 'bg-gray-100 text-gray-600' };
+      if (imc < 18.5) return { label: 'Bajo peso', badgeClass: 'bg-amber-100 text-amber-800' };
+      if (imc < 25) return { label: 'Normopeso', badgeClass: 'bg-emerald-100 text-emerald-800' };
+      if (imc < 30) return { label: 'Sobrepeso', badgeClass: 'bg-amber-100 text-amber-800' };
+      return { label: 'Obesidad', badgeClass: 'bg-rose-100 text-rose-800' };
+    }
+
+    function recalcAntropometriaUI() {
+      const peso = document.getElementById('ant-peso')?.value;
+      const talla = document.getElementById('ant-talla')?.value;
+      const imc = computeImc(peso, talla);
+      const meta = getImcBadgeMeta(imc);
+      const disp = document.getElementById('ant-imc-display');
+      const badge = document.getElementById('ant-imc-badge');
+      if (disp) disp.textContent = imc !== null ? imc.toFixed(1) : '—';
+      if (badge) {
+        badge.textContent = meta.label;
+        badge.className = `px-2 py-0.5 rounded-full text-[11px] font-bold ${meta.badgeClass}`;
+      }
+    }
+
+    function setExpedienteTab(tab) {
+      if (appState.expediente) appState.expediente.activeTab = tab;
+      ['evolucion', 'examenes', 'ficha'].forEach((t) => {
+        const panel = document.getElementById(`exp-tab-panel-${t}`);
+        const btn = document.getElementById(`exp-tab-btn-${t}`);
+        const active = t === tab;
+        if (panel) panel.classList.toggle('hidden', !active);
+        if (btn) {
+          btn.className = `flex-1 min-w-[160px] min-h-[42px] px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${active ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}`;
+        }
+      });
+    }
+
+    function insertClinicalSoapTemplate() {
+      const el = document.getElementById('ficha-comentarios-nicole');
+      if (!el) return;
+      const tpl = [
+        '• S (Subjetivo / Evolución): ',
+        '• O (Objetivo / Antropometría y adherencia): ',
+        '• A (Análisis nutricional): ',
+        '• P (Plan alimentario, suplementación y próximo control): '
+      ].join('\n');
+      const cur = el.value.trim();
+      el.value = cur ? `${cur}\n\n${tpl}` : tpl;
+      el.focus();
+    }
+
+    function loadTranscriptFile(input, targetId) {
+      const file = input?.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result || '').trim();
+        const el = document.getElementById(targetId);
+        if (el && text) {
+          const cur = el.value.trim();
+          el.value = cur ? `${cur}\n\n--- ${file.name} ---\n${text}` : text;
+          el.focus();
+          showToast(`Archivo "${file.name}" cargado en el texto.`);
+        }
+        input.value = '';
+      };
+      reader.onerror = () => showToast('No se pudo leer el archivo seleccionado.', 'error');
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    let activeSpeechRec = null;
+    function toggleVoiceDictation() {
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const btn = document.getElementById('voice-dictation-btn');
+      const el = document.getElementById('ficha-comentarios-nicole');
+      if (!SpeechRec) {
+        showToast('Tu navegador no soporta dictado por voz. Usa Chrome o pega la transcripción.', 'error');
+        return;
+      }
+      if (activeSpeechRec) {
+        activeSpeechRec.stop();
+        activeSpeechRec = null;
+        if (btn) {
+          btn.className = 'min-h-[40px] px-3.5 rounded-full bg-coral/10 border border-coral/35 text-coral hover:bg-coral hover:text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all';
+          btn.innerHTML = '<i data-lucide="mic" class="w-3.5 h-3.5"></i> <span>Dictar por voz</span>';
+          if (window.lucide) lucide.createIcons();
+        }
+        return;
+      }
+      const rec = new SpeechRec();
+      rec.lang = 'es-CL';
+      rec.continuous = true;
+      rec.interimResults = false;
+      rec.onresult = (event) => {
+        if (!el) return;
+        let chunk = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) chunk += event.results[i][0].transcript + ' ';
+        }
+        if (chunk.trim()) {
+          const cur = el.value;
+          el.value = cur && !cur.endsWith(' ') && !cur.endsWith('\n') ? `${cur} ${chunk.trim()}` : `${cur}${chunk.trim()}`;
+        }
+      };
+      rec.onerror = () => {
+        activeSpeechRec = null;
+        if (btn) {
+          btn.className = 'min-h-[40px] px-3.5 rounded-full bg-coral/10 border border-coral/35 text-coral hover:bg-coral hover:text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all';
+          btn.innerHTML = '<i data-lucide="mic" class="w-3.5 h-3.5"></i> <span>Dictar por voz</span>';
+          if (window.lucide) lucide.createIcons();
+        }
+      };
+      rec.onend = () => {
+        activeSpeechRec = null;
+        if (btn) {
+          btn.className = 'min-h-[40px] px-3.5 rounded-full bg-coral/10 border border-coral/35 text-coral hover:bg-coral hover:text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all';
+          btn.innerHTML = '<i data-lucide="mic" class="w-3.5 h-3.5"></i> <span>Dictar por voz</span>';
+          if (window.lucide) lucide.createIcons();
+        }
+      };
+      activeSpeechRec = rec;
+      rec.start();
+      if (btn) {
+        btn.className = 'min-h-[40px] px-3.5 rounded-full bg-coral text-white text-xs font-bold inline-flex items-center gap-1.5 animate-pulse shadow-xs';
+        btn.innerHTML = '<i data-lucide="square" class="w-3.5 h-3.5"></i> <span>Escuchando... (Detener)</span>';
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
     function insertExamTemplate(key) {
       const el = document.getElementById('ficha-examenes-texto');
       const tpl = EXAM_TEMPLATES[key];
@@ -2149,9 +2437,23 @@
       const btn = document.getElementById('save-notes-btn');
       const examenes = (document.getElementById('ficha-examenes-texto')?.value || '').trim();
       const comentarios = (document.getElementById('ficha-comentarios-nicole')?.value || '').trim();
+
+      const peso = parseAntNum(document.getElementById('ant-peso')?.value);
+      const talla = parseAntNum(document.getElementById('ant-talla')?.value);
+      const cintura = parseAntNum(document.getElementById('ant-cintura')?.value);
+      const grasa_pct = parseAntNum(document.getElementById('ant-grasa')?.value);
+      const musculo_pct = parseAntNum(document.getElementById('ant-musculo')?.value);
+      const imc = computeImc(peso, talla);
+
+      const existingSys = (appState.activeFicha?.ficha?.rastreo_sistemas && typeof appState.activeFicha.ficha.rastreo_sistemas === 'object')
+        ? { ...appState.activeFicha.ficha.rastreo_sistemas }
+        : {};
+      existingSys._antropometria = { peso, talla, imc, cintura, grasa_pct, musculo_pct };
+
       const patchBody = {
         resultados_examenes_texto: examenes || null,
-        comentarios_clinicos: comentarios || null
+        comentarios_clinicos: comentarios || null,
+        rastreo_sistemas: existingSys
       };
       const editActFis = document.getElementById('edit-ficha-actfis');
       const editEnf = document.getElementById('edit-ficha-enf');
@@ -2180,14 +2482,15 @@
         }
         if (appState.expediente) appState.expediente.editMode = false;
         renderExpedienteTimelineAndFicha();
-        showToast('Ficha, comentarios y exámenes guardados.');
+        showToast('Consulta, antropometría y notas guardadas.');
       } catch (e) {
         showToast(e.message || 'No se pudieron guardar las notas.', 'error');
       } finally {
         const b2 = document.getElementById('save-notes-btn');
         if (b2) {
           b2.disabled = false;
-          b2.textContent = 'Guardar ficha, comentarios y exámenes';
+          b2.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Guardar consulta completa';
+          if (window.lucide) lucide.createIcons();
         }
       }
     }
@@ -2201,7 +2504,10 @@
       const f = ctx.ficha;
       const r = ctx.booking || {};
       const code = f.codigo_ficha || buildFichaId(f.rut || r.rut, f.fecha_hoy || r.fechaIso, r.id);
-      const sysEntries = Object.entries(f.rastreo_sistemas || {});
+      const rawSys = f.rastreo_sistemas && typeof f.rastreo_sistemas === 'object' ? f.rastreo_sistemas : {};
+      const sysEntries = Object.entries(rawSys).filter(([k]) => !k.startsWith('_'));
+      const ant = (rawSys._antropometria && typeof rawSys._antropometria === 'object') ? rawSys._antropometria : {};
+      const hasAnt = [ant.peso, ant.talla, ant.imc, ant.cintura, ant.grasa_pct, ant.musculo_pct].some((v) => v !== null && v !== undefined && v !== '');
       const filesList = Array.isArray(f.archivos_urls) ? f.archivos_urls : [];
       const docTitle = `${code} - ${f.nombre_completo || r.paciente || 'Ficha Clinica'}`;
 
@@ -2255,6 +2561,16 @@
     ${row('Actividad laboral / diaria', f.actividad_laboral)}
     ${row('Servicio agendado', r.servicio)}
   </table>
+
+  ${hasAnt ? `
+    <h2>Protocolo Antropométrico Inicial</h2>
+    <table>
+      ${row('Peso / Talla', `${ant.peso ?? '-'} kg · ${ant.talla ?? '-'} cm`)}
+      ${row('IMC', ant.imc != null ? `${ant.imc} kg/m² (${getImcBadgeMeta(ant.imc).label})` : '-')}
+      ${row('Cintura', ant.cintura != null ? `${ant.cintura} cm` : '-')}
+      ${row('% Grasa / % Músculo', `${ant.grasa_pct ?? '-'}% grasa · ${ant.musculo_pct ?? '-'}% músculo`)}
+    </table>
+  ` : ''}
 
   <h2>2. Antecedentes Médicos y Hábitos</h2>
   <table>
