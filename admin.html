@@ -1953,6 +1953,9 @@
       const rawSys = f.rastreo_sistemas && typeof f.rastreo_sistemas === 'object' ? f.rastreo_sistemas : {};
       const sysEntries = Object.entries(rawSys).filter(([k]) => !k.startsWith('_'));
       const ant = (rawSys._antropometria && typeof rawSys._antropometria === 'object') ? rawSys._antropometria : {};
+      const pauta = (rawSys._pauta && typeof rawSys._pauta === 'object') ? rawSys._pauta : {};
+      const tea = (rawSys._tea && typeof rawSys._tea === 'object') ? rawSys._tea : {};
+      const teaTex = Array.isArray(tea.texturas_rechazadas) ? tea.texturas_rechazadas : [];
       const prevAnt = (prevF && prevF.rastreo_sistemas && typeof prevF.rastreo_sistemas._antropometria === 'object')
         ? prevF.rastreo_sistemas._antropometria
         : null;
@@ -1989,8 +1992,11 @@
             <button type="button" onclick="toggleFichaEditMode()" class="min-h-[44px] px-4 rounded-2xl ${isEditing ? 'bg-sage-deep text-white' : 'bg-white border border-sage/30 text-sage-deep'} text-xs sm:text-sm font-semibold inline-flex items-center gap-2">
               <i data-lucide="pencil" class="w-4 h-4"></i> ${isEditing ? 'Modo lectura' : 'Editar datos de ficha'}
             </button>
+            <button type="button" onclick="downloadActivePautaPDF()" class="min-h-[44px] px-4 rounded-2xl bg-sage-deep text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs hover:bg-sage-deep/90">
+              <i data-lucide="file-heart" class="w-4 h-4"></i> Pauta PDF (Paciente)
+            </button>
             <button type="button" onclick="downloadActiveFichaPDF()" class="min-h-[44px] px-4 rounded-2xl bg-coral text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs">
-              <i data-lucide="file-down" class="w-4 h-4"></i> Descargar Ficha PDF
+              <i data-lucide="file-down" class="w-4 h-4"></i> Ficha PDF
             </button>
           </div>
         </div>
@@ -2081,14 +2087,17 @@
 
         <!-- NAVEGACIÓN DIDÁCTICA POR PESTAÑAS -->
         <div class="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-[#F4F8F6] border border-sage/15" role="tablist">
-          <button id="exp-tab-btn-evolucion" type="button" onclick="setExpedienteTab('evolucion')" class="flex-1 min-w-[160px] min-h-[42px] px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'evolucion' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
-            <i data-lucide="mic" class="w-4 h-4"></i> Evolución y Transcripción
+          <button id="exp-tab-btn-evolucion" type="button" onclick="setExpedienteTab('evolucion')" class="flex-1 min-w-[140px] min-h-[42px] px-3 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'evolucion' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
+            <i data-lucide="mic" class="w-4 h-4"></i> Evolución
           </button>
-          <button id="exp-tab-btn-examenes" type="button" onclick="setExpedienteTab('examenes')" class="flex-1 min-w-[160px] min-h-[42px] px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'examenes' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
-            <i data-lucide="flask-conical" class="w-4 h-4"></i> Exámenes y Laboratorio
+          <button id="exp-tab-btn-pauta" type="button" onclick="setExpedienteTab('pauta')" class="flex-1 min-w-[140px] min-h-[42px] px-3 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'pauta' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
+            <i data-lucide="utensils" class="w-4 h-4"></i> Pauta y TEA
           </button>
-          <button id="exp-tab-btn-ficha" type="button" onclick="setExpedienteTab('ficha')" class="flex-1 min-w-[160px] min-h-[42px] px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'ficha' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
-            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ficha del Paciente
+          <button id="exp-tab-btn-examenes" type="button" onclick="setExpedienteTab('examenes')" class="flex-1 min-w-[140px] min-h-[42px] px-3 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'examenes' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
+            <i data-lucide="flask-conical" class="w-4 h-4"></i> Exámenes
+          </button>
+          <button id="exp-tab-btn-ficha" type="button" onclick="setExpedienteTab('ficha')" class="flex-1 min-w-[140px] min-h-[42px] px-3 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${activeTab === 'ficha' ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}">
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Ficha Paciente
           </button>
         </div>
 
@@ -2186,6 +2195,125 @@
               </div>
             </div>
           ` : ''}
+        </div>
+
+        <!-- TAB 4: PAUTA ALIMENTARIA, SUPLEMENTACIÓN Y PERFIL TEA / SENSIBILIDAD -->
+        <div id="exp-tab-panel-pauta" class="${activeTab === 'pauta' ? '' : 'hidden'} space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h4 class="text-sm sm:text-base font-bold text-sage-deep">Pauta Alimentaria por Comidas y Suplementación</h4>
+              <p class="text-xs text-sage-deep/70">Diseña la pauta del día, el semáforo de alimentos y compártela con el botón <strong>Pauta PDF (Paciente)</strong>.</p>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${prevF ? `<button type="button" onclick="copyPautaFromPrevious()" class="px-3 py-1.5 rounded-full bg-white border border-sage/30 hover:bg-sage-soft/50 text-xs font-semibold text-sage-deep inline-flex items-center gap-1"><i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar control previo</button>` : ''}
+              <button type="button" onclick="insertPautaTemplate('antiinflamatoria')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Antiinflamatoria</button>
+              <button type="button" onclick="insertPautaTemplate('sibo')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Low FODMAP / SIBO</button>
+              <button type="button" onclick="insertPautaTemplate('glucemico')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Control Glucémico</button>
+              <button type="button" onclick="insertPautaTemplate('tea')" class="px-3 py-1.5 rounded-full bg-coral/15 hover:bg-coral/25 text-xs font-bold text-coral">+ Protocolo TEA</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/20 space-y-1.5">
+              <label for="pauta-desayuno" class="text-xs font-bold uppercase tracking-wider text-sage-deep">☀️ Desayuno</label>
+              <textarea id="pauta-desayuno" rows="3" placeholder="Ej. 2 huevos revueltos + 1/2 palta + pan masa madre o avena..." class="w-full rounded-xl border border-sage/20 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(pauta.desayuno || '')}</textarea>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/20 space-y-1.5">
+              <label for="pauta-colacion-am" class="text-xs font-bold uppercase tracking-wider text-sage-deep">🍏 Colación AM</label>
+              <textarea id="pauta-colacion-am" rows="3" placeholder="Ej. Frutos rojos + puñado de almendras o yogur griego..." class="w-full rounded-xl border border-sage/20 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(pauta.colacion_am || '')}</textarea>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/20 space-y-1.5">
+              <label for="pauta-almuerzo" class="text-xs font-bold uppercase tracking-wider text-sage-deep">🥗 Almuerzo</label>
+              <textarea id="pauta-almuerzo" rows="3" placeholder="Ej. Proteína magra/pescado + 1/2 plato verduras cocidas/crudas + carbohidrato complejo..." class="w-full rounded-xl border border-sage/20 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(pauta.almuerzo || '')}</textarea>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/20 space-y-1.5">
+              <label for="pauta-colacion-pm" class="text-xs font-bold uppercase tracking-wider text-sage-deep">🍵 Once / Colación PM</label>
+              <textarea id="pauta-colacion-pm" rows="3" placeholder="Ej. Infusión de manzanilla/jengibre + tostada con hummus o fruta..." class="w-full rounded-xl border border-sage/20 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(pauta.colacion_pm || '')}</textarea>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/20 space-y-1.5 md:col-span-2">
+              <label for="pauta-cena" class="text-xs font-bold uppercase tracking-wider text-sage-deep">🌙 Cena</label>
+              <textarea id="pauta-cena" rows="2" placeholder="Ej. Crema de zapallo/verduras + proteína liviana o tortilla de verduras..." class="w-full rounded-xl border border-sage/20 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(pauta.cena || '')}</textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-1.5">
+              <label for="pauta-priorizar" class="text-xs font-bold uppercase tracking-wider text-emerald-800">🟢 Alimentos a priorizar</label>
+              <textarea id="pauta-priorizar" rows="3" placeholder="Verduras toleradas, omega-3, fibra soluble, aceite de oliva extra virgen..." class="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm text-sage-deep focus:border-emerald-500 focus:outline-none">${escapeHtml(pauta.priorizar || '')}</textarea>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-rose-50/50 border border-rose-200 space-y-1.5">
+              <label for="pauta-limitar" class="text-xs font-bold uppercase tracking-wider text-rose-800">🔴 Limitar o pausar temporalmente</label>
+              <textarea id="pauta-limitar" rows="3" placeholder="Azúcares refinados, ultraprocesados, lácteos/gluten o FODMAPs según tolerancia..." class="w-full rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm text-sage-deep focus:border-rose-400 focus:outline-none">${escapeHtml(pauta.limitar || '')}</textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/20 space-y-1.5">
+              <label for="pauta-suplementos" class="text-xs font-bold uppercase tracking-wider text-sage-deep">💊 Suplementación y Horarios</label>
+              <textarea id="pauta-suplementos" rows="3" placeholder="Ej. Magnesio bisglicinato 300mg noche · Vitamina D3 2000 UI con almuerzo..." class="w-full rounded-xl border border-sage/20 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(pauta.suplementos || '')}</textarea>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-[#FAF9F6] border border-sage/20 space-y-1.5">
+              <label for="pauta-hidratacion" class="text-xs font-bold uppercase tracking-wider text-sage-deep">💧 Hidratación y Hábitos</label>
+              <textarea id="pauta-hidratacion" rows="3" placeholder="Ej. 1.8 - 2.0 L agua al día fuera de comidas · Masticación consciente · Caminata post almuerzo..." class="w-full rounded-xl border border-sage/20 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(pauta.hidratacion || '')}</textarea>
+            </div>
+          </div>
+
+          <!-- MÓDULO ESPECIAL: PERFIL TEA Y SENSIBILIDAD SENSORIAL -->
+          <div class="rounded-3xl border border-coral/30 bg-gradient-to-br from-[#FFF9F7] to-[#FAF9F6] p-4 sm:p-5 space-y-4">
+            <label class="flex items-center justify-between gap-3 cursor-pointer">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-2xl bg-coral/15 text-coral flex items-center justify-center">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <span class="block text-sm sm:text-base font-bold text-sage-deep">Módulo Especial: Perfil TEA y Sensibilidad Alimentaria</span>
+                  <span class="block text-xs text-sage-deep/70">Actívalo para registrar texturas, alimentos seguros, Food Chaining y guía para padres/cuidadores.</span>
+                </div>
+              </div>
+              <input id="tea-activo" type="checkbox" ${tea.activo ? 'checked' : ''} onchange="toggleTeaModuleUI()" class="w-5 h-5 accent-[#E07A5F] rounded cursor-pointer" />
+            </label>
+
+            <div id="tea-module-body" class="${tea.activo ? '' : 'hidden'} space-y-4 pt-2 border-t border-coral/20">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-sage-deep mb-2">Texturas desafiantes / rechazadas</p>
+                <div class="flex flex-wrap gap-2">
+                  ${['Crujiente', 'Puré / Cremoso', 'Líquido', 'Grumoso', 'Fibroso / Carnes', 'Mezclado (varias texturas)', 'Frutas o verduras crudas'].map((tx) => `
+                    <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-sage/25 text-xs font-medium text-sage-deep cursor-pointer hover:border-coral">
+                      <input type="checkbox" name="tea-textura" value="${escapeHtml(tx)}" ${teaTex.includes(tx) ? 'checked' : ''} class="accent-[#E07A5F]" />
+                      ${escapeHtml(tx)}
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label for="tea-temperaturas" class="text-xs font-bold uppercase tracking-wider text-sage-deep">Temperaturas, colores y presentación</label>
+                  <input id="tea-temperaturas" type="text" value="${escapeHtml(tea.temperaturas || '')}" placeholder="Ej. Prefiere tibio/frío, plato con divisiones sin que se toquen..." class="w-full rounded-xl border border-sage/25 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none" />
+                </div>
+                <div class="space-y-1">
+                  <label for="tea-gatillantes" class="text-xs font-bold uppercase tracking-wider text-rose-800">Rechazos, alergias o sensibilidades</label>
+                  <input id="tea-gatillantes" type="text" value="${escapeHtml(tea.gatillantes || '')}" placeholder="Ej. Caseína/lácteos, olores fuertes, colores verdes..." class="w-full rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label for="tea-seguros" class="text-xs font-bold uppercase tracking-wider text-emerald-800">🟢 Alimentos seguros (aceptados hoy)</label>
+                  <textarea id="tea-seguros" rows="3" placeholder="Base nutricional que el niño/paciente acepta sin estrés..." class="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm text-sage-deep focus:border-emerald-500 focus:outline-none">${escapeHtml(tea.alimentos_seguros || '')}</textarea>
+                </div>
+                <div class="space-y-1">
+                  <label for="tea-puente" class="text-xs font-bold uppercase tracking-wider text-amber-800">🟡 Puente sensorial (Food Chaining)</label>
+                  <textarea id="tea-puente" rows="3" placeholder="Ej. Papa frita → papa al horno en bastones → camote en bastones..." class="w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm text-sage-deep focus:border-amber-500 focus:outline-none">${escapeHtml(tea.puente_sensorial || '')}</textarea>
+                </div>
+              </div>
+
+              <div class="space-y-1">
+                <label for="tea-estrategia" class="text-xs font-bold uppercase tracking-wider text-sage-deep">🏡 Estrategia para padres / cuidadores (exposición sin presión)</label>
+                <textarea id="tea-estrategia" rows="3" placeholder="Indicaciones prácticas para la mesa en casa (no forzar, micro-porciones junto al alimento seguro, entorno tranquilo)..." class="w-full rounded-xl border border-sage/25 bg-white px-3 py-2 text-sm text-sage-deep focus:border-coral focus:outline-none">${escapeHtml(tea.estrategia_familia || '')}</textarea>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="pt-4 border-t border-sage/15 flex flex-wrap items-center justify-between gap-3">
@@ -2477,15 +2605,144 @@
 
     function setExpedienteTab(tab) {
       if (appState.expediente) appState.expediente.activeTab = tab;
-      ['evolucion', 'examenes', 'ficha'].forEach((t) => {
+      ['evolucion', 'pauta', 'examenes', 'ficha'].forEach((t) => {
         const panel = document.getElementById(`exp-tab-panel-${t}`);
         const btn = document.getElementById(`exp-tab-btn-${t}`);
         const active = t === tab;
         if (panel) panel.classList.toggle('hidden', !active);
         if (btn) {
-          btn.className = `flex-1 min-w-[160px] min-h-[42px] px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${active ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}`;
+          btn.className = `flex-1 min-w-[140px] min-h-[42px] px-3 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all ${active ? 'bg-sage-deep text-white shadow-xs' : 'text-sage-deep/80 hover:bg-white/70'}`;
         }
       });
+    }
+
+    function toggleTeaModuleUI() {
+      const cb = document.getElementById('tea-activo');
+      const body = document.getElementById('tea-module-body');
+      if (body && cb) body.classList.toggle('hidden', !cb.checked);
+    }
+
+    const PAUTA_TEMPLATES = {
+      antiinflamatoria: {
+        desayuno: '2 huevos revueltos o pochados + 1/2 palta + pan de masa madre o avena cocida con canela.',
+        colacion_am: '1 puñado de frutos rojos (arándanos/frambuesas) + 10 almendras o nueces.',
+        almuerzo: 'Proteína (salmón, pavo o pollo) + 1/2 plato de verduras variadas + quínoa o camote cocido.',
+        colacion_pm: 'Infusión de jengibre/cúrcuma + tostada integral con hummus o pasta de sésamo.',
+        cena: 'Crema de verduras con aceite de oliva extra virgen + proteína liviana o tortilla de espinaca.',
+        priorizar: 'Pescados grasos, aceite de oliva extra virgen, cúrcuma/jengibre, frutos rojos, verduras de colores, semillas de chía/linaza.',
+        limitar: 'Azúcares refinados, harinas blancas, frituras, embutidos, bebidas azucaradas y alcohol.',
+        suplementos: '• Omega 3 (EPA/DHA): con almuerzo\n• Vitamina D3: según examen\n• Magnesio bisglicinato: noche',
+        hidratacion: '1.8 - 2.0 L de agua filtrada al día + descanso nocturno regular (7-8 hrs).'
+      },
+      sibo: {
+        desayuno: 'Tortilla de 2 huevos con espinaca + pan de espelta/masa madre tolerado o avena sin gluten + té verde.',
+        colacion_am: '1 kiwi o frutillas + 10 nueces pecanas o semillas de zapallo.',
+        almuerzo: 'Pollo/pescado a la plancha + zapallo italiano y zanahoria cocida + arroz basmati o quínoa.',
+        colacion_pm: 'Infusión de menta o jengibre + galletas de arroz con mantequilla de almendra natural.',
+        cena: 'Caldo casero de huesos/verduras bajas en FODMAP + pescado blanco o huevo + calabacín.',
+        priorizar: 'Alimentos bajos en FODMAP, cocciones suaves (al vapor/horno), espacios de 3.5-4 horas entre comidas (complejo motor migratorio).',
+        limitar: 'Cebolla, ajo, legumbres sin remojo, manzana/pera, lácteos con lactosa, edulcorantes (sorbitol/xilitol) y chicles.',
+        suplementos: '• Procinético / Jengibre según indicación\n• Enzimas digestivas antes de almuerzo/cena\n• Probiótico específico post-fase',
+        hidratacion: 'Agua tibia o infusiones digestivas fuera de las comidas principales. Evitar beber mucho líquido durante el almuerzo.'
+      },
+      glucemico: {
+        desayuno: 'Siempre iniciar con proteína y grasa saludable: 2 huevos + palta + pan integral de grano entero o chía pudding.',
+        colacion_am: 'Yogur griego natural sin azúcar + canela + 1 cda semillas de chía o frutos secos.',
+        almuerzo: 'Orden de ingesta: 1° Ensalada verde (fibra) → 2° Proteína → 3° Carbohidrato complejo (lentejas/quínoa/arroz integral).',
+        colacion_pm: 'Bastones de apio/pepino con hummus o 1 manzana verde con mantequilla de maní natural.',
+        cena: 'Proteína magra + verduras salteadas en aceite de oliva (cena liviana 2.5-3 hrs antes de dormir).',
+        priorizar: 'Fibra soluble antes de carbohidratos, proteínas en todas las comidas, vinagre de manzana diluido (1 cdita antes de almuerzo si tolera).',
+        limitar: 'Jugos de fruta, pan blanco, galletas, cereales azucarados, picoteo dulce en la tarde/noche.',
+        suplementos: '• Myo-inositol / Berberina (según indicación clínica)\n• Magnesio citrato/bisglicinato\n• Vitamina D3',
+        hidratacion: '2 L de agua al día + caminata de 10-15 min después del almuerzo/cena para mejorar sensibilidad a la insulina.'
+      },
+      tea: {
+        desayuno: 'Mantener alimento seguro proteico + cereal/pan de textura aceptada (ej. pan tostado crocante o panqueque de avena y plátano).',
+        colacion_am: 'Fruta en formato aceptado (liofilizada, bastones o puré suave) + fruto seco molido o crema de maní.',
+        almuerzo: 'Plato con divisiones (alimentos separados sin tocarse): proteína conocida + carbohidrato seguro + micro-porción de alimento puente.',
+        colacion_pm: 'Leche vegetal fortificada o yogur tolerado + snack crocante saludable casero.',
+        cena: 'Cena predecible y tranquila: proteína suave/crocante según perfil sensorial + acompañamiento seguro.',
+        priorizar: 'Alimentos densos en nutrientes dentro de las texturas toleradas, grasas saludables (palta, aceite de oliva en purés/masas), hierro y zinc.',
+        limitar: 'Ultraprocesados con colorantes/aditivos artificiales, exceso de azúcar simple y mezclas de texturas inesperadas.',
+        suplementos: '• Evaluar Ferritina, Vitamina D, Zinc y B12\n• Omega 3 (formato líquido/gomita sin azúcar si aplica)\n• Probiótico suave intestinal',
+        hidratacion: 'Ofrecer agua en vaso/botella preferida de forma visual y constante durante el día.',
+        teaActivo: true,
+        teaEstrategia: '1. Nunca obligar ni premiar con postres.\n2. Exposición progresiva sin presión: mirar → oler → tocar → lamer → probar.\n3. Servir siempre 1 alimento 100% seguro junto a 1 micro-porción de alimento nuevo o puente.\n4. Respetar tiempos, temperatura y plato con divisiones.'
+      }
+    };
+
+    function insertPautaTemplate(key) {
+      const tpl = PAUTA_TEMPLATES[key];
+      if (!tpl) return;
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val && !el.value.trim()) el.value = val;
+        else if (el && val && el.value.trim()) el.value = val;
+      };
+      setVal('pauta-desayuno', tpl.desayuno);
+      setVal('pauta-colacion-am', tpl.colacion_am);
+      setVal('pauta-almuerzo', tpl.almuerzo);
+      setVal('pauta-colacion-pm', tpl.colacion_pm);
+      setVal('pauta-cena', tpl.cena);
+      setVal('pauta-priorizar', tpl.priorizar);
+      setVal('pauta-limitar', tpl.limitar);
+      setVal('pauta-suplementos', tpl.suplementos);
+      setVal('pauta-hidratacion', tpl.hidratacion);
+      if (tpl.teaActivo) {
+        const cb = document.getElementById('tea-activo');
+        if (cb) { cb.checked = true; toggleTeaModuleUI(); }
+        if (tpl.teaEstrategia) setVal('tea-estrategia', tpl.teaEstrategia);
+      }
+      showToast(`Plantilla "${key}" aplicada a la pauta.`);
+    }
+
+    function copyPautaFromPrevious() {
+      const exp = appState.expediente;
+      if (!exp || !exp.fichas) return;
+      const prevF = exp.fichas[exp.selectedFichaIdx + 1];
+      const prevP = prevF?.rastreo_sistemas?._pauta;
+      const prevT = prevF?.rastreo_sistemas?._tea;
+      if (!prevP && !prevT) {
+        showToast('El control anterior no tiene pauta registrada aún.', 'error');
+        return;
+      }
+      if (prevP) {
+        const map = {
+          'pauta-desayuno': prevP.desayuno,
+          'pauta-colacion-am': prevP.colacion_am,
+          'pauta-almuerzo': prevP.almuerzo,
+          'pauta-colacion-pm': prevP.colacion_pm,
+          'pauta-cena': prevP.cena,
+          'pauta-priorizar': prevP.priorizar,
+          'pauta-limitar': prevP.limitar,
+          'pauta-suplementos': prevP.suplementos,
+          'pauta-hidratacion': prevP.hidratacion
+        };
+        Object.entries(map).forEach(([id, v]) => {
+          const el = document.getElementById(id);
+          if (el && v) el.value = v;
+        });
+      }
+      if (prevT && prevT.activo) {
+        const cb = document.getElementById('tea-activo');
+        if (cb) { cb.checked = true; toggleTeaModuleUI(); }
+        const tMap = {
+          'tea-temperaturas': prevT.temperaturas,
+          'tea-gatillantes': prevT.gatillantes,
+          'tea-seguros': prevT.alimentos_seguros,
+          'tea-puente': prevT.puente_sensorial,
+          'tea-estrategia': prevT.estrategia_familia
+        };
+        Object.entries(tMap).forEach(([id, v]) => {
+          const el = document.getElementById(id);
+          if (el && v) el.value = v;
+        });
+        const prevTex = Array.isArray(prevT.texturas_rechazadas) ? prevT.texturas_rechazadas : [];
+        document.querySelectorAll('input[name="tea-textura"]').forEach((box) => {
+          box.checked = prevTex.includes(box.value);
+        });
+      }
+      showToast('Pauta y perfil copiados del control anterior.');
     }
 
     function insertClinicalSoapTemplate() {
@@ -2609,6 +2866,26 @@
         ? { ...appState.activeFicha.ficha.rastreo_sistemas }
         : {};
       existingSys._antropometria = { peso, talla, imc, cintura, grasa_pct, musculo_pct };
+      existingSys._pauta = {
+        desayuno: (document.getElementById('pauta-desayuno')?.value || '').trim(),
+        colacion_am: (document.getElementById('pauta-colacion-am')?.value || '').trim(),
+        almuerzo: (document.getElementById('pauta-almuerzo')?.value || '').trim(),
+        colacion_pm: (document.getElementById('pauta-colacion-pm')?.value || '').trim(),
+        cena: (document.getElementById('pauta-cena')?.value || '').trim(),
+        priorizar: (document.getElementById('pauta-priorizar')?.value || '').trim(),
+        limitar: (document.getElementById('pauta-limitar')?.value || '').trim(),
+        suplementos: (document.getElementById('pauta-suplementos')?.value || '').trim(),
+        hidratacion: (document.getElementById('pauta-hidratacion')?.value || '').trim()
+      };
+      existingSys._tea = {
+        activo: !!document.getElementById('tea-activo')?.checked,
+        texturas_rechazadas: [...document.querySelectorAll('input[name="tea-textura"]:checked')].map((x) => x.value),
+        temperaturas: (document.getElementById('tea-temperaturas')?.value || '').trim(),
+        gatillantes: (document.getElementById('tea-gatillantes')?.value || '').trim(),
+        alimentos_seguros: (document.getElementById('tea-seguros')?.value || '').trim(),
+        puente_sensorial: (document.getElementById('tea-puente')?.value || '').trim(),
+        estrategia_familia: (document.getElementById('tea-estrategia')?.value || '').trim()
+      };
 
       const patchBody = {
         resultados_examenes_texto: examenes || null,
@@ -2761,6 +3038,167 @@
   <div class="footer">
     <span>Documento clínico confidencial · Ley 21.719</span>
     <span>${escapeHtml(code)}</span>
+  </div>
+  <script>setTimeout(() => window.print(), 250);<\/script>
+</body>
+</html>`;
+
+      const win = window.open('', '_blank', 'width=900,height=750');
+      if (!win) {
+        showToast('Tu navegador bloqueó la ventana emergente para generar el PDF.', 'error');
+        return;
+      }
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+    }
+
+    function downloadActivePautaPDF() {
+      const ctx = appState.activeFicha;
+      if (!ctx || !ctx.ficha) {
+        showToast('No hay una consulta seleccionada para generar la pauta.', 'error');
+        return;
+      }
+      const f = ctx.ficha;
+      const r = ctx.booking || {};
+      const rawSys = f.rastreo_sistemas && typeof f.rastreo_sistemas === 'object' ? f.rastreo_sistemas : {};
+      const savedP = rawSys._pauta || {};
+      const savedT = rawSys._tea || {};
+      const valOr = (id, fb) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : (fb || '');
+      };
+
+      const p = {
+        desayuno: valOr('pauta-desayuno', savedP.desayuno),
+        colacion_am: valOr('pauta-colacion-am', savedP.colacion_am),
+        almuerzo: valOr('pauta-almuerzo', savedP.almuerzo),
+        colacion_pm: valOr('pauta-colacion-pm', savedP.colacion_pm),
+        cena: valOr('pauta-cena', savedP.cena),
+        priorizar: valOr('pauta-priorizar', savedP.priorizar),
+        limitar: valOr('pauta-limitar', savedP.limitar),
+        suplementos: valOr('pauta-suplementos', savedP.suplementos),
+        hidratacion: valOr('pauta-hidratacion', savedP.hidratacion)
+      };
+
+      const teaCb = document.getElementById('tea-activo');
+      const teaActivo = teaCb ? teaCb.checked : !!savedT.activo;
+      const tea = {
+        texturas: teaCb
+          ? [...document.querySelectorAll('input[name="tea-textura"]:checked')].map((x) => x.value)
+          : (Array.isArray(savedT.texturas_rechazadas) ? savedT.texturas_rechazadas : []),
+        temperaturas: valOr('tea-temperaturas', savedT.temperaturas),
+        gatillantes: valOr('tea-gatillantes', savedT.gatillantes),
+        seguros: valOr('tea-seguros', savedT.alimentos_seguros),
+        puente: valOr('tea-puente', savedT.puente_sensorial),
+        estrategia: valOr('tea-estrategia', savedT.estrategia_familia)
+      };
+
+      const ant = rawSys._antropometria || {};
+      const peso = parseAntNum(document.getElementById('ant-peso')?.value) ?? ant.peso;
+      const talla = parseAntNum(document.getElementById('ant-talla')?.value) ?? ant.talla;
+      const imc = computeImc(peso, talla) ?? ant.imc;
+      const cintura = parseAntNum(document.getElementById('ant-cintura')?.value) ?? ant.cintura;
+      const hasAnt = [peso, talla, imc, cintura].some((v) => v !== null && v !== undefined && v !== '');
+
+      const paciente = f.nombre_completo || r.paciente || 'Paciente';
+      const fecha = f.fecha_hoy || new Date().toISOString().slice(0, 10);
+      const mealRow = (icon, title, text) => text ? `
+        <div class="meal">
+          <div class="meal-title">${icon} ${escapeHtml(title)}</div>
+          <div class="meal-body">${escapeHtml(text)}</div>
+        </div>` : '';
+
+      const html = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Pauta Alimentaria - ${escapeHtml(paciente)}</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1f2937; font-size: 12px; line-height: 1.5; margin: 0; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2C5240; padding-bottom: 10px; margin-bottom: 14px; }
+    .brand h1 { margin: 0; font-size: 19px; color: #2C5240; }
+    .brand p { margin: 2px 0 0; font-size: 11px; color: #57534E; }
+    .meta { text-align: right; font-size: 11px; color: #2C5240; }
+    .ant-bar { display: flex; gap: 14px; flex-wrap: wrap; background: #F4F8F6; border: 1px solid #C5DDD1; border-radius: 10px; padding: 8px 12px; margin-bottom: 14px; font-size: 11.5px; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #2C5240; border-left: 4px solid #E07A5F; padding-left: 8px; margin: 16px 0 8px; page-break-after: avoid; }
+    .meal { background: #FAF9F6; border: 1px solid #E5E7EB; border-radius: 10px; padding: 9px 12px; margin-bottom: 8px; page-break-inside: avoid; }
+    .meal-title { font-weight: 700; color: #2C5240; margin-bottom: 3px; font-size: 12px; }
+    .meal-body { white-space: pre-wrap; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .box-green { background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 10px; padding: 10px; white-space: pre-wrap; page-break-inside: avoid; }
+    .box-red { background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 10px; white-space: pre-wrap; page-break-inside: avoid; }
+    .box-soft { background: #FAF9F6; border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px; white-space: pre-wrap; page-break-inside: avoid; }
+    .box-tea { background: #FFF9F7; border: 1px solid #F3C4B6; border-radius: 10px; padding: 12px; margin-top: 8px; page-break-inside: avoid; }
+    .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #E5E7EB; font-size: 10.5px; color: #6B7280; display: flex; justify-content: space-between; }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="background:#2C5240;color:#fff;padding:10px 14px;margin-bottom:14px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+    <span>Pauta personalizada lista para entregar al paciente / familia</span>
+    <button onclick="window.print()" style="background:#E07A5F;color:#fff;border:none;padding:7px 14px;border-radius:6px;font-weight:700;cursor:pointer;">Guardar / Imprimir PDF</button>
+  </div>
+  <div class="header">
+    <div class="brand">
+      <h1>Pauta Alimentaria y Plan Nutricional</h1>
+      <p>Nicole Borguenson Fraga · Nutrición Integrativa &amp; Clínica</p>
+    </div>
+    <div class="meta">
+      <div><strong>${escapeHtml(paciente)}</strong></div>
+      <div>Fecha: ${escapeHtml(fecha)}</div>
+    </div>
+  </div>
+
+  ${hasAnt ? `
+    <div class="ant-bar">
+      ${peso != null ? `<span><strong>Peso:</strong> ${peso} kg</span>` : ''}
+      ${talla != null ? `<span><strong>Talla:</strong> ${talla} cm</span>` : ''}
+      ${imc != null ? `<span><strong>IMC:</strong> ${imc} kg/m² (${escapeHtml(getImcBadgeMeta(imc).label)})</span>` : ''}
+      ${cintura != null ? `<span><strong>Cintura:</strong> ${cintura} cm</span>` : ''}
+    </div>
+  ` : ''}
+
+  <h2>1. Tu Día de Alimentación</h2>
+  ${mealRow('☀️', 'Desayuno', p.desayuno)}
+  ${mealRow('🍏', 'Colación AM', p.colacion_am)}
+  ${mealRow('🥗', 'Almuerzo', p.almuerzo)}
+  ${mealRow('🍵', 'Once / Colación PM', p.colacion_pm)}
+  ${mealRow('🌙', 'Cena', p.cena)}
+
+  ${(p.priorizar || p.limitar) ? `
+    <h2>2. Semáforo de Alimentos</h2>
+    <div class="grid2">
+      <div class="box-green"><strong style="color:#065F46;display:block;margin-bottom:4px;">🟢 Alimentos a Priorizar</strong>${escapeHtml(p.priorizar || '-')}</div>
+      <div class="box-red"><strong style="color:#9F1239;display:block;margin-bottom:4px;">🔴 Limitar o Pausar Temporalmente</strong>${escapeHtml(p.limitar || '-')}</div>
+    </div>
+  ` : ''}
+
+  ${(p.suplementos || p.hidratacion) ? `
+    <h2>3. Suplementación y Hábitos Diarios</h2>
+    <div class="grid2">
+      ${p.suplementos ? `<div class="box-soft"><strong style="color:#2C5240;display:block;margin-bottom:4px;">💊 Suplementación</strong>${escapeHtml(p.suplementos)}</div>` : ''}
+      ${p.hidratacion ? `<div class="box-soft"><strong style="color:#2C5240;display:block;margin-bottom:4px;">💧 Hidratación y Hábitos</strong>${escapeHtml(p.hidratacion)}</div>` : ''}
+    </div>
+  ` : ''}
+
+  ${teaActivo ? `
+    <h2>4. Guía Sensorial y Estrategia TEA / Selectividad</h2>
+    <div class="box-tea">
+      ${tea.texturas.length ? `<p style="margin:0 0 6px;"><strong>Texturas desafiantes a respetar:</strong> ${escapeHtml(tea.texturas.join(', '))}</p>` : ''}
+      ${tea.temperaturas ? `<p style="margin:0 0 6px;"><strong>Presentación y temperatura:</strong> ${escapeHtml(tea.temperaturas)}</p>` : ''}
+      ${tea.gatillantes ? `<p style="margin:0 0 6px;"><strong>Sensibilidades / evitar:</strong> ${escapeHtml(tea.gatillantes)}</p>` : ''}
+      ${tea.seguros ? `<p style="margin:6px 0 4px;"><strong>🟢 Alimentos seguros (base diaria):</strong></p><div style="white-space:pre-wrap;">${escapeHtml(tea.seguros)}</div>` : ''}
+      ${tea.puente ? `<p style="margin:8px 0 4px;"><strong>🟡 Puente sensorial (Food Chaining):</strong></p><div style="white-space:pre-wrap;">${escapeHtml(tea.puente)}</div>` : ''}
+      ${tea.estrategia ? `<p style="margin:8px 0 4px;"><strong>🏡 Estrategia en casa (exposición sin presión):</strong></p><div style="white-space:pre-wrap;">${escapeHtml(tea.estrategia)}</div>` : ''}
+    </div>
+  ` : ''}
+
+  <div class="footer">
+    <span>Nicole Borguenson Fraga · Nutrición Clínica &amp; Integrativa</span>
+    <span>www.nicoleborguenson.cl</span>
   </div>
   <script>setTimeout(() => window.print(), 250);<\/script>
 </body>
