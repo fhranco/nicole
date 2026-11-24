@@ -1,5 +1,6 @@
 // Vercel Serverless Function: Verificación directa de pago en Mercado Pago Orders API v1 por intake_token
 // Actúa como respaldo automático si el webhook de Mercado Pago demora o falla.
+import { sendBookingConfirmationEmail } from './_send-email.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -77,6 +78,13 @@ export default async function handler(req, res) {
         })
       });
       const rpcData = await rpcRes.json();
+      if (rpcRes.ok && rpcData?.ok && !rpcData?.idempotent_replay) {
+        await sendBookingConfirmationEmail({
+          reference,
+          supabaseUrl: SUPABASE_URL,
+          serviceKey: SUPABASE_SERVICE_ROLE_KEY
+        });
+      }
       return res.status(200).json({ ok: rpcRes.ok, confirmed: rpcRes.ok, rpc: rpcData });
     }
 

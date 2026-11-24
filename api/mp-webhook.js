@@ -1,5 +1,6 @@
 // Vercel Serverless Function: Webhook oficial Mercado Pago -> verificación API + RPC atómica confirmar_pago_tuu()
 import crypto from 'crypto';
+import { sendBookingConfirmationEmail } from './_send-email.js';
 
 function verifyMpSignature(req, secret) {
   if (!secret) return true; // Verificación HMAC opcional si MP_WEBHOOK_SECRET está configurado
@@ -143,6 +144,13 @@ export default async function handler(req, res) {
     const rpcData = await rpcRes.json();
     if (!rpcRes.ok) {
       return res.status(400).json({ error: rpcData?.message || 'Error al confirmar pago' });
+    }
+    if (mappedStatus === 'paid' && rpcData?.ok && !rpcData?.idempotent_replay) {
+      await sendBookingConfirmationEmail({
+        reference,
+        supabaseUrl: SUPABASE_URL,
+        serviceKey: SUPABASE_SERVICE_ROLE_KEY
+      });
     }
     return res.status(200).json(rpcData);
   } catch (err) {
