@@ -325,27 +325,25 @@
           <div id="exp-header-actions" class="flex flex-wrap items-center gap-2"></div>
         </div>
 
-        <div id="exp-patient-banner" class="bg-white rounded-3xl p-5 sm:p-6 border border-sage/20 shadow-2xs"></div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <aside class="lg:col-span-4 space-y-3">
-            <div class="bg-white rounded-3xl p-5 border border-sage/20 space-y-3">
-              <div class="flex items-center justify-between gap-2">
-                <h2 class="text-sm font-bold text-sage-deep">Historial clínico</h2>
-                <button id="exp-new-control-btn" type="button" onclick="createClinicalControlRecord()" class="px-3 py-1.5 rounded-xl bg-coral text-white text-[11px] font-semibold inline-flex items-center gap-1">
+        <div class="sticky top-3 z-20 bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-5 border border-sage/20 shadow-sm space-y-3">
+          <div id="exp-patient-banner"></div>
+          <div class="pt-3 border-t border-sage/15 flex flex-col gap-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70 shrink-0">Historial:</span>
+                <div id="exp-timeline" class="flex flex-wrap items-center gap-1.5"></div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <div id="exp-bookings-list" class="text-xs"></div>
+                <button id="exp-new-control-btn" type="button" onclick="createClinicalControlRecord()" class="min-h-[34px] px-3 rounded-xl bg-coral text-white text-xs font-semibold inline-flex items-center gap-1 hover:bg-coral/90 shadow-2xs">
                   <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nuevo control
                 </button>
               </div>
-              <div id="exp-timeline" class="space-y-2"></div>
             </div>
-            <div class="bg-white rounded-3xl p-5 border border-sage/20 space-y-2.5">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Citas registradas</h3>
-              <div id="exp-bookings-list" class="space-y-2 text-xs"></div>
-            </div>
-          </aside>
-
-          <div id="exp-main-ficha" class="lg:col-span-8 bg-white rounded-3xl p-5 sm:p-7 border border-sage/20 space-y-5"></div>
+          </div>
         </div>
+
+        <div id="exp-main-ficha" class="bg-white rounded-3xl p-5 sm:p-7 border border-sage/20 space-y-5"></div>
       </section>
 
       <!-- =================================================================== -->
@@ -1870,13 +1868,20 @@
       `;
 
       document.getElementById('exp-bookings-list').innerHTML = allPatientBookings.length
-        ? allPatientBookings.map((b) => `
-          <div class="p-2.5 rounded-xl bg-[#FAF9F6] border border-sage/15">
-            <p class="font-semibold text-sage-deep">${escapeHtml(b.fechaIso.split('-').reverse().join('/'))} · ${escapeHtml(b.hora)} hrs</p>
-            <p class="text-[11px] text-sage-deep/75">${escapeHtml(b.servicio)} · ${escapeHtml(b.estado)}</p>
-          </div>
-        `).join('')
-        : '<p class="text-sage-deep/65">Sin citas confirmadas.</p>';
+        ? `<details class="relative">
+            <summary class="list-none cursor-pointer min-h-[34px] px-3 rounded-xl bg-[#FAF9F6] border border-sage/20 text-xs font-semibold text-sage-deep inline-flex items-center gap-1.5 hover:bg-sage-soft/40 select-none">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-sage-deep/70"></i> ${allPatientBookings.length} cita(s) <i data-lucide="chevron-down" class="w-3 h-3 opacity-60"></i>
+            </summary>
+            <div class="absolute right-0 mt-1.5 w-72 rounded-2xl bg-white border border-sage/20 shadow-lg p-2 z-30 space-y-1.5">
+              ${allPatientBookings.map((b) => `
+                <div class="p-2 rounded-xl bg-[#FAF9F6] border border-sage/15">
+                  <p class="font-semibold text-sage-deep">${escapeHtml(b.fechaIso.split('-').reverse().join('/'))} · ${escapeHtml(b.hora)} hrs</p>
+                  <p class="text-[11px] text-sage-deep/75">${escapeHtml(b.servicio)} · ${escapeHtml(b.estado)}</p>
+                </div>
+              `).join('')}
+            </div>
+          </details>`
+        : '<span class="text-xs text-sage-deep/60 px-2">Sin citas</span>';
 
       const timelineEl = document.getElementById('exp-timeline');
       const mainEl = document.getElementById('exp-main-ficha');
@@ -1925,25 +1930,18 @@
       }
 
       const isEditing = !!exp.editMode;
-      timelineEl.innerHTML = `
-        <p class="text-xs text-sage-deep/70 mb-1">Haz clic en una sesión para ver o editar:</p>
-        ${fichas.map((f, idx) => {
-          const active = idx === exp.selectedFichaIdx;
-          const code = f.codigo_ficha || buildFichaId(f.rut || exp.booking.rut, f.fecha_hoy || exp.booking.fechaIso, f.id);
-          const controlNum = fichas.length - 1 - idx;
-          const label = idx === fichas.length - 1 ? 'Ficha inicial' : `Control #${controlNum}`;
-          return `
-            <button type="button" onclick="selectHistorialFicha(${idx})" class="w-full text-left p-3.5 rounded-2xl border-2 transition-colors ${active ? 'bg-sage-soft/65 border-coral text-sage-deep shadow-2xs' : 'bg-[#FAF9F6] border-sage/15 text-sage-deep/85 hover:bg-sage-soft/30'}">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold">${escapeHtml(f.fecha_hoy || String(f.created_at || '').slice(0, 10))}</span>
-                <span class="text-[11px] px-2.5 py-0.5 rounded-full ${active ? 'bg-coral text-white' : 'bg-white border border-sage/20 text-sage-deep'} font-semibold">${escapeHtml(active ? `${label} · Viendo` : label)}</span>
-              </div>
-              <p class="font-mono text-[11px] text-sage-deep/70 mt-1">${escapeHtml(code)}</p>
-              <p class="text-xs sm:text-sm font-medium truncate mt-0.5">${escapeHtml(f.motivo_consulta || 'Control nutricional')}</p>
-            </button>
-          `;
-        }).join('')}
-      `;
+      timelineEl.innerHTML = fichas.map((f, idx) => {
+        const active = idx === exp.selectedFichaIdx;
+        const controlNum = fichas.length - 1 - idx;
+        const label = idx === fichas.length - 1 ? 'Ficha inicial' : `Control #${controlNum}`;
+        const dateStr = f.fecha_hoy || String(f.created_at || '').slice(0, 10);
+        return `
+          <button type="button" onclick="selectHistorialFicha(${idx})" class="min-h-[34px] px-3 py-1 rounded-xl border text-xs font-semibold inline-flex items-center gap-1.5 transition-all ${active ? 'bg-coral text-white border-coral shadow-2xs' : 'bg-[#FAF9F6] border-sage/20 text-sage-deep hover:bg-sage-soft/50'}">
+            <span>${escapeHtml(label)}</span>
+            <span class="text-[11px] ${active ? 'text-white/90' : 'text-sage-deep/60'}">(${escapeHtml(dateStr)})</span>
+          </button>
+        `;
+      }).join('');
 
       const f = fichas[exp.selectedFichaIdx] || fichas[0];
       const prevF = fichas[exp.selectedFichaIdx + 1] || null;
