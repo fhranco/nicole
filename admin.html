@@ -758,6 +758,7 @@
     const SUPABASE_URL = 'https://bfzeejjzgvhfybtfeajg.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmemVlamp6Z3ZoZnlidGZlYWpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4NDY2NDYsImV4cCI6MjExMDQyMjY0Nn0.RdHRAyybuLjwdVThhX2I2_vF4Y4JFsspdiTJ733-8AU';
     const AUTH_TOKEN_KEY = 'nicole_sb_access_token';
+    const AUTH_REFRESH_KEY = 'nicole_sb_refresh_token';
     const DEMO_BLOCKS_KEY = 'nicole_demo_blocks_v1';
     const DEMO_BOOKINGS_KEY = 'nicole_demo_bookings_v1';
 
@@ -936,7 +937,7 @@
       return DEMO_DEFAULT_BOOKINGS;
     }
 
-    async function sbFetch(path, options = {}) {
+    async function sbFetch(path, options = {}, _retried = false) {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
       if (!token) throw new Error('Sesión no iniciada');
       const res = await fetch(`${SUPABASE_URL}${path}`, {
@@ -949,6 +950,9 @@
         }
       });
       if (res.status === 401) {
+        if (!_retried && await refreshAdminSession()) {
+          return sbFetch(path, options, true);
+        }
         signOutNicole();
         throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
       }
@@ -3920,6 +3924,7 @@
         }
 
         localStorage.setItem(AUTH_TOKEN_KEY, data.access_token);
+        if (data.refresh_token) localStorage.setItem(AUTH_REFRESH_KEY, data.refresh_token);
         if (passEl) passEl.value = '';
         updateAuthUI();
         await loadOperationalData();
@@ -3939,8 +3944,37 @@
       }
     }
 
+    let _refreshPromise = null;
+    async function refreshAdminSession() {
+      if (_refreshPromise) return _refreshPromise;
+      const refreshToken = localStorage.getItem(AUTH_REFRESH_KEY);
+      if (!refreshToken) return false;
+      _refreshPromise = (async () => {
+        try {
+          const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+            body: JSON.stringify({ refresh_token: refreshToken })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.access_token) return false;
+          const okAdmin = await verifyAdminSessionToken(data.access_token);
+          if (!okAdmin) return false;
+          localStorage.setItem(AUTH_TOKEN_KEY, data.access_token);
+          if (data.refresh_token) localStorage.setItem(AUTH_REFRESH_KEY, data.refresh_token);
+          return true;
+        } catch (_) {
+          return false;
+        } finally {
+          _refreshPromise = null;
+        }
+      })();
+      return _refreshPromise;
+    }
+
     function signOutNicole() {
       localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(AUTH_REFRESH_KEY);
       appState.prodBlocks = [];
       appState.prodBookings = [];
       updateAuthUI();
@@ -3987,13 +4021,24 @@
       if (token) {
         const valid = await verifyAdminSessionToken(token);
         if (!valid) {
-          localStorage.removeItem(AUTH_TOKEN_KEY);
+          const refreshed = await refreshAdminSession();
+          if (!refreshed) {
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+            localStorage.removeItem(AUTH_REFRESH_KEY);
+          }
         }
+      } else if (localStorage.getItem(AUTH_REFRESH_KEY)) {
+        await refreshAdminSession();
       }
       updateAuthUI();
       if (isAuthenticated()) {
         await loadOperationalData();
       }
+      setInterval(() => {
+        if (isAuthenticated() && localStorage.getItem(AUTH_REFRESH_KEY)) {
+          refreshAdminSession();
+        }
+      }, 40 * 60 * 1000);
     });
   </script>
 </body>
