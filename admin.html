@@ -52,16 +52,55 @@
       background-color: #EAF3EE;
       border-radius: 1rem;
     }
+    body.auth-locked #admin-sidebar,
+    body.auth-locked #admin-mobile-header,
+    body.auth-locked #admin-main,
+    body.auth-locked #admin-mobile-nav {
+      display: none !important;
+    }
+    body:not(.auth-locked) #auth-gate-screen {
+      display: none !important;
+    }
   </style>
 </head>
 
-<body class="min-h-screen flex flex-col lg:flex-row">
+<body class="min-h-screen flex flex-col lg:flex-row auth-locked">
 
   <!-- TOAST DE NOTIFICACIONES (ARIA-LIVE) -->
   <div id="toast-container" aria-live="polite" class="fixed top-4 right-4 z-[70] space-y-2 max-w-sm w-[calc(100%-2rem)] pointer-events-none"></div>
 
+  <!-- PANTALLA DE ACCESO BLINDADA (SOLO USUARIO Y CONTRASEÑA) -->
+  <section id="auth-gate-screen" class="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-[#F4F8F6] via-[#FAF9F6] to-[#F3EDE6]">
+    <div class="w-full max-w-md bg-white rounded-3xl border border-sage/25 shadow-xl p-7 sm:p-9 space-y-6">
+      <div class="text-center space-y-2">
+        <img src="logo-icon.png" alt="Nicole Borguenson" class="w-14 h-14 mx-auto rounded-2xl border border-sage/25 p-2 bg-white object-contain shadow-2xs" />
+        <h1 class="font-editorial text-2xl sm:text-3xl font-semibold text-sage-deep">Nicole Borguenson</h1>
+        <p class="text-xs font-semibold uppercase tracking-widest text-sage-deep/65">Acceso Clínico Privado</p>
+      </div>
+
+      <form id="gate-login-form" onsubmit="event.preventDefault(); signInNicole('gate');" class="space-y-4">
+        <div>
+          <label for="gate-email" class="block text-xs font-semibold text-sage-deep mb-1.5">Usuario (Correo electrónico)</label>
+          <input id="gate-email" type="email" autocomplete="username" required placeholder="nicole@..." class="w-full min-h-[46px] rounded-2xl border border-sage/25 bg-[#FAF9F6] px-4 text-sm text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+        </div>
+        <div>
+          <label for="gate-pass" class="block text-xs font-semibold text-sage-deep mb-1.5">Contraseña</label>
+          <input id="gate-pass" type="password" autocomplete="current-password" required placeholder="••••••••" class="w-full min-h-[46px] rounded-2xl border border-sage/25 bg-[#FAF9F6] px-4 text-sm text-sage-deep focus:bg-white focus:border-coral focus:outline-none" />
+        </div>
+        <p id="gate-err" class="hidden text-xs font-semibold text-coral text-center"></p>
+        <button id="gate-login-btn" type="submit" class="w-full min-h-[48px] rounded-2xl bg-sage-deep hover:bg-sage-deep/90 text-white text-sm font-semibold shadow-sm transition-all">
+          Ingresar al panel
+        </button>
+      </form>
+
+      <div class="pt-2 border-t border-sage/15 text-center">
+        <a href="index.html" class="text-xs font-medium text-sage-deep/65 hover:text-sage-deep transition-colors">← Volver al sitio público</a>
+      </div>
+    </div>
+  </section>
+
   <!-- SIDEBAR ESCRITORIO -->
-  <aside class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-sage/20 z-30">
+  <aside id="admin-sidebar" class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-sage/20 z-30">
     <div class="px-6 py-6 flex items-center gap-3 border-b border-sage/15">
       <img src="logo-icon.png" alt="Nicole Borguenson" class="w-10 h-10 rounded-2xl border border-sage/25 p-1.5 bg-white object-contain" />
       <div>
@@ -103,7 +142,7 @@
   </aside>
 
   <!-- HEADER MÓVIL -->
-  <header class="lg:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-sage/20 px-4 h-14 flex items-center justify-between">
+  <header id="admin-mobile-header" class="lg:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-sage/20 px-4 h-14 flex items-center justify-between">
     <div class="flex items-center gap-2.5">
       <img src="logo-icon.png" alt="NB" class="w-8 h-8 rounded-xl border border-sage/20 p-1 bg-white object-contain" />
       <span class="font-editorial text-lg font-semibold text-sage-deep">Nicole Borguenson</span>
@@ -115,7 +154,7 @@
   </header>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-1 lg:pl-64 pb-24 lg:pb-12">
+  <main id="admin-main" class="flex-1 lg:pl-64 pb-24 lg:pb-12">
     <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
 
       <!-- BANNER SEPARACIÓN ESTRICTA DEMO VS PRODUCCIÓN -->
@@ -430,7 +469,7 @@
   </main>
 
   <!-- NAVEGACIÓN INFERIOR MÓVIL -->
-  <nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-sage/20 pb-[env(safe-area-inset-bottom)]" aria-label="Navegación móvil">
+  <nav id="admin-mobile-nav" class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-sage/20 pb-[env(safe-area-inset-bottom)]" aria-label="Navegación móvil">
     <div class="grid grid-cols-5">
       <button type="button" onclick="navigateTo('resumen')" data-mnav="resumen" class="mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold text-coral">
         <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Resumen</span>
@@ -3760,13 +3799,35 @@
     // =========================================================================
     // AUTENTICACIÓN SUPABASE + VERIFICACIÓN DE ROL ADMINISTRADORA CLÍNICA
     // =========================================================================
-    async function signInNicole() {
-      const email = document.getElementById('cfg-email').value.trim();
-      const password = document.getElementById('cfg-pass').value;
-      const btn = document.getElementById('cfg-login-btn');
+    async function verifyAdminSessionToken(token) {
+      if (!token) return false;
+      try {
+        const adminCheck = await fetch(`${SUPABASE_URL}/rest/v1/rpc/es_admin_clinica`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!adminCheck.ok) return false;
+        const isAdmin = await adminCheck.json();
+        return isAdmin === true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function signInNicole(source = 'cfg') {
+      const emailEl = document.getElementById(source === 'gate' ? 'gate-email' : 'cfg-email');
+      const passEl = document.getElementById(source === 'gate' ? 'gate-pass' : 'cfg-pass');
+      const btn = document.getElementById(source === 'gate' ? 'gate-login-btn' : 'cfg-login-btn');
+      const errEl = document.getElementById('gate-err');
+      const email = (emailEl?.value || '').trim();
+      const password = passEl?.value || '';
       if (!email || !password) return;
-      btn.disabled = true;
-      btn.textContent = 'Conectando...';
+      if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+      if (btn) { btn.disabled = true; btn.textContent = 'Ingresando...'; }
       try {
         const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
           method: 'POST',
@@ -3776,31 +3837,28 @@
         const data = await res.json();
         if (!res.ok || !data.access_token) throw new Error(data.error_description || 'Credenciales inválidas');
 
-        // Verificar permiso administrativo efectivo
-        const adminCheck = await fetch(`${SUPABASE_URL}/rest/v1/rpc/es_admin_clinica`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${data.access_token}`
-          }
-        });
-        if (adminCheck.ok) {
-          const isAdmin = await adminCheck.json();
-          if (isAdmin === false) {
-            throw new Error('Tu cuenta no tiene permisos de administración clínica.');
-          }
+        const okAdmin = await verifyAdminSessionToken(data.access_token);
+        if (!okAdmin) {
+          throw new Error('Tu cuenta no tiene permisos de administración clínica.');
         }
 
         localStorage.setItem(AUTH_TOKEN_KEY, data.access_token);
+        if (passEl) passEl.value = '';
         updateAuthUI();
         await loadOperationalData();
-        showToast('Sesión administrativa conectada con Supabase.');
+        showToast('Sesión clínica iniciada.');
       } catch (err) {
-        showToast(err.message || 'No se pudo iniciar sesión', 'error');
+        const msg = err.message || 'No se pudo iniciar sesión';
+        if (errEl && source === 'gate') {
+          errEl.textContent = msg;
+          errEl.classList.remove('hidden');
+        }
+        showToast(msg, 'error');
       } finally {
-        btn.disabled = false;
-        btn.textContent = 'Conectar cuenta';
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = source === 'gate' ? 'Ingresar al panel' : 'Conectar cuenta';
+        }
       }
     }
 
@@ -3809,26 +3867,36 @@
       appState.prodBlocks = [];
       appState.prodBookings = [];
       updateAuthUI();
-      renderAll();
-      showToast('Sesión cerrada. Volviste al modo DEMO.');
+      showToast('Sesión cerrada.');
     }
 
     function updateAuthUI() {
       const ok = isAuthenticated();
+      document.body.classList.toggle('auth-locked', !ok);
       ['sidebar-auth-dot', 'mobile-auth-dot'].forEach((id) => {
-        document.getElementById(id).className = ok ? 'w-2 h-2 rounded-full bg-sage' : 'w-2 h-2 rounded-full bg-coral';
+        const el = document.getElementById(id);
+        if (el) el.className = ok ? 'w-2 h-2 rounded-full bg-sage' : 'w-2 h-2 rounded-full bg-coral';
       });
-      document.getElementById('sidebar-auth-text').textContent = ok ? 'Producción (Supabase)' : 'Modo DEMO';
-      document.getElementById('mobile-auth-text').textContent = ok ? 'En vivo' : 'DEMO';
-      document.getElementById('env-banner').classList.toggle('hidden', ok);
-      document.getElementById('cfg-login-form').classList.toggle('hidden', ok);
-      document.getElementById('cfg-logout-btn').classList.toggle('hidden', !ok);
-      document.getElementById('cfg-auth-status').textContent = ok
-        ? 'Sesión activa en Producción. Todos los cambios operan directamente en Supabase.'
-        : 'Modo demostración activo. Inicia sesión para trabajar exclusivamente con datos reales en Supabase.';
+      const st = document.getElementById('sidebar-auth-text');
+      const mt = document.getElementById('mobile-auth-text');
+      if (st) st.textContent = ok ? 'Producción (Supabase)' : 'Bloqueado';
+      if (mt) mt.textContent = ok ? 'En vivo' : 'Bloqueado';
+      const eb = document.getElementById('env-banner');
+      if (eb) eb.classList.add('hidden');
+      const lf = document.getElementById('cfg-login-form');
+      const lb = document.getElementById('cfg-logout-btn');
+      const as = document.getElementById('cfg-auth-status');
+      if (lf) lf.classList.toggle('hidden', ok);
+      if (lb) lb.classList.toggle('hidden', !ok);
+      if (as) {
+        as.textContent = ok
+          ? 'Sesión activa en Producción. Todos los cambios operan directamente en Supabase.'
+          : 'Sesión cerrada.';
+      }
     }
 
     function renderAll() {
+      if (!isAuthenticated()) return;
       renderResumen();
       renderAgendaCalendar();
       renderPatientsView();
@@ -3838,8 +3906,17 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       updateGreeting();
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      if (token) {
+        const valid = await verifyAdminSessionToken(token);
+        if (!valid) {
+          localStorage.removeItem(AUTH_TOKEN_KEY);
+        }
+      }
       updateAuthUI();
-      await loadOperationalData();
+      if (isAuthenticated()) {
+        await loadOperationalData();
+      }
     });
   </script>
 </body>
