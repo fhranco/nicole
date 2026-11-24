@@ -2063,6 +2063,7 @@
       const ant = (rawSys._antropometria && typeof rawSys._antropometria === 'object') ? rawSys._antropometria : {};
       const pauta = (rawSys._pauta && typeof rawSys._pauta === 'object') ? rawSys._pauta : {};
       const tea = (rawSys._tea && typeof rawSys._tea === 'object') ? rawSys._tea : {};
+      const rec = (rawSys._recordatorio && typeof rawSys._recordatorio === 'object') ? rawSys._recordatorio : {};
       const teaTex = Array.isArray(tea.texturas_rechazadas) ? tea.texturas_rechazadas : [];
       const prevAnt = (prevF && prevF.rastreo_sistemas && typeof prevF.rastreo_sistemas._antropometria === 'object')
         ? prevF.rastreo_sistemas._antropometria
@@ -2089,9 +2090,18 @@
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-sage/15">
           <div>
             <span class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Consulta / Ficha seleccionada</span>
-            <p class="font-mono text-base font-bold text-sage-deep mt-0.5">${escapeHtml(code)} · Fecha: ${escapeHtml(f.fecha_hoy || '-')}</p>
+            <div class="flex flex-wrap items-center gap-2.5 mt-1">
+              <span class="font-mono text-sm sm:text-base font-bold text-sage-deep">${escapeHtml(code)}</span>
+              <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#FAF9F6] border border-sage/20 text-xs font-semibold text-sage-deep">
+                <span>Fecha control:</span>
+                <input id="edit-ficha-fecha" type="date" value="${escapeHtml(/^\d{4}-\d{2}-\d{2}$/.test(f.fecha_hoy || '') ? f.fecha_hoy : santiagoTodayStr())}" class="bg-transparent font-bold text-sage-deep focus:outline-none cursor-pointer" />
+              </label>
+            </div>
           </div>
           <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="openManualBookingForActivePatient()" class="min-h-[40px] px-3.5 rounded-xl bg-coral text-white hover:bg-coral/90 text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-all">
+              <i data-lucide="calendar-plus" class="w-4 h-4"></i> Asignar espacio en Agenda
+            </button>
             <button type="button" onclick="downloadActivePautaPDF()" class="min-h-[40px] px-3.5 rounded-xl bg-white border border-sage/30 text-sage-deep hover:bg-sage-soft/50 text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-all">
               <i data-lucide="file-heart" class="w-4 h-4 text-coral"></i> Pauta PDF
             </button>
@@ -2128,6 +2138,24 @@
                 ` : ''}
               </div>
             </details>
+          </div>
+        </div>
+
+        <!-- RECORDATORIO DE PRÓXIMO CONTROL (NO BLOQUEA NI SINCRONIZA AGENDA) -->
+        <div class="rounded-2xl bg-[#FAF9F6] border border-sage/20 px-4 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input id="rec-activo" type="checkbox" ${rec.activo ? 'checked' : ''} class="w-4 h-4 accent-[#E07A5F] rounded" />
+              <span class="text-xs font-bold text-sage-deep">🔔 Recordatorio próximo control</span>
+            </label>
+            <input id="rec-fecha" type="date" value="${escapeHtml(rec.fecha_proximo || '')}" class="min-h-[36px] rounded-xl border border-sage/25 bg-white px-2.5 text-xs font-semibold text-sage-deep focus:border-coral focus:outline-none" />
+            <input id="rec-nota" type="text" value="${escapeHtml(rec.nota || '')}" placeholder="Nota recordatorio (ej. revisar exámenes SIBO)..." class="min-h-[36px] w-full sm:w-64 rounded-xl border border-sage/25 bg-white px-3 text-xs text-sage-deep focus:border-coral focus:outline-none" />
+          </div>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <span class="text-[11px] text-sage-deep/60">No bloquea agenda</span>
+            <button type="button" onclick="sendReminderWhatsApp()" class="min-h-[34px] px-3 rounded-xl bg-[#25D366]/15 text-[#128C7E] hover:bg-[#25D366] hover:text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Enviar WhatsApp
+            </button>
           </div>
         </div>
 
@@ -3069,12 +3097,21 @@
         puente_sensorial: (document.getElementById('tea-puente')?.value || '').trim(),
         estrategia_familia: (document.getElementById('tea-estrategia')?.value || '').trim()
       };
+      existingSys._recordatorio = {
+        activo: !!document.getElementById('rec-activo')?.checked,
+        fecha_proximo: (document.getElementById('rec-fecha')?.value || '').trim() || null,
+        nota: (document.getElementById('rec-nota')?.value || '').trim()
+      };
 
       const patchBody = {
         resultados_examenes_texto: examenes || null,
         comentarios_clinicos: comentarios || null,
         rastreo_sistemas: existingSys
       };
+      const editFecha = document.getElementById('edit-ficha-fecha')?.value;
+      if (editFecha && /^\d{4}-\d{2}-\d{2}$/.test(editFecha)) {
+        patchBody.fecha_hoy = editFecha;
+      }
       const editActFis = document.getElementById('edit-ficha-actfis');
       const editEnf = document.getElementById('edit-ficha-enf');
       const editTrat = document.getElementById('edit-ficha-trat');
@@ -3597,16 +3634,56 @@
       setVal('mb-time', r.hora);
     }
 
-    function openManualBookingModal() {
+    function openManualBookingModal(prefill = null) {
       if (!isAuthenticated()) {
         showToast('Inicia sesión con tu cuenta clínica para agendar sin pago.', 'error');
-        openAuthModal();
         return;
       }
       document.getElementById('mb-err').classList.add('hidden');
       const dEl = document.getElementById('mb-date');
-      if (dEl && !dEl.value) dEl.value = santiagoTodayStr();
+      if (prefill && typeof prefill === 'object') {
+        if (prefill.name) document.getElementById('mb-name').value = prefill.name;
+        if (prefill.rut) document.getElementById('mb-rut').value = prefill.rut;
+        if (prefill.phone) document.getElementById('mb-phone').value = prefill.phone;
+        if (prefill.email) document.getElementById('mb-email').value = prefill.email;
+        if (dEl) dEl.value = prefill.date || santiagoTodayStr();
+      } else if (dEl && !dEl.value) {
+        dEl.value = santiagoTodayStr();
+      }
       openModal('manual-booking-modal');
+    }
+
+    function openManualBookingForActivePatient() {
+      const ctx = appState.activeFicha;
+      const f = ctx?.ficha || {};
+      const r = ctx?.booking || {};
+      const recDate = document.getElementById('rec-fecha')?.value || '';
+      openManualBookingModal({
+        name: f.nombre_completo || r.paciente || '',
+        rut: f.rut || r.rut || '',
+        phone: f.telefono || r.telefono || '',
+        email: f.email || r.email || '',
+        date: /^\d{4}-\d{2}-\d{2}$/.test(recDate) ? recDate : santiagoTodayStr()
+      });
+    }
+
+    function sendReminderWhatsApp() {
+      const ctx = appState.activeFicha;
+      const f = ctx?.ficha || {};
+      const r = ctx?.booking || {};
+      const phone = String(f.telefono || r.telefono || '').replace(/\D/g, '');
+      if (!phone) {
+        showToast('Este paciente no tiene teléfono registrado para WhatsApp.', 'error');
+        return;
+      }
+      const nombre = (f.nombre_completo || r.paciente || '').split(' ')[0] || 'hola';
+      const recDate = document.getElementById('rec-fecha')?.value || '';
+      const nota = (document.getElementById('rec-nota')?.value || '').trim();
+      const dateTxt = /^\d{4}-\d{2}-\d{2}$/.test(recDate)
+        ? ` alrededor del ${recDate.split('-').reverse().join('/')}`
+        : '';
+      const msg = `Hola ${nombre}, te escribe Nicole Borguenson. Te recuerdo que es momento de agendar tu próximo control nutricional${dateTxt}${nota ? ` (${nota})` : ''}. Puedes elegir tu horario directo en https://www.nicoleborguenson.cl/reservar`;
+      window.open(`https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
     }
 
     async function submitManualBooking() {
