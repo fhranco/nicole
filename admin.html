@@ -314,6 +314,41 @@
       </section>
 
       <!-- =================================================================== -->
+      <!-- ÁREA 3B: EXPEDIENTE CLÍNICO HISTÓRICO (PANTALLA COMPLETA)           -->
+      <!-- =================================================================== -->
+      <section id="view-expediente" class="hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <button type="button" onclick="navigateTo('pacientes')" class="min-h-[42px] px-4 rounded-2xl bg-white border border-sage/25 text-xs font-semibold text-sage-deep inline-flex items-center gap-2 hover:bg-sage-soft/40">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Volver a Pacientes</span>
+          </button>
+          <div id="exp-header-actions" class="flex flex-wrap items-center gap-2"></div>
+        </div>
+
+        <div id="exp-patient-banner" class="bg-white rounded-3xl p-5 sm:p-6 border border-sage/20 shadow-2xs"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <aside class="lg:col-span-4 space-y-3">
+            <div class="bg-white rounded-3xl p-5 border border-sage/20 space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <h2 class="text-sm font-bold text-sage-deep">Historial clínico</h2>
+                <button id="exp-new-control-btn" type="button" onclick="createClinicalControlRecord()" class="px-3 py-1.5 rounded-xl bg-coral text-white text-[11px] font-semibold inline-flex items-center gap-1">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nuevo control
+                </button>
+              </div>
+              <div id="exp-timeline" class="space-y-2"></div>
+            </div>
+            <div class="bg-white rounded-3xl p-5 border border-sage/20 space-y-2.5">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Citas registradas</h3>
+              <div id="exp-bookings-list" class="space-y-2 text-xs"></div>
+            </div>
+          </aside>
+
+          <div id="exp-main-ficha" class="lg:col-span-8 bg-white rounded-3xl p-5 sm:p-7 border border-sage/20 space-y-5"></div>
+        </div>
+      </section>
+
+      <!-- =================================================================== -->
       <!-- ÁREA 4: FINANZAS Y SEGUIMIENTO DE PAGOS                             -->
       <!-- =================================================================== -->
       <section id="view-finanzas" class="hidden space-y-6">
@@ -1011,17 +1046,18 @@
 
     function navigateTo(view) {
       appState.view = view;
-      ['resumen', 'agenda', 'pacientes', 'finanzas', 'configuracion'].forEach((v) => {
-        document.getElementById(`view-${v}`).classList.toggle('hidden', v !== view);
+      ['resumen', 'agenda', 'pacientes', 'expediente', 'finanzas', 'configuracion'].forEach((v) => {
+        document.getElementById(`view-${v}`)?.classList.toggle('hidden', v !== view);
       });
+      const navTarget = view === 'expediente' ? 'pacientes' : view;
       document.querySelectorAll('.nav-item').forEach((btn) => {
-        const active = btn.dataset.nav === view;
+        const active = btn.dataset.nav === navTarget;
         btn.className = active
           ? 'nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-colors bg-sage/15 text-sage-deep'
           : 'nav-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors text-sage-deep/75 hover:bg-sage/10';
       });
       document.querySelectorAll('.mnav-item').forEach((btn) => {
-        const active = btn.dataset.mnav === view;
+        const active = btn.dataset.mnav === navTarget;
         btn.className = active
           ? 'mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold text-coral'
           : 'mnav-item min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-sage-deep/60';
@@ -1789,118 +1825,250 @@
     async function openPatientDrawer(id) {
       const r = getBookings().find((x) => x.id === id);
       if (!r) return;
+
+      const allPatientBookings = getBookings()
+        .filter((b) => (r.pacienteId && b.pacienteId === r.pacienteId) || (r.rut && b.rut === r.rut) || b.id === r.id)
+        .filter((b) => ['abonada', 'pagada', 'completada', 'confirmada'].includes(b.estado));
       const paid = (r.credito || 0) + (r.abonado || 0);
       const saldo = Math.max(0, r.total - paid);
-      document.getElementById('drawer-patient-name').textContent = r.paciente;
-      document.getElementById('drawer-patient-tag').textContent = r.servicio;
-      const bodyEl = document.getElementById('drawer-patient-body');
-      const fichaId = buildFichaId(r.rut, r.fechaIso, r.id);
-      bodyEl.innerHTML = `
-        <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5 text-xs">
-          <p><strong>ID Ficha Clínica:</strong> <span class="font-mono font-bold text-sage-deep">${escapeHtml(fichaId)}</span></p>
-          <p><strong>RUT:</strong> ${escapeHtml(r.rut || '-')}</p>
-          <p><strong>Contacto:</strong> ${escapeHtml(r.telefono || '-')} · ${escapeHtml(r.email || '-')}</p>
-          <p><strong>Cita:</strong> ${escapeHtml(r.fechaIso.split('-').reverse().join('/'))} · ${escapeHtml(r.hora)} hrs (${escapeHtml(SEDES[r.sede] || r.sede)})</p>
-        </div>
-        <div class="p-4 rounded-2xl bg-sage-soft/50 border border-sage/20 space-y-1.5 text-xs">
-          <p><strong>Valor servicio:</strong> ${fmtCLP(r.total)}</p>
-          <p><strong>Total abonado / crédito:</strong> ${fmtCLP(paid)}</p>
-          <p><strong>Saldo pendiente:</strong> <span class="font-bold text-coral">${fmtCLP(saldo)}</span></p>
-        </div>
-        <div id="drawer-ficha-box" class="p-4 rounded-2xl bg-white border border-sage/20 text-xs space-y-1.5">
-          <div class="skeleton-box h-12"></div>
-        </div>
-        <div class="flex flex-col gap-2.5 pt-1">
-          <a href="/ingreso-paciente?token=${encodeURIComponent(r.token || '')}" target="_blank" class="min-h-[46px] rounded-2xl bg-sage-deep text-white text-xs font-semibold flex items-center justify-center gap-2">
-            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Abrir enlace de ficha
-          </a>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button type="button" onclick="copyIntakeLink('${escapeHtml(r.token || '')}')" class="min-h-[44px] rounded-2xl bg-white border border-sage/25 text-sage-deep text-xs font-semibold flex items-center justify-center gap-1.5">
-              <i data-lucide="copy" class="w-4 h-4"></i> Copiar enlace
-            </button>
-            ${String(r.telefono || '').replace(/\D/g, '') ? `
-              <a href="https://wa.me/${encodeURIComponent(String(r.telefono || '').replace(/\D/g, ''))}?text=${encodeURIComponent(`Hola ${r.paciente}, soy Nicole Borguenson. Te comparto el enlace de tu ficha de ingreso clínico para nuestra consulta del ${r.fechaIso.split('-').reverse().join('/')} a las ${r.hora} hrs: ${window.location.origin}/ingreso-paciente?token=${r.token || ''}`)}" target="_blank" rel="noopener noreferrer" class="min-h-[44px] rounded-2xl bg-[#25D366] text-white text-xs font-semibold flex items-center justify-center gap-1.5">
-                <i data-lucide="message-circle" class="w-4 h-4"></i> Enviar por WhatsApp
-              </a>
-            ` : ''}
+      const baseCode = buildFichaId(r.rut, '', r.id);
+      const waDigits = String(r.telefono || '').replace(/\D/g, '');
+      const waShareMsg = `Hola ${r.paciente}, soy Nicole Borguenson. Te comparto el enlace de tu ficha de ingreso clínico para nuestra consulta del ${r.fechaIso.split('-').reverse().join('/')} a las ${r.hora} hrs: ${window.location.origin}/ingreso-paciente?token=${r.token || ''}`;
+
+      appState.expediente = { booking: r, patientBookings: allPatientBookings, fichas: [], selectedFichaIdx: 0 };
+      navigateTo('expediente');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      document.getElementById('exp-header-actions').innerHTML = `
+        <button type="button" onclick="copyIntakeLink('${escapeHtml(r.token || '')}')" class="min-h-[40px] px-3.5 rounded-2xl bg-white border border-sage/25 text-sage-deep text-xs font-semibold inline-flex items-center gap-1.5">
+          <i data-lucide="copy" class="w-4 h-4"></i> Copiar enlace ficha
+        </button>
+        ${waDigits ? `<a href="https://wa.me/${encodeURIComponent(waDigits)}?text=${encodeURIComponent(waShareMsg)}" target="_blank" rel="noopener noreferrer" class="min-h-[40px] px-3.5 rounded-2xl bg-[#25D366] text-white text-xs font-semibold inline-flex items-center gap-1.5"><i data-lucide="message-circle" class="w-4 h-4"></i> Enviar ficha WhatsApp</a>` : ''}
+        ${saldo > 0 ? `<button type="button" onclick="openQuickPaymentModal('${escapeHtml(r.id)}')" class="min-h-[40px] px-4 rounded-2xl bg-coral text-white text-xs font-semibold">Registrar pago (${fmtCLP(saldo)})</button>` : ''}
+      `;
+
+      document.getElementById('exp-patient-banner').innerHTML = `
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-sage-soft text-sage-deep font-mono text-[11px] font-bold">${escapeHtml(baseCode)}</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#FAF9F6] border border-sage/20 text-[11px] font-semibold text-sage-deep">${allPatientBookings.length || 1} consulta(s)</span>
+            </div>
+            <h1 class="font-editorial text-2xl sm:text-3xl font-semibold text-sage-deep">${escapeHtml(r.paciente)}</h1>
+            <p class="text-xs text-sage-deep/80">
+              <strong>RUT:</strong> ${escapeHtml(r.rut || '-')} ·
+              <strong>WhatsApp:</strong> ${escapeHtml(r.telefono || '-')} ·
+              <strong>Correo:</strong> ${escapeHtml(r.email || '-')}
+            </p>
           </div>
-          ${saldo > 0 ? `<button type="button" onclick="closeModal('patient-drawer'); openQuickPaymentModal('${escapeHtml(r.id)}')" class="min-h-[46px] rounded-2xl bg-coral text-white text-xs font-semibold">Registrar pago de saldo</button>` : ''}
+          <div class="grid grid-cols-3 gap-3 text-xs bg-[#FAF9F6] p-3.5 rounded-2xl border border-sage/15 shrink-0">
+            <div><span class="block text-sage-deep/65">Servicio</span><strong class="text-sage-deep">${escapeHtml(r.servicio)}</strong></div>
+            <div><span class="block text-sage-deep/65">Abonado</span><strong class="text-sage-deep">${fmtCLP(paid)}</strong></div>
+            <div><span class="block text-sage-deep/65">Saldo</span><strong class="${saldo ? 'text-coral' : 'text-sage-deep'}">${fmtCLP(saldo)}</strong></div>
+          </div>
         </div>
       `;
-      openModal('patient-drawer');
+
+      document.getElementById('exp-bookings-list').innerHTML = allPatientBookings.length
+        ? allPatientBookings.map((b) => `
+          <div class="p-2.5 rounded-xl bg-[#FAF9F6] border border-sage/15">
+            <p class="font-semibold text-sage-deep">${escapeHtml(b.fechaIso.split('-').reverse().join('/'))} · ${escapeHtml(b.hora)} hrs</p>
+            <p class="text-[11px] text-sage-deep/75">${escapeHtml(b.servicio)} · ${escapeHtml(b.estado)}</p>
+          </div>
+        `).join('')
+        : '<p class="text-sage-deep/65">Sin citas confirmadas.</p>';
+
+      const timelineEl = document.getElementById('exp-timeline');
+      const mainEl = document.getElementById('exp-main-ficha');
+      timelineEl.innerHTML = '<div class="skeleton-box h-16"></div>';
+      mainEl.innerHTML = '<div class="skeleton-box h-48"></div>';
       if (window.lucide) lucide.createIcons();
 
-      const fichaBox = document.getElementById('drawer-ficha-box');
       if (!isAuthenticated()) {
-        fichaBox.innerHTML = r.ficha
-          ? '<p><strong>Motivo (DEMO):</strong> Evaluación integral y hábitos alimentarios.</p>'
-          : '<p class="text-sage-deep/70">El paciente aún no ha enviado su ficha de ingreso.</p>';
+        timelineEl.innerHTML = '<p class="text-xs text-sage-deep/70">Modo DEMO: conecta tu cuenta real para ver el historial clínico.</p>';
+        mainEl.innerHTML = '<p class="text-sm text-sage-deep/70">Inicia sesión con tu cuenta real para acceder al expediente completo.</p>';
         return;
       }
 
       try {
-        let rows = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?reserva_id=eq.${encodeURIComponent(r.id)}&select=*&order=created_at.desc&limit=1`);
-        if ((!rows || !rows.length) && r.pacienteId) {
-          rows = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?paciente_id=eq.${encodeURIComponent(r.pacienteId)}&select=*&order=created_at.desc&limit=1`);
-        }
-        const f = rows?.[0];
-        appState.activeFicha = f ? { ficha: f, booking: r } : null;
-        if (!f) {
-          fichaBox.innerHTML = '<p class="text-sage-deep/70">Ficha clínica aún no ingresada para esta reserva.</p>';
-          return;
-        }
-        const code = f.codigo_ficha || buildFichaId(f.rut || r.rut, f.fecha_hoy || r.fechaIso, r.id);
-        const sysEntries = Object.entries(f.rastreo_sistemas || {});
-        const filesList = Array.isArray(f.archivos_urls) ? f.archivos_urls : [];
-        fichaBox.innerHTML = `
-          <div class="space-y-3">
-            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-sage/15">
-              <div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-sage-deep/70">Ficha clínica completa</span>
-                <p class="font-mono text-xs font-bold text-sage-deep">${escapeHtml(code)}</p>
-              </div>
-              <button type="button" onclick="downloadActiveFichaPDF()" class="px-3.5 py-2 rounded-xl bg-coral text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs">
-                <i data-lucide="file-down" class="w-4 h-4"></i> Descargar Ficha PDF
-              </button>
-            </div>
-            <div class="space-y-1.5 text-xs">
-              <p><strong>Fecha ficha:</strong> ${escapeHtml(f.fecha_hoy || '-')} · <strong>Edad:</strong> ${escapeHtml(f.edad ?? '-')} años</p>
-              <p><strong>Actividad:</strong> ${escapeHtml(f.actividad_laboral || '-')}</p>
-              <p><strong>Enfermedades actuales:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>
-              <p><strong>Tratamiento / fármacos:</strong> ${escapeHtml(f.tratamiento_actual || '-')}</p>
-              <p><strong>Historia clínica:</strong> ${escapeHtml(f.historia_clinica || '-')}</p>
-              <p><strong>Actividad física:</strong> ${escapeHtml(f.actividad_fisica || '-')}</p>
-              <p><strong>Motivo de consulta:</strong> ${escapeHtml(f.motivo_consulta || '-')}</p>
-              <p><strong>Día típico:</strong> ${escapeHtml(f.dia_tipico || '-')}</p>
-              ${sysEntries.length ? `<details class="pt-1"><summary class="cursor-pointer font-semibold text-sage-deep">Ver rastreo de 6 meses (${sysEntries.length} áreas)</summary><div class="mt-1.5 space-y-1 pl-2 border-l-2 border-sage/25">${sysEntries.map(([k, v]) => `<p><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</p>`).join('')}</div></details>` : ''}
-              ${filesList.length ? `<p class="pt-1"><strong>Exámenes adjuntos (${filesList.length}):</strong> ${filesList.map((u) => escapeHtml(String(u).split('/').pop())).join(', ')}</p>` : ''}
-            </div>
+        const filterQuery = r.pacienteId
+          ? `paciente_id=eq.${encodeURIComponent(r.pacienteId)}`
+          : `reserva_id=eq.${encodeURIComponent(r.id)}`;
+        const fichas = await sbFetch(`/rest/v1/fichas_ingreso_pacientes?${filterQuery}&select=*&order=created_at.desc`);
+        appState.expediente.fichas = Array.isArray(fichas) ? fichas : [];
+        appState.expediente.selectedFichaIdx = 0;
+        renderExpedienteTimelineAndFicha();
+      } catch (e) {
+        timelineEl.innerHTML = '';
+        mainEl.innerHTML = `<p class="text-sm text-coral">No pudimos cargar el expediente (${escapeHtml(e.message)}).</p>`;
+      }
+    }
 
-            <div class="pt-3 border-t border-sage/20 space-y-3">
-              <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep">Registro clínico de Nicole</p>
-              <div>
-                <label for="ficha-examenes-texto" class="block text-xs font-semibold text-sage-deep mb-1">Resultado de exámenes (texto)</label>
-                <div class="flex flex-wrap gap-1.5 mb-2">
-                  <button type="button" onclick="insertExamTemplate('metabolico')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Sangre / Metabólico</button>
-                  <button type="button" onclick="insertExamTemplate('vitaminas')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Vitaminas y Hierro</button>
-                  <button type="button" onclick="insertExamTemplate('tiroides')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Tiroides</button>
-                  <button type="button" onclick="insertExamTemplate('digestivo')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ SIBO / Epixlife</button>
-                </div>
-                <textarea id="ficha-examenes-texto" rows="6" placeholder="Toca una plantilla arriba o escribe aquí los resultados (ej: Vitamina D, insulina, ferritina, TSH, SIBO...)" class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-3 py-2 text-xs text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.resultados_examenes_texto || '')}</textarea>
-              </div>
-              <div>
-                <label for="ficha-comentarios-nicole" class="block text-xs font-semibold text-sage-deep mb-1">Comentarios clínicos de Nicole</label>
-                <textarea id="ficha-comentarios-nicole" rows="3" placeholder="Observaciones de consulta, diagnóstico nutricional, pauta e indicaciones..." class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-3 py-2 text-xs text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.comentarios_clinicos || '')}</textarea>
-              </div>
-              <button id="save-notes-btn" type="button" onclick="saveFichaClinicalNotes('${escapeHtml(f.id)}')" class="w-full min-h-[42px] rounded-2xl bg-sage-deep text-white text-xs font-semibold">
-                Guardar comentarios y exámenes
-              </button>
-            </div>
+    function renderExpedienteTimelineAndFicha() {
+      const exp = appState.expediente;
+      const timelineEl = document.getElementById('exp-timeline');
+      const mainEl = document.getElementById('exp-main-ficha');
+      if (!exp || !timelineEl || !mainEl) return;
+
+      const fichas = exp.fichas || [];
+      if (!fichas.length) {
+        appState.activeFicha = null;
+        timelineEl.innerHTML = '<p class="text-xs text-sage-deep/70">El paciente aún no ha enviado su ficha inicial. Puedes reenviarle el enlace arriba o crear un control clínico.</p>';
+        mainEl.innerHTML = `
+          <div class="text-center py-10 space-y-3">
+            <p class="text-sm font-semibold text-sage-deep">Aún no hay fichas registradas en este expediente.</p>
+            <p class="text-xs text-sage-deep/75">Envía el enlace de ingreso al paciente o crea un nuevo control clínico para comenzar su historia.</p>
+            <button type="button" onclick="createClinicalControlRecord()" class="px-5 py-2.5 rounded-2xl bg-coral text-white text-xs font-semibold">+ Crear primer registro clínico</button>
           </div>
         `;
-        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      timelineEl.innerHTML = fichas.map((f, idx) => {
+        const active = idx === exp.selectedFichaIdx;
+        const code = f.codigo_ficha || buildFichaId(f.rut || exp.booking.rut, f.fecha_hoy || exp.booking.fechaIso, f.id);
+        const label = idx === fichas.length - 1 ? 'Ficha inicial' : 'Control / Evolución';
+        return `
+          <button type="button" onclick="selectHistorialFicha(${idx})" class="w-full text-left p-3 rounded-2xl border transition-colors ${active ? 'bg-sage-soft/60 border-sage-deep text-sage-deep' : 'bg-[#FAF9F6] border-sage/15 text-sage-deep/85 hover:bg-sage-soft/30'}">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-bold">${escapeHtml(f.fecha_hoy || String(f.created_at || '').slice(0, 10))}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-white border border-sage/20 font-semibold">${escapeHtml(label)}</span>
+            </div>
+            <p class="font-mono text-[10px] text-sage-deep/70 mt-1">${escapeHtml(code)}</p>
+            <p class="text-xs truncate mt-0.5">${escapeHtml(f.motivo_consulta || 'Control nutricional')}</p>
+          </button>
+        `;
+      }).join('');
+
+      const f = fichas[exp.selectedFichaIdx] || fichas[0];
+      const r = exp.booking;
+      appState.activeFicha = { ficha: f, booking: r };
+      const code = f.codigo_ficha || buildFichaId(f.rut || r.rut, f.fecha_hoy || r.fechaIso, r.id);
+      const sysEntries = Object.entries(f.rastreo_sistemas || {});
+      const filesList = Array.isArray(f.archivos_urls) ? f.archivos_urls : [];
+
+      mainEl.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-sage/15">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70">Ficha clínica seleccionada</span>
+            <p class="font-mono text-sm font-bold text-sage-deep">${escapeHtml(code)} · Fecha: ${escapeHtml(f.fecha_hoy || '-')}</p>
+          </div>
+          <button type="button" onclick="downloadActiveFichaPDF()" class="min-h-[42px] px-4 rounded-2xl bg-coral text-white text-xs font-semibold inline-flex items-center gap-2 shadow-xs">
+            <i data-lucide="file-down" class="w-4 h-4"></i> Descargar Ficha PDF
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Identificación y hábitos</p>
+            <p><strong>Edad / F. Nac.:</strong> ${escapeHtml(f.edad ?? '-')} años (${escapeHtml(f.fecha_nacimiento || '-')})</p>
+            <p><strong>Dirección:</strong> ${escapeHtml(f.direccion || '-')}</p>
+            <p><strong>Actividad laboral:</strong> ${escapeHtml(f.actividad_laboral || '-')}</p>
+            <p><strong>Actividad física:</strong> ${escapeHtml(f.actividad_fisica || '-')}</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Antecedentes clínicos</p>
+            <p><strong>Enfermedades actuales:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>
+            <p><strong>Tratamiento / fármacos:</strong> ${escapeHtml(f.tratamiento_actual || '-')}</p>
+            <p><strong>Historia clínica:</strong> ${escapeHtml(f.historia_clinica || '-')}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70">Motivo de consulta y objetivos</p>
+            <p class="whitespace-pre-wrap leading-relaxed">${escapeHtml(f.motivo_consulta || '-')}</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70">Día típico de alimentación</p>
+            <p class="whitespace-pre-wrap leading-relaxed">${escapeHtml(f.dia_tipico || '-')}</p>
+          </div>
+        </div>
+
+        ${sysEntries.length ? `
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 text-xs space-y-2">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70">Rastreo de síntomas últimos 6 meses (${sysEntries.length} áreas)</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+              ${sysEntries.map(([k, v]) => `<p><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</p>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${filesList.length ? `<p class="text-xs"><strong>Exámenes adjuntos (${filesList.length}):</strong> ${filesList.map((u) => escapeHtml(String(u).split('/').pop())).join(', ')}</p>` : ''}
+
+        <div class="pt-4 border-t border-sage/20 space-y-3">
+          <p class="text-xs font-bold uppercase tracking-wider text-sage-deep">Registro clínico de Nicole (Evolución y Exámenes)</p>
+          <div>
+            <label for="ficha-examenes-texto" class="block text-xs font-semibold text-sage-deep mb-1">Resultado de exámenes (texto)</label>
+            <div class="flex flex-wrap gap-1.5 mb-2">
+              <button type="button" onclick="insertExamTemplate('metabolico')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Sangre / Metabólico</button>
+              <button type="button" onclick="insertExamTemplate('vitaminas')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Vitaminas y Hierro</button>
+              <button type="button" onclick="insertExamTemplate('tiroides')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Tiroides</button>
+              <button type="button" onclick="insertExamTemplate('digestivo')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ SIBO / Epixlife</button>
+            </div>
+            <textarea id="ficha-examenes-texto" rows="6" placeholder="Toca una plantilla arriba o escribe aquí los resultados (Vitamina D, insulina, ferritina, TSH, SIBO...)" class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.resultados_examenes_texto || '')}</textarea>
+          </div>
+          <div>
+            <label for="ficha-comentarios-nicole" class="block text-xs font-semibold text-sage-deep mb-1">Comentarios y evolución clínica de Nicole</label>
+            <textarea id="ficha-comentarios-nicole" rows="5" placeholder="Observaciones de consulta, diagnóstico nutricional, pauta, suplementación e indicaciones..." class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.comentarios_clinicos || '')}</textarea>
+          </div>
+          <button id="save-notes-btn" type="button" onclick="saveFichaClinicalNotes('${escapeHtml(f.id)}')" class="min-h-[44px] px-6 rounded-2xl bg-sage-deep text-white text-xs font-semibold">
+            Guardar comentarios y exámenes
+          </button>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function selectHistorialFicha(idx) {
+      if (!appState.expediente) return;
+      appState.expediente.selectedFichaIdx = idx;
+      renderExpedienteTimelineAndFicha();
+    }
+
+    async function createClinicalControlRecord() {
+      const exp = appState.expediente;
+      if (!exp || !isAuthenticated()) return;
+      const r = exp.booking;
+      const prev = exp.fichas?.[0] || {};
+      const btn = document.getElementById('exp-new-control-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Creando...'; }
+      try {
+        const rows = await sbFetch('/rest/v1/fichas_ingreso_pacientes', {
+          method: 'POST',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify({
+            reserva_id: r.id,
+            paciente_id: r.pacienteId,
+            intake_token: r.token || null,
+            fecha_hoy: santiagoTodayStr(),
+            nombre_completo: prev.nombre_completo || r.paciente,
+            telefono: prev.telefono || r.telefono || '',
+            rut: prev.rut || r.rut || '',
+            direccion: prev.direccion || null,
+            email: prev.email || r.email || '',
+            fecha_nacimiento: prev.fecha_nacimiento || null,
+            edad: prev.edad ?? null,
+            actividad_laboral: prev.actividad_laboral || null,
+            enfermedades_actuales: prev.enfermedades_actuales || null,
+            tratamiento_actual: prev.tratamiento_actual || null,
+            historia_clinica: prev.historia_clinica || null,
+            actividad_fisica: prev.actividad_fisica || null,
+            motivo_consulta: `Control clínico (${santiagoTodayStr().split('-').reverse().join('/')})`,
+            origen: 'admin-control'
+          })
+        });
+        const created = Array.isArray(rows) ? rows[0] : rows;
+        if (created) {
+          exp.fichas.unshift(created);
+          exp.selectedFichaIdx = 0;
+          renderExpedienteTimelineAndFicha();
+          showToast('Nuevo control clínico creado en el historial.');
+        }
       } catch (e) {
-        fichaBox.innerHTML = `<p class="text-coral">No pudimos cargar los antecedentes (${escapeHtml(e.message)}).</p>`;
+        showToast(e.message || 'No se pudo crear el control clínico.', 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="plus" class="w-3.5 h-3.5"></i> Nuevo control'; if (window.lucide) lucide.createIcons(); }
       }
     }
 
