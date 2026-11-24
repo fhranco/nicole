@@ -1984,26 +1984,42 @@
             <p class="font-mono text-base font-bold text-sage-deep mt-0.5">${escapeHtml(code)} · Fecha: ${escapeHtml(f.fecha_hoy || '-')}</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            ${(f.origen === 'admin-control' || fichas.length > 1 && exp.selectedFichaIdx < fichas.length - 1) ? `
-              <button type="button" onclick="deleteClinicalControlRecord('${escapeHtml(f.id)}')" class="min-h-[44px] px-3.5 rounded-2xl bg-white border border-coral/35 text-coral text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-coral-soft/40">
-                <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar control
-              </button>
-            ` : ''}
-            <button type="button" onclick="toggleFichaEditMode()" class="min-h-[44px] px-4 rounded-2xl ${isEditing ? 'bg-sage-deep text-white' : 'bg-white border border-sage/30 text-sage-deep'} text-xs sm:text-sm font-semibold inline-flex items-center gap-2">
-              <i data-lucide="pencil" class="w-4 h-4"></i> ${isEditing ? 'Modo lectura' : 'Editar datos de ficha'}
+            <button type="button" onclick="downloadActivePautaPDF()" class="min-h-[40px] px-3.5 rounded-xl bg-white border border-sage/30 text-sage-deep hover:bg-sage-soft/50 text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-all">
+              <i data-lucide="file-heart" class="w-4 h-4 text-coral"></i> Pauta PDF
             </button>
-            <button type="button" onclick="syncPatientToRaiz('activate')" id="sync-raiz-btn" class="min-h-[44px] px-4 rounded-2xl bg-emerald-700 text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs hover:bg-emerald-800">
-              <i data-lucide="smartphone" class="w-4 h-4"></i> Activar / Sincronizar App Raíz
+            <button type="button" onclick="downloadActiveFichaPDF()" class="min-h-[40px] px-3.5 rounded-xl bg-white border border-sage/30 text-sage-deep hover:bg-sage-soft/50 text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-all">
+              <i data-lucide="file-down" class="w-4 h-4 text-sage-deep/75"></i> Ficha PDF
             </button>
-            <button type="button" onclick="syncPatientToRaiz('pause')" id="pause-raiz-btn" title="Pausar acceso del paciente a la App Raíz" class="min-h-[44px] px-3 rounded-2xl bg-white border border-sage/30 text-sage-deep/80 hover:text-coral hover:border-coral/40 text-xs font-semibold inline-flex items-center gap-1.5">
-              <i data-lucide="pause-circle" class="w-4 h-4"></i> Pausar App
-            </button>
-            <button type="button" onclick="downloadActivePautaPDF()" class="min-h-[44px] px-4 rounded-2xl bg-sage-deep text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs hover:bg-sage-deep/90">
-              <i data-lucide="file-heart" class="w-4 h-4"></i> Pauta PDF (Paciente)
-            </button>
-            <button type="button" onclick="downloadActiveFichaPDF()" class="min-h-[44px] px-4 rounded-2xl bg-coral text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs">
-              <i data-lucide="file-down" class="w-4 h-4"></i> Ficha PDF
-            </button>
+
+            <details class="relative">
+              <summary class="list-none cursor-pointer min-h-[40px] px-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100/70 text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 select-none">
+                <i data-lucide="smartphone" class="w-4 h-4"></i> App Raíz <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-70"></i>
+              </summary>
+              <div class="absolute right-0 mt-1.5 w-56 rounded-2xl bg-white border border-sage/20 shadow-lg p-1.5 z-30 space-y-1">
+                <button type="button" id="sync-raiz-btn" onclick="this.closest('details').open=false; syncPatientToRaiz('activate')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-50 text-xs sm:text-sm font-semibold text-emerald-800 inline-flex items-center gap-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4"></i> Activar / Sincronizar App
+                </button>
+                <button type="button" id="pause-raiz-btn" onclick="this.closest('details').open=false; syncPatientToRaiz('pause')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 text-xs sm:text-sm font-medium text-rose-700 inline-flex items-center gap-2">
+                  <i data-lucide="pause-circle" class="w-4 h-4"></i> Pausar acceso App
+                </button>
+              </div>
+            </details>
+
+            <details class="relative">
+              <summary class="list-none cursor-pointer min-h-[40px] w-10 rounded-xl bg-white border border-sage/30 text-sage-deep hover:bg-sage-soft/50 inline-flex items-center justify-center select-none" title="Más opciones de ficha">
+                <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+              </summary>
+              <div class="absolute right-0 mt-1.5 w-52 rounded-2xl bg-white border border-sage/20 shadow-lg p-1.5 z-30 space-y-1">
+                <button type="button" onclick="this.closest('details').open=false; toggleFichaEditMode()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-sage-soft/50 text-xs sm:text-sm font-semibold text-sage-deep inline-flex items-center gap-2">
+                  <i data-lucide="pencil" class="w-4 h-4"></i> ${isEditing ? 'Modo lectura' : 'Editar datos de ficha'}
+                </button>
+                ${(f.origen === 'admin-control' || fichas.length > 1 && exp.selectedFichaIdx < fichas.length - 1) ? `
+                  <button type="button" onclick="this.closest('details').open=false; deleteClinicalControlRecord('${escapeHtml(f.id)}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 text-xs sm:text-sm font-semibold text-coral inline-flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar control
+                  </button>
+                ` : ''}
+              </div>
+            </details>
           </div>
         </div>
 
@@ -2016,12 +2032,12 @@
               </div>
               <div>
                 <h3 class="text-sm sm:text-base font-bold text-sage-deep leading-tight">Protocolo Antropométrico Inicial</h3>
-                <p class="text-xs text-sage-deep/70">Paso 1 de consulta · Base objetiva para evaluar evolución clínica</p>
+                <p class="text-xs text-sage-deep/70">${prevAnt ? 'Comparando automáticamente vs control previo' : 'Paso 1 de consulta · Base objetiva de evolución'}</p>
               </div>
             </div>
-            <span class="px-3 py-1 rounded-full bg-white border border-sage/20 text-[11px] font-bold uppercase tracking-wider text-sage-deep">
-              ${prevAnt ? 'Comparando vs control previo' : 'Registro inicial de sesión'}
-            </span>
+            <button id="toggle-chart-btn" type="button" onclick="toggleEvolutionChart()" class="px-3 py-1.5 rounded-full bg-white border border-sage/25 hover:border-sage-deep text-xs font-semibold text-sage-deep inline-flex items-center gap-1.5 transition-all">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-coral"></i> <span id="toggle-chart-label">${(exp.showChart ?? (fichas.filter((x) => x?.rastreo_sistemas?._antropometria?.peso || x?.rastreo_sistemas?._antropometria?.cintura).length >= 2)) ? 'Ocultar gráfica' : 'Ver gráfica'}</span>
+            </button>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -2086,8 +2102,8 @@
           </div>
         </section>
 
-        <!-- GRÁFICA DE EVOLUCIÓN ANTROPOMÉTRICA -->
-        <div id="exp-evolution-chart-box">
+        <!-- GRÁFICA DE EVOLUCIÓN ANTROPOMÉTRICA (COLAPSABLE) -->
+        <div id="exp-evolution-chart-box" class="${(exp.showChart ?? (fichas.filter((x) => x?.rastreo_sistemas?._antropometria?.peso || x?.rastreo_sistemas?._antropometria?.cintura).length >= 2)) ? '' : 'hidden'}">
           ${buildEvolutionChartHtml(fichas, exp.chartMetric || 'peso', f.id)}
         </div>
 
@@ -2461,6 +2477,16 @@
       grasa_pct: { label: '% Grasa', unit: '%', color: '#D97706', fill: 'rgba(217, 119, 6, 0.14)', invertGood: false },
       musculo_pct: { label: '% Músculo', unit: '%', color: '#059669', fill: 'rgba(5, 150, 105, 0.14)', invertGood: true }
     };
+
+    function toggleEvolutionChart() {
+      const box = document.getElementById('exp-evolution-chart-box');
+      const lbl = document.getElementById('toggle-chart-label');
+      if (!box) return;
+      const willShow = box.classList.contains('hidden');
+      box.classList.toggle('hidden', !willShow);
+      if (appState.expediente) appState.expediente.showChart = willShow;
+      if (lbl) lbl.textContent = willShow ? 'Ocultar gráfica' : 'Ver gráfica';
+    }
 
     function setExpedienteChartMetric(metricKey) {
       if (!appState.expediente) return;
