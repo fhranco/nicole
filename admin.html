@@ -1061,11 +1061,13 @@
 
       // Criterio temporal estricto:
       // - Ingresos recibidos: suma de pagos efectivos cuya fechaIso cae en el período (sin duplicar créditos previos)
-      const periodBookings = bookings.filter((r) => r.fechaIso >= bounds.start && r.fechaIso <= bounds.end && r.estado !== 'cancelada');
+      const confirmedBookings = bookings.filter((r) => ['abonada', 'pagada', 'completada', 'confirmada'].includes(r.estado));
+      const periodBookings = confirmedBookings.filter((r) => r.fechaIso >= bounds.start && r.fechaIso <= bounds.end);
+      const completedPeriodCount = periodBookings.filter((r) => ['pagada', 'completada'].includes(r.estado)).length;
       let ingresosPeriodo = 0;
       const revBySlug = { programa_90_dias: 0, evaluacion_epixlife: 0, consulta_inicial: 0 };
 
-      bookings.forEach((r) => {
+      confirmedBookings.forEach((r) => {
         const key = r.slug.startsWith('consulta_inicial') ? 'consulta_inicial' : r.slug;
         (r.pagos || []).forEach((p) => {
           if (p.fechaIso >= bounds.start && p.fechaIso <= bounds.end) {
@@ -1075,16 +1077,16 @@
         });
       });
 
-      const saldosVigentes = bookings.reduce((a, r) => a + Math.max(0, r.total - (r.credito || 0) - (r.abonado || 0)), 0);
-      const conSaldo = bookings.filter((r) => Math.max(0, r.total - (r.credito || 0) - (r.abonado || 0)) > 0).length;
+      const saldosVigentes = confirmedBookings.reduce((a, r) => a + Math.max(0, r.total - (r.credito || 0) - (r.abonado || 0)), 0);
+      const conSaldo = confirmedBookings.filter((r) => Math.max(0, r.total - (r.credito || 0) - (r.abonado || 0)) > 0).length;
       const cuposPeriodo = countSlotsForPeriod(blocks, bounds);
       const ocupPct = cuposPeriodo > 0 ? Math.min(100, Math.round((periodBookings.length / cuposPeriodo) * 100)) : 0;
-      const progCount = bookings.filter((r) => (r.slug === 'evaluacion_epixlife' || r.slug === 'programa_90_dias') && r.estado !== 'cancelada').length;
+      const progCount = confirmedBookings.filter((r) => r.slug === 'evaluacion_epixlife' || r.slug === 'programa_90_dias').length;
 
       document.getElementById('sum-ingresos').textContent = fmtCLP(ingresosPeriodo);
       document.getElementById('sum-saldos').textContent = fmtCLP(saldosVigentes);
       document.getElementById('sum-saldos-sub').textContent = `${conSaldo} paciente(s) vigente(s)`;
-      document.getElementById('sum-citas').textContent = String(periodBookings.length);
+      document.getElementById('sum-citas').textContent = String(completedPeriodCount);
       document.getElementById('sum-ocupacion').textContent = `${ocupPct}%`;
       document.getElementById('sum-ocupacion-sub').textContent = `${periodBookings.length} de ${cuposPeriodo} cupos`;
       document.getElementById('sum-programas').textContent = String(progCount);
@@ -1764,7 +1766,8 @@
             </div>
             <p class="text-xs text-sage-deep/75 truncate">${subText}</p>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            ${isAttemptFilter ? `<button type="button" onclick="createBookingFromAttempt('${escapeHtml(r.id)}')" class="min-h-[44px] px-3.5 rounded-2xl bg-coral text-white text-xs font-semibold inline-flex items-center gap-1.5">Crear reserva</button>` : ''}
             ${(isAttemptFilter && waDigits) ? `<a href="https://wa.me/${encodeURIComponent(waDigits)}?text=${encodeURIComponent(waMsg)}" target="_blank" rel="noopener noreferrer" class="min-h-[44px] px-3.5 rounded-2xl bg-[#25D366] text-white text-xs font-semibold inline-flex items-center gap-1.5">WhatsApp</a>` : ''}
             <button type="button" onclick="openPatientDrawer('${escapeHtml(r.id)}')" class="min-h-[44px] px-4 rounded-2xl bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep shrink-0">
               Ver detalle
@@ -2076,6 +2079,7 @@
 
     function renderFinanceView() {
       const rows = getBookings().filter((r) => {
+        if (!['abonada', 'pagada', 'completada', 'confirmada'].includes(r.estado)) return false;
         const saldo = Math.max(0, r.total - (r.credito || 0) - (r.abonado || 0));
         if (appState.financeFilter === 'saldo') return saldo > 0;
         if (appState.financeFilter === 'pagada') return saldo === 0;
@@ -2147,6 +2151,21 @@
       if (!match) return '-03:00';
       const hr = Number(match[1]);
       return `${hr < 0 ? '-' : '+'}${String(Math.abs(hr)).padStart(2, '0')}:00`;
+    }
+
+    function createBookingFromAttempt(attemptId) {
+      const r = getBookings().find((x) => x.id === attemptId);
+      if (!r) return;
+      openManualBookingModal();
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+      setVal('mb-name', r.paciente);
+      setVal('mb-rut', r.rut);
+      setVal('mb-phone', r.telefono);
+      setVal('mb-email', r.email);
+      setVal('mb-service', r.slug);
+      setVal('mb-sede', r.sede);
+      setVal('mb-date', r.fechaIso);
+      setVal('mb-time', r.hora);
     }
 
     function openManualBookingModal() {
