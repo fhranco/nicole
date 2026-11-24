@@ -18,7 +18,8 @@ function verifyMpSignature(req, secret) {
   const nowSec = Math.floor(Date.now() / 1000);
   if (!Number.isFinite(tsNum) || Math.abs(nowSec - tsNum) > 300) return false;
 
-  const dataId = req.body?.data?.id || req.query?.['data.id'] || '';
+  const rawDataId = req.body?.data?.id || req.query?.['data.id'] || '';
+  const dataId = String(rawDataId).toLowerCase();
   const manifest = `id:${dataId};request-id:${reqId};ts:${parts.ts};`;
   const expected = crypto.createHmac('sha256', secret).update(manifest, 'utf8').digest('hex');
   try {

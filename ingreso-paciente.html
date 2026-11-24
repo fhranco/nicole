@@ -922,6 +922,9 @@
           const chk = document.getElementById('token-checking-screen');
           const chkText = chk?.querySelector('p');
           if (chkText) chkText.textContent = 'Confirmando tu abono con Mercado Pago... un momento por favor.';
+          if (attempt === 0 || attempt === 2) {
+            await fetch(`/api/mp-verificar-pago?token=${encodeURIComponent(token)}`).catch(() => {});
+          }
           return await new Promise((resolve) => {
             setTimeout(() => resolve(verifyBookingTokenAccess(attempt + 1)), 2000);
           });
