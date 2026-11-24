@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /reservar
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /ingreso-paciente
+Disallow: /ingreso-paciente.html
+Disallow: /api/
+
+Sitemap: https://www.nicoleborguenson.cl/sitemap.xml
