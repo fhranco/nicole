@@ -1924,21 +1924,26 @@
         return;
       }
 
-      timelineEl.innerHTML = fichas.map((f, idx) => {
-        const active = idx === exp.selectedFichaIdx;
-        const code = f.codigo_ficha || buildFichaId(f.rut || exp.booking.rut, f.fecha_hoy || exp.booking.fechaIso, f.id);
-        const label = idx === fichas.length - 1 ? 'Ficha inicial' : 'Control / Evolución';
-        return `
-          <button type="button" onclick="selectHistorialFicha(${idx})" class="w-full text-left p-3 rounded-2xl border transition-colors ${active ? 'bg-sage-soft/60 border-sage-deep text-sage-deep' : 'bg-[#FAF9F6] border-sage/15 text-sage-deep/85 hover:bg-sage-soft/30'}">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] font-bold">${escapeHtml(f.fecha_hoy || String(f.created_at || '').slice(0, 10))}</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-white border border-sage/20 font-semibold">${escapeHtml(label)}</span>
-            </div>
-            <p class="font-mono text-[10px] text-sage-deep/70 mt-1">${escapeHtml(code)}</p>
-            <p class="text-xs truncate mt-0.5">${escapeHtml(f.motivo_consulta || 'Control nutricional')}</p>
-          </button>
-        `;
-      }).join('');
+      const isEditing = !!exp.editMode;
+      timelineEl.innerHTML = `
+        <p class="text-xs text-sage-deep/70 mb-1">Haz clic en una sesión para ver o editar:</p>
+        ${fichas.map((f, idx) => {
+          const active = idx === exp.selectedFichaIdx;
+          const code = f.codigo_ficha || buildFichaId(f.rut || exp.booking.rut, f.fecha_hoy || exp.booking.fechaIso, f.id);
+          const controlNum = fichas.length - 1 - idx;
+          const label = idx === fichas.length - 1 ? 'Ficha inicial' : `Control #${controlNum}`;
+          return `
+            <button type="button" onclick="selectHistorialFicha(${idx})" class="w-full text-left p-3.5 rounded-2xl border-2 transition-colors ${active ? 'bg-sage-soft/65 border-coral text-sage-deep shadow-2xs' : 'bg-[#FAF9F6] border-sage/15 text-sage-deep/85 hover:bg-sage-soft/30'}">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-bold">${escapeHtml(f.fecha_hoy || String(f.created_at || '').slice(0, 10))}</span>
+                <span class="text-[11px] px-2.5 py-0.5 rounded-full ${active ? 'bg-coral text-white' : 'bg-white border border-sage/20 text-sage-deep'} font-semibold">${escapeHtml(active ? `${label} · Viendo` : label)}</span>
+              </div>
+              <p class="font-mono text-[11px] text-sage-deep/70 mt-1">${escapeHtml(code)}</p>
+              <p class="text-xs sm:text-sm font-medium truncate mt-0.5">${escapeHtml(f.motivo_consulta || 'Control nutricional')}</p>
+            </button>
+          `;
+        }).join('')}
+      `;
 
       const f = fichas[exp.selectedFichaIdx] || fichas[0];
       const r = exp.booking;
@@ -1950,79 +1955,103 @@
       mainEl.innerHTML = `
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-sage/15">
           <div>
-            <span class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70">Ficha clínica seleccionada</span>
-            <p class="font-mono text-sm font-bold text-sage-deep">${escapeHtml(code)} · Fecha: ${escapeHtml(f.fecha_hoy || '-')}</p>
+            <span class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Ficha clínica seleccionada</span>
+            <p class="font-mono text-base font-bold text-sage-deep mt-0.5">${escapeHtml(code)} · Fecha: ${escapeHtml(f.fecha_hoy || '-')}</p>
           </div>
-          <button type="button" onclick="downloadActiveFichaPDF()" class="min-h-[42px] px-4 rounded-2xl bg-coral text-white text-xs font-semibold inline-flex items-center gap-2 shadow-xs">
-            <i data-lucide="file-down" class="w-4 h-4"></i> Descargar Ficha PDF
-          </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="toggleFichaEditMode()" class="min-h-[44px] px-4 rounded-2xl ${isEditing ? 'bg-sage-deep text-white' : 'bg-white border border-sage/30 text-sage-deep'} text-xs sm:text-sm font-semibold inline-flex items-center gap-2">
+              <i data-lucide="pencil" class="w-4 h-4"></i> ${isEditing ? 'Modo lectura' : 'Editar datos de ficha'}
+            </button>
+            <button type="button" onclick="downloadActiveFichaPDF()" class="min-h-[44px] px-4 rounded-2xl bg-coral text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-xs">
+              <i data-lucide="file-down" class="w-4 h-4"></i> Descargar Ficha PDF
+            </button>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Identificación y hábitos</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm leading-relaxed">
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
+            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Identificación y hábitos</p>
             <p><strong>Edad / F. Nac.:</strong> ${escapeHtml(f.edad ?? '-')} años (${escapeHtml(f.fecha_nacimiento || '-')})</p>
             <p><strong>Dirección:</strong> ${escapeHtml(f.direccion || '-')}</p>
             <p><strong>Actividad laboral:</strong> ${escapeHtml(f.actividad_laboral || '-')}</p>
-            <p><strong>Actividad física:</strong> ${escapeHtml(f.actividad_fisica || '-')}</p>
+            ${isEditing
+              ? `<div><label class="block text-xs font-semibold text-sage-deep mb-1">Actividad física</label><input id="edit-ficha-actfis" type="text" value="${escapeHtml(f.actividad_fisica || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>`
+              : `<p><strong>Actividad física:</strong> ${escapeHtml(f.actividad_fisica || '-')}</p>`}
           </div>
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Antecedentes clínicos</p>
-            <p><strong>Enfermedades actuales:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>
-            <p><strong>Tratamiento / fármacos:</strong> ${escapeHtml(f.tratamiento_actual || '-')}</p>
-            <p><strong>Historia clínica:</strong> ${escapeHtml(f.historia_clinica || '-')}</p>
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
+            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70 mb-1">Antecedentes clínicos</p>
+            ${isEditing
+              ? `<div class="space-y-2">
+                  <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Enfermedades actuales</label><input id="edit-ficha-enf" type="text" value="${escapeHtml(f.enfermedades_actuales || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>
+                  <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Tratamiento / fármacos</label><input id="edit-ficha-trat" type="text" value="${escapeHtml(f.tratamiento_actual || '')}" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep" /></div>
+                  <div><label class="block text-xs font-semibold text-sage-deep mb-0.5">Historia clínica</label><textarea id="edit-ficha-hist" rows="2" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.historia_clinica || '')}</textarea></div>
+                 </div>`
+              : `<p><strong>Enfermedades actuales:</strong> ${escapeHtml(f.enfermedades_actuales || '-')}</p>
+                 <p><strong>Tratamiento / fármacos:</strong> ${escapeHtml(f.tratamiento_actual || '-')}</p>
+                 <p><strong>Historia clínica:</strong> ${escapeHtml(f.historia_clinica || '-')}</p>`}
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70">Motivo de consulta y objetivos</p>
-            <p class="whitespace-pre-wrap leading-relaxed">${escapeHtml(f.motivo_consulta || '-')}</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm leading-relaxed">
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
+            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Motivo de consulta y objetivos</p>
+            ${isEditing
+              ? `<textarea id="edit-ficha-motivo" rows="4" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.motivo_consulta || '')}</textarea>`
+              : `<p class="whitespace-pre-wrap">${escapeHtml(f.motivo_consulta || '-')}</p>`}
           </div>
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-1.5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70">Día típico de alimentación</p>
-            <p class="whitespace-pre-wrap leading-relaxed">${escapeHtml(f.dia_tipico || '-')}</p>
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 space-y-2">
+            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Día típico de alimentación</p>
+            ${isEditing
+              ? `<textarea id="edit-ficha-diatipico" rows="4" class="w-full rounded-xl border border-sage/30 bg-white px-3 py-2 text-sm text-sage-deep">${escapeHtml(f.dia_tipico || '')}</textarea>`
+              : `<p class="whitespace-pre-wrap">${escapeHtml(f.dia_tipico || '-')}</p>`}
           </div>
         </div>
 
         ${sysEntries.length ? `
-          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 text-xs space-y-2">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-sage-deep/70">Rastreo de síntomas últimos 6 meses (${sysEntries.length} áreas)</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+          <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-sage/15 text-sm space-y-2">
+            <p class="text-xs font-bold uppercase tracking-wider text-sage-deep/70">Rastreo de síntomas últimos 6 meses (${sysEntries.length} áreas)</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               ${sysEntries.map(([k, v]) => `<p><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</p>`).join('')}
             </div>
           </div>
         ` : ''}
 
-        ${filesList.length ? `<p class="text-xs"><strong>Exámenes adjuntos (${filesList.length}):</strong> ${filesList.map((u) => escapeHtml(String(u).split('/').pop())).join(', ')}</p>` : ''}
+        ${filesList.length ? `<p class="text-sm"><strong>Exámenes adjuntos (${filesList.length}):</strong> ${filesList.map((u) => escapeHtml(String(u).split('/').pop())).join(', ')}</p>` : ''}
 
-        <div class="pt-4 border-t border-sage/20 space-y-3">
-          <p class="text-xs font-bold uppercase tracking-wider text-sage-deep">Registro clínico de Nicole (Evolución y Exámenes)</p>
+        <div class="pt-4 border-t border-sage/20 space-y-3.5">
+          <p class="text-sm font-bold uppercase tracking-wider text-sage-deep">Registro clínico de Nicole (Evolución y Exámenes)</p>
           <div>
-            <label for="ficha-examenes-texto" class="block text-xs font-semibold text-sage-deep mb-1">Resultado de exámenes (texto)</label>
+            <label for="ficha-examenes-texto" class="block text-sm font-semibold text-sage-deep mb-1.5">Resultado de exámenes (texto)</label>
             <div class="flex flex-wrap gap-1.5 mb-2">
-              <button type="button" onclick="insertExamTemplate('metabolico')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Sangre / Metabólico</button>
-              <button type="button" onclick="insertExamTemplate('vitaminas')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Vitaminas y Hierro</button>
-              <button type="button" onclick="insertExamTemplate('tiroides')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ Tiroides</button>
-              <button type="button" onclick="insertExamTemplate('digestivo')" class="px-2.5 py-1 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-[11px] font-semibold text-sage-deep">+ SIBO / Epixlife</button>
+              <button type="button" onclick="insertExamTemplate('metabolico')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Sangre / Metabólico</button>
+              <button type="button" onclick="insertExamTemplate('vitaminas')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Vitaminas y Hierro</button>
+              <button type="button" onclick="insertExamTemplate('tiroides')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ Tiroides</button>
+              <button type="button" onclick="insertExamTemplate('digestivo')" class="px-3 py-1.5 rounded-full bg-sage-soft/70 hover:bg-sage-soft text-xs font-semibold text-sage-deep">+ SIBO / Epixlife</button>
             </div>
-            <textarea id="ficha-examenes-texto" rows="6" placeholder="Toca una plantilla arriba o escribe aquí los resultados (Vitamina D, insulina, ferritina, TSH, SIBO...)" class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.resultados_examenes_texto || '')}</textarea>
+            <textarea id="ficha-examenes-texto" rows="6" placeholder="Toca una plantilla arriba o escribe aquí los resultados (Vitamina D, insulina, ferritina, TSH, SIBO...)" class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-4 py-3 text-sm text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.resultados_examenes_texto || '')}</textarea>
           </div>
           <div>
-            <label for="ficha-comentarios-nicole" class="block text-xs font-semibold text-sage-deep mb-1">Comentarios y evolución clínica de Nicole</label>
-            <textarea id="ficha-comentarios-nicole" rows="5" placeholder="Observaciones de consulta, diagnóstico nutricional, pauta, suplementación e indicaciones..." class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.comentarios_clinicos || '')}</textarea>
+            <label for="ficha-comentarios-nicole" class="block text-sm font-semibold text-sage-deep mb-1.5">Comentarios y evolución clínica de Nicole</label>
+            <textarea id="ficha-comentarios-nicole" rows="5" placeholder="Observaciones de consulta, diagnóstico nutricional, pauta, suplementación e indicaciones..." class="w-full rounded-2xl border border-sage/25 bg-[#FAF9F6] px-4 py-3 text-sm text-sage-deep focus:bg-white focus:border-coral focus:outline-none">${escapeHtml(f.comentarios_clinicos || '')}</textarea>
           </div>
-          <button id="save-notes-btn" type="button" onclick="saveFichaClinicalNotes('${escapeHtml(f.id)}')" class="min-h-[44px] px-6 rounded-2xl bg-sage-deep text-white text-xs font-semibold">
-            Guardar comentarios y exámenes
+          <button id="save-notes-btn" type="button" onclick="saveFichaClinicalNotes('${escapeHtml(f.id)}')" class="min-h-[48px] px-7 rounded-2xl bg-sage-deep text-white text-sm font-semibold">
+            Guardar ficha, comentarios y exámenes
           </button>
         </div>
       `;
       if (window.lucide) lucide.createIcons();
     }
 
+    function toggleFichaEditMode() {
+      if (!appState.expediente) return;
+      appState.expediente.editMode = !appState.expediente.editMode;
+      renderExpedienteTimelineAndFicha();
+    }
+
     function selectHistorialFicha(idx) {
       if (!appState.expediente) return;
       appState.expediente.selectedFichaIdx = idx;
+      appState.expediente.editMode = false;
       renderExpedienteTimelineAndFicha();
     }
 
@@ -2062,8 +2091,9 @@
         if (created) {
           exp.fichas.unshift(created);
           exp.selectedFichaIdx = 0;
+          exp.editMode = true;
           renderExpedienteTimelineAndFicha();
-          showToast('Nuevo control clínico creado en el historial.');
+          showToast('Nuevo control clínico creado. Ya puedes editarlo.');
         }
       } catch (e) {
         showToast(e.message || 'No se pudo crear el control clínico.', 'error');
@@ -2096,6 +2126,23 @@
       const btn = document.getElementById('save-notes-btn');
       const examenes = (document.getElementById('ficha-examenes-texto')?.value || '').trim();
       const comentarios = (document.getElementById('ficha-comentarios-nicole')?.value || '').trim();
+      const patchBody = {
+        resultados_examenes_texto: examenes || null,
+        comentarios_clinicos: comentarios || null
+      };
+      const editActFis = document.getElementById('edit-ficha-actfis');
+      const editEnf = document.getElementById('edit-ficha-enf');
+      const editTrat = document.getElementById('edit-ficha-trat');
+      const editHist = document.getElementById('edit-ficha-hist');
+      const editMotivo = document.getElementById('edit-ficha-motivo');
+      const editDia = document.getElementById('edit-ficha-diatipico');
+      if (editActFis) patchBody.actividad_fisica = editActFis.value.trim();
+      if (editEnf) patchBody.enfermedades_actuales = editEnf.value.trim();
+      if (editTrat) patchBody.tratamiento_actual = editTrat.value.trim();
+      if (editHist) patchBody.historia_clinica = editHist.value.trim();
+      if (editMotivo) patchBody.motivo_consulta = editMotivo.value.trim();
+      if (editDia) patchBody.dia_tipico = editDia.value.trim();
+
       if (btn) {
         btn.disabled = true;
         btn.textContent = 'Guardando...';
@@ -2103,22 +2150,21 @@
       try {
         await sbFetch(`/rest/v1/fichas_ingreso_pacientes?id=eq.${encodeURIComponent(fichaId)}`, {
           method: 'PATCH',
-          body: JSON.stringify({
-            resultados_examenes_texto: examenes || null,
-            comentarios_clinicos: comentarios || null
-          })
+          body: JSON.stringify(patchBody)
         });
         if (appState.activeFicha?.ficha) {
-          appState.activeFicha.ficha.resultados_examenes_texto = examenes;
-          appState.activeFicha.ficha.comentarios_clinicos = comentarios;
+          Object.assign(appState.activeFicha.ficha, patchBody);
         }
-        showToast('Comentarios y resultados guardados en la ficha.');
+        if (appState.expediente) appState.expediente.editMode = false;
+        renderExpedienteTimelineAndFicha();
+        showToast('Ficha, comentarios y exámenes guardados.');
       } catch (e) {
         showToast(e.message || 'No se pudieron guardar las notas.', 'error');
       } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = 'Guardar comentarios y exámenes';
+        const b2 = document.getElementById('save-notes-btn');
+        if (b2) {
+          b2.disabled = false;
+          b2.textContent = 'Guardar ficha, comentarios y exámenes';
         }
       }
     }
