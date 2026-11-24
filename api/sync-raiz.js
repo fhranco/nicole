@@ -159,7 +159,7 @@ export default async function handler(req, res) {
 
     // 6. Publicar Plan Vivo (plan_versions + plan_items) si hay pauta o TEA activo
     const itemsToCreate = [];
-    const pushItem = (key, label, instruction, category, frequency) => {
+    const pushItem = (key, label, instruction, category, frequency, unit = 'indicación') => {
       const clean = String(instruction || '').trim();
       if (!clean) return;
       itemsToCreate.push({
@@ -167,7 +167,10 @@ export default async function handler(req, res) {
         patient_id: raizPatient.id,
         item_key: key,
         label,
+        description: clean.slice(0, 120),
         instruction: clean,
+        target: 1,
+        unit,
         category,
         frequency,
         tracking: 'manual',
@@ -175,37 +178,47 @@ export default async function handler(req, res) {
       });
     };
 
-    pushItem('desayuno', 'Desayuno', pauta.desayuno, 'nutrition', 'daily');
-    pushItem('colacion_am', 'Colación AM', pauta.colacion_am, 'nutrition', 'daily');
-    pushItem('almuerzo', 'Almuerzo', pauta.almuerzo, 'nutrition', 'daily');
-    pushItem('colacion_pm', 'Once / Colación PM', pauta.colacion_pm, 'nutrition', 'daily');
-    pushItem('cena', 'Cena', pauta.cena, 'nutrition', 'daily');
-    pushItem('priorizar', 'Alimentos a priorizar', pauta.priorizar, 'nutrition', 'daily');
-    pushItem('limitar', 'Limitar o pausar temporalmente', pauta.limitar, 'nutrition', 'daily');
-    pushItem('suplementos', 'Suplementación y horarios', pauta.suplementos, 'supplement', 'daily');
-    pushItem('hidratacion', 'Hidratación y hábitos', pauta.hidratacion, 'hydration', 'daily');
+    pushItem('desayuno', 'Desayuno', pauta.desayuno, 'nutrition', 'daily', 'comida');
+    pushItem('colacion_am', 'Colación AM', pauta.colacion_am, 'nutrition', 'daily', 'comida');
+    pushItem('almuerzo', 'Almuerzo', pauta.almuerzo, 'nutrition', 'daily', 'comida');
+    pushItem('colacion_pm', 'Once / Colación PM', pauta.colacion_pm, 'nutrition', 'daily', 'comida');
+    pushItem('cena', 'Cena', pauta.cena, 'nutrition', 'daily', 'comida');
+    pushItem('priorizar', 'Alimentos a priorizar', pauta.priorizar, 'nutrition', 'daily', 'guía');
+    pushItem('limitar', 'Limitar o pausar temporalmente', pauta.limitar, 'nutrition', 'daily', 'guía');
+    pushItem('suplementos', 'Suplementación y horarios', pauta.suplementos, 'supplement', 'daily', 'dosis');
+    pushItem('hidratacion', 'Hidratación y hábitos', pauta.hidratacion, 'hydration', 'daily', 'hábito');
 
     if (tea?.activo) {
-      pushItem('tea_seguros', 'Alimentos seguros (TEA)', tea.alimentos_seguros, 'nutrition', 'daily');
-      pushItem('tea_puente', 'Puente sensorial (Food Chaining)', tea.puente_sensorial, 'other', 'as_needed');
-      pushItem('tea_estrategia', 'Estrategia en casa (TEA)', tea.estrategia_familia, 'other', 'daily');
+      pushItem('tea_seguros', 'Alimentos seguros (TEA)', tea.alimentos_seguros, 'nutrition', 'daily', 'guía');
+      pushItem('tea_puente', 'Puente sensorial (Food Chaining)', tea.puente_sensorial, 'other', 'as_needed', 'exposición');
+      pushItem('tea_estrategia', 'Estrategia en casa (TEA)', tea.estrategia_familia, 'other', 'daily', 'estrategia');
     }
 
     if (itemsToCreate.length > 0) {
-      // Asegurar ciclo activo
+      // Asegurar ciclo activo (cumpliendo NOT NULL: number, start_date, end_date, review_date, goal)
       const activeCycles = await raizFetch(
         `/rest/v1/cycles?org_id=eq.${orgId}&patient_id=eq.${raizPatient.id}&status=eq.active&select=id&limit=1`
       );
       let cycleId = activeCycles?.[0]?.id || null;
       if (!cycleId) {
+        const startD = new Date(`${measuredAt}T12:00:00Z`);
+        const addDays = (d, days) => new Date(d.getTime() + days * 86400000).toISOString().slice(0, 10);
+        const allCycles = await raizFetch(
+          `/rest/v1/cycles?org_id=eq.${orgId}&patient_id=eq.${raizPatient.id}&select=number&order=number.desc&limit=1`
+        );
+        const nextNum = (allCycles?.[0]?.number || 0) + 1;
         const newCycle = await raizFetch('/rest/v1/cycles', {
           method: 'POST',
           headers: { Prefer: 'return=representation' },
           body: JSON.stringify({
             org_id: orgId,
             patient_id: raizPatient.id,
+            number: nextNum,
             status: 'active',
-            start_date: measuredAt
+            start_date: measuredAt,
+            review_date: addDays(startD, 30),
+            end_date: addDays(startD, 90),
+            goal: patient.main_goal ? String(patient.main_goal).trim() : 'Plan Nutricional Integrativo'
           })
         });
         cycleId = newCycle?.[0]?.id || null;
